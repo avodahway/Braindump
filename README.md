@@ -56,6 +56,8 @@ The Google OAuth token client lives in `src/server/googleOAuthClient.ts`. It exp
 
 `src/server/refreshingTokenProvider.ts` turns stored OAuth tokens into access tokens for provider writes and refreshes them when needed.
 
+`src/server/durableStore.ts` provides the production storage boundary. Deployments can pass a key-value store plus an encryption codec into the backend factory so OAuth tokens and sessions survive restarts without putting secrets in the frontend.
+
 ## Private Apps Script Adapter
 
 `apps-script/BrainDumpBridge.gs` is retained as a private adapter for Cleveland Stewardship OS. It is not the default public backend.

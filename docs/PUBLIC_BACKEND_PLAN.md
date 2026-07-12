@@ -76,6 +76,8 @@ Calendar execution carries the request timezone through the executor context and
 
 `src/server/refreshingTokenProvider.ts` reads stored Google tokens and refreshes them before provider writes when they are near expiration.
 
+`src/server/durableStore.ts` adds a framework-neutral key-value storage adapter for OAuth state, refresh tokens, workspaces, and sessions. A deployed backend can supply a managed store and encryption codec to `createBrainDumpBackend` without changing the parser, frontend, or Google execution code.
+
 ## Safety Rules
 
 - Never store Google client secrets in the PWA.

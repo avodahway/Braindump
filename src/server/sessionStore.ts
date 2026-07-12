@@ -54,7 +54,7 @@ export function readSessionIdFromCookie(cookieHeader: string | null): string | u
     .find(([name]) => name === sessionCookieName)?.[1];
 }
 
-function createSessionId(): string {
+export function createSessionId(): string {
   const bytes = new Uint8Array(24);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');

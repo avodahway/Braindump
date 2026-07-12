@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { sessionCookieName, createMemorySessionStore } from './sessionStore';
 import { createBrainDumpBackend, createGoogleBackedExecutor } from './backendFactory';
 import { createMemoryOAuthStore, defaultWorkspace, type TokenExchangeClient } from './oauthSession';
+import { createMemoryKeyValueStore } from './durableStore';
 import type { ParsedAction } from '../lib/types';
 
 const googleOAuth = {
@@ -90,6 +91,35 @@ describe('backend factory', () => {
       message: 'No signed-in Google user is available for this request.'
     });
   });
+
+  it('can compose OAuth and session storage from a shared durable store', async () => {
+    const storage = createMemoryKeyValueStore();
+    const backend = createBrainDumpBackend({
+      googleOAuth,
+      storage,
+      storageKeyPrefix: 'test',
+      tokenClient: callbackTokenClient()
+    });
+
+    const startResponse = await backend.handle(
+      new Request('https://api.example.com/api/auth/google/start', { method: 'POST' })
+    );
+    const start = await startResponse.json();
+    const callbackResponse = await backend.handle(
+      new Request(`https://api.example.com/api/auth/google/callback?code=auth-code&state=${start.state}`)
+    );
+    const cookie = callbackResponse.headers.get('Set-Cookie') ?? '';
+
+    const workspaceResponse = await backend.handle(
+      new Request('https://api.example.com/api/workspace', { headers: { Cookie: cookie.split(';')[0] } })
+    );
+    const workspace = await workspaceResponse.json();
+
+    expect(workspace.status).toBe('connected');
+    expect(workspace.email).toBe('user@example.com');
+    expect([...storage.values.keys()].some((key) => key.includes(':google-tokens:user@example.com'))).toBe(true);
+    expect([...storage.values.keys()].some((key) => key.includes(':session:'))).toBe(true);
+  });
 });
 
 function fakeTokenClient(): TokenExchangeClient {
@@ -107,6 +137,30 @@ function fakeTokenClient(): TokenExchangeClient {
     },
     async readProfile() {
       throw new Error('not used');
+    }
+  };
+}
+
+function callbackTokenClient(): TokenExchangeClient {
+  return {
+    async exchangeCode() {
+      return {
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        expiresAt: Date.now() + 3600_000,
+        scope: googleOAuth.scopes.join(' ')
+      };
+    },
+    async refreshTokens(refreshToken) {
+      return {
+        accessToken: 'fresh-token',
+        refreshToken,
+        expiresAt: Date.now() + 3600_000,
+        scope: googleOAuth.scopes.join(' ')
+      };
+    },
+    async readProfile() {
+      return { email: 'user@example.com' };
     }
   };
 }

@@ -1,6 +1,12 @@
 import type { GoogleOAuthConfig } from './publicBackend';
 import { createPublicBackend } from './publicBackend';
 import type { ActionExecutor } from './actionExecutor';
+import {
+  createDurableOAuthStore,
+  createDurableSessionStore,
+  type KeyValueStore,
+  type SecretCodec
+} from './durableStore';
 import { createGoogleActionExecutor } from './googleExecutor';
 import { createGoogleOAuthClient } from './googleOAuthClient';
 import { createGoogleRestProviderClients } from './googleProviderClients';
@@ -19,13 +25,31 @@ export type BrainDumpBackendConfig = {
   nowDate?: () => Date;
   oauthStore?: OAuthSessionStore;
   sessionStore?: SessionStore;
+  storage?: KeyValueStore;
+  storageCodec?: SecretCodec;
+  storageKeyPrefix?: string;
   tokenClient?: TokenExchangeClient;
   executor?: ActionExecutor;
 };
 
 export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
-  const oauthStore = config.oauthStore ?? createMemoryOAuthStore();
-  const sessionStore = config.sessionStore ?? createMemorySessionStore(config.nowMs);
+  const oauthStore =
+    config.oauthStore ??
+    (config.storage
+      ? createDurableOAuthStore(config.storage, {
+          keyPrefix: config.storageKeyPrefix,
+          codec: config.storageCodec
+        })
+      : createMemoryOAuthStore());
+  const sessionStore =
+    config.sessionStore ??
+    (config.storage
+      ? createDurableSessionStore(config.storage, {
+          keyPrefix: config.storageKeyPrefix,
+          codec: config.storageCodec,
+          now: config.nowMs
+        })
+      : createMemorySessionStore(config.nowMs));
   const tokenClient =
     config.tokenClient ??
     createGoogleOAuthClient(
