@@ -1,0 +1,15 @@
+import type { BrainDumpRequest, BrainDumpResponse, UserWorkspace } from '../lib/types';
+
+export type PublicBackendContract = {
+  getWorkspace(): Promise<UserWorkspace>;
+  startGoogleConnection(): Promise<{ authorizationUrl: string }>;
+  disconnectGoogle(): Promise<{ ok: true }>;
+  processBrainDump(request: BrainDumpRequest): Promise<BrainDumpResponse>;
+};
+
+export const publicBackendRoutes = {
+  workspace: '/api/workspace',
+  googleConnect: '/api/auth/google/start',
+  googleDisconnect: '/api/auth/google/disconnect',
+  brainDump: '/api/brain-dump'
+} as const;

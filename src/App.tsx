@@ -1,4 +1,16 @@
-import { AlertTriangle, CalendarDays, CheckCircle2, ClipboardList, FolderKanban, Lock, Mic, Settings, Sparkles, UserCheck } from 'lucide-react';
+import {
+  AlertTriangle,
+  CalendarDays,
+  CheckCircle2,
+  ClipboardList,
+  Cloud,
+  FolderKanban,
+  Lock,
+  Mic,
+  Settings,
+  Sparkles,
+  UserCheck
+} from 'lucide-react';
 import { FormEvent, useMemo, useState } from 'react';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
 import type { BrainDumpResponse, ParsedAction } from './lib/types';
@@ -81,12 +93,7 @@ export function App() {
 
       <section className="capturePanel">
         <h2>What's on your mind?</h2>
-        {settings.backendMode === 'public' && (
-          <div className="setupNotice">
-            <strong>Public account setup is next.</strong>
-            <span>For now, Brain Dump can preview routing in mock mode without touching anyone's Google account.</span>
-          </div>
-        )}
+        <SetupPanel mode={settings.backendMode} onOpenSettings={() => setShowSettings(true)} />
         <textarea
           value={text}
           onChange={(event) => handleDraft(event.target.value)}
@@ -221,6 +228,51 @@ function Summary({ label, value }: { label: string; value: number }) {
     <div className="summaryCard">
       <span>{value}</span>
       <small>{label}</small>
+    </div>
+  );
+}
+
+function SetupPanel({ mode, onOpenSettings }: { mode: BackendSettings['backendMode']; onOpenSettings: () => void }) {
+  if (mode === 'mock') {
+    return (
+      <div className="setupPanel">
+        <div>
+          <strong>Preview mode</strong>
+          <span>Brain Dump will show where items would go without touching Google.</span>
+        </div>
+        <button type="button" onClick={onOpenSettings}>
+          <Settings size={16} />
+          Setup
+        </button>
+      </div>
+    );
+  }
+
+  if (mode === 'public') {
+    return (
+      <div className="setupPanel">
+        <div>
+          <strong>Google connection planned</strong>
+          <span>Next backend milestone will let each user connect their own account.</span>
+        </div>
+        <button type="button" onClick={onOpenSettings}>
+          <Cloud size={16} />
+          Review
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="setupPanel">
+      <div>
+        <strong>Private bridge mode</strong>
+        <span>Routes to one configured Apps Script bridge for CSOS testing.</span>
+      </div>
+      <button type="button" onClick={onOpenSettings}>
+        <Settings size={16} />
+        Edit
+      </button>
     </div>
   );
 }

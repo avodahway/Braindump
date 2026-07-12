@@ -108,9 +108,11 @@ button {
   font-size: 25px;
 }
 
-.setupNotice {
-  display: grid;
-  gap: 4px;
+.setupPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin: 0 0 14px;
   padding: 12px;
   border: 1px solid rgba(39, 89, 70, 0.2);
@@ -120,8 +122,28 @@ button {
   font-size: 13px;
 }
 
-.setupNotice span {
+.setupPanel div {
+  display: grid;
+  gap: 4px;
+}
+
+.setupPanel span {
   color: rgba(24, 50, 40, 0.74);
+}
+
+.setupPanel button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--green);
+  background: var(--paper);
+  border: 1px solid rgba(39, 89, 70, 0.18);
+  font-size: 13px;
+  font-weight: 850;
+  white-space: nowrap;
 }
 
 textarea {

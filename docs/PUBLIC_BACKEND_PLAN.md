@@ -32,7 +32,7 @@ Gmail should stay out of v1 execution. Keep email output in Needs Review until t
 
 ## Backend API Shape
 
-Keep the existing request/response contract:
+Keep the existing process request/response contract:
 
 ```json
 {
@@ -43,6 +43,13 @@ Keep the existing request/response contract:
 ```
 
 The public backend should infer the user from the session, not from frontend-supplied Google IDs.
+
+Initial routes are documented in `src/api/publicContract.ts`:
+
+- `GET /api/workspace`
+- `POST /api/auth/google/start`
+- `POST /api/auth/google/disconnect`
+- `POST /api/brain-dump`
 
 ## Safety Rules
 

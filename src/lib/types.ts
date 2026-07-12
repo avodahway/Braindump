@@ -40,3 +40,19 @@ export type BrainDumpResponse = {
   actions: ParsedAction[];
   errors: string[];
 };
+
+export type ConnectionStatus = 'mock' | 'not_connected' | 'connected' | 'private_bridge';
+
+export type UserDestination = {
+  id: string;
+  name: string;
+  provider: 'google_tasks' | 'google_calendar' | 'brain_dump_workspace';
+  kind: 'work_tasks' | 'personal_tasks' | 'calendar' | 'projects' | 'waiting';
+  isDefault: boolean;
+};
+
+export type UserWorkspace = {
+  status: ConnectionStatus;
+  email?: string;
+  destinations: UserDestination[];
+};
