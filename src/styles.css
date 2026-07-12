@@ -497,6 +497,27 @@ input:focus {
   padding: 16px;
 }
 
+.reviewBanner {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding: 13px;
+  border: 1px solid rgba(231, 217, 181, 0.7);
+  border-radius: 8px;
+  background: #fff8e7;
+  color: var(--green);
+}
+
+.reviewBanner strong {
+  font-size: 15px;
+}
+
+.reviewBanner span {
+  color: rgba(24, 50, 40, 0.72);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .summaryGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

@@ -20,6 +20,7 @@ import type { ReactNode } from 'react';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
 import { connectPublicWorkspace, disconnectPublicWorkspace, refreshPublicWorkspace } from './api/publicConnection';
 import { loadWorkspace } from './api/workspace';
+import { parseBrainDump } from './lib/parser';
 import { feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
 
@@ -57,6 +58,7 @@ function useRoute() {
 function ProductApp() {
   const [text, setText] = useState(() => localStorage.getItem('brain-dump-draft') ?? '');
   const [result, setResult] = useState<BrainDumpResponse | null>(null);
+  const [preview, setPreview] = useState<BrainDumpResponse | null>(null);
   const [error, setError] = useState('');
   const [isProcessing, setProcessing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -78,14 +80,26 @@ function ProductApp() {
   const groupedActions = useMemo(() => {
     const map = new Map<string, ParsedAction[]>();
     groups.forEach((group) => map.set(group.key, []));
-    result?.actions.forEach((action) => map.get(action.type)?.push(action));
+    (result ?? preview)?.actions.forEach((action) => map.get(action.type)?.push(action));
     return map;
-  }, [result]);
+  }, [preview, result]);
 
-  async function handleProcess() {
+  function handleReview() {
     const trimmed = text.trim();
     if (!trimmed) {
       setError('Add something to your brain dump first.');
+      return;
+    }
+    setError('');
+    setResult(null);
+    setPreview(parseBrainDump(trimmed, crypto.randomUUID()));
+  }
+
+  async function handleCreate() {
+    const trimmed = text.trim();
+    const reviewed = preview;
+    if (!trimmed || !reviewed) {
+      handleReview();
       return;
     }
 
@@ -94,11 +108,12 @@ function ProductApp() {
 
     try {
       const response = await processBrainDump({
-        requestId: crypto.randomUUID(),
+        requestId: reviewed.requestId,
         text: trimmed,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
       });
       setResult(response);
+      setPreview(null);
       setText('');
       localStorage.removeItem('brain-dump-draft');
     } catch (err) {
@@ -111,6 +126,8 @@ function ProductApp() {
 
   function handleDraft(value: string) {
     setText(value);
+    setPreview(null);
+    setResult(null);
     localStorage.setItem('brain-dump-draft', value);
   }
 
@@ -173,14 +190,21 @@ function ProductApp() {
             <Mic size={19} />
             Dictate
           </button>
-          <button className="processButton" type="button" onClick={handleProcess} disabled={isProcessing}>
-            <Sparkles size={20} />
-            {isProcessing ? 'Processing' : 'Process'}
-          </button>
+          {preview ? (
+            <button className="processButton" type="button" onClick={handleCreate} disabled={isProcessing}>
+              <Sparkles size={20} />
+              {isProcessing ? 'Creating' : 'Create'}
+            </button>
+          ) : (
+            <button className="processButton" type="button" onClick={handleReview} disabled={isProcessing}>
+              <Sparkles size={20} />
+              Review
+            </button>
+          )}
         </div>
       </section>
 
-      {(error || result) && (
+      {(error || preview || result) && (
         <section className="resultsPanel" aria-live="polite">
           {error && (
             <>
@@ -188,15 +212,21 @@ function ProductApp() {
               <SupportPrompt context="Processing error" />
             </>
           )}
-          {result && (
+          {(preview || result) && (
             <>
+              {preview && (
+                <div className="reviewBanner">
+                  <strong>Review before creating</strong>
+                  <span>Nothing has been sent to Google yet. Edit the text above or create these actions.</span>
+                </div>
+              )}
               <div className="summaryGrid">
-                <Summary label="Calendar" value={result.summary.calendar} />
-                <Summary label="Work" value={result.summary.workTasks} />
-                <Summary label="Personal" value={result.summary.personalTasks} />
-                <Summary label="Projects" value={result.summary.projects} />
-                <Summary label="Waiting" value={result.summary.waiting} />
-                <Summary label="Review" value={result.summary.needsReview} />
+                <Summary label="Calendar" value={(result ?? preview)?.summary.calendar ?? 0} />
+                <Summary label="Work" value={(result ?? preview)?.summary.workTasks ?? 0} />
+                <Summary label="Personal" value={(result ?? preview)?.summary.personalTasks ?? 0} />
+                <Summary label="Projects" value={(result ?? preview)?.summary.projects ?? 0} />
+                <Summary label="Waiting" value={(result ?? preview)?.summary.waiting ?? 0} />
+                <Summary label="Review" value={(result ?? preview)?.summary.needsReview ?? 0} />
               </div>
 
               {groups.map((group) => {
@@ -218,7 +248,7 @@ function ProductApp() {
                   </article>
                 );
               })}
-              <FeedbackPanel result={result} />
+              {result && <FeedbackPanel result={result} />}
             </>
           )}
         </section>

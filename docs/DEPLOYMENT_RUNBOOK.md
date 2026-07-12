@@ -87,10 +87,12 @@ After deploy:
 7. Click Connect Google.
 8. Complete OAuth with a test user.
 9. Submit: `Pay employees tomorrow. Lunch with Jack Thursday at noon; put on calendar.`
-10. Confirm Google Tasks has the work task.
-11. Confirm Google Calendar has the event.
-12. Click Disconnect.
-13. Confirm `/api/workspace` returns not connected afterward.
+10. Confirm the review step appears before anything is created.
+11. Click Create.
+12. Confirm Google Tasks has the work task.
+13. Confirm Google Calendar has the event.
+14. Click Disconnect.
+15. Confirm `/api/workspace` returns not connected afterward.
 
 ## Rollback
 

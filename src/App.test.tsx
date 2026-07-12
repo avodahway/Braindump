@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { App } from './App';
 
@@ -46,7 +46,21 @@ describe('App routes', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Brain Dump' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: "What's on your mind?" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Put everything here. Do not organize it.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Process/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Review/i })).toBeInTheDocument();
+  });
+
+  it('previews actions before creating them', () => {
+    renderAt('/app');
+
+    fireEvent.change(screen.getByPlaceholderText('Put everything here. Do not organize it.'), {
+      target: { value: 'Pay employees tomorrow. Lunch with Jack Thursday at noon; put on calendar.' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Review/i }));
+
+    expect(screen.getByText('Review before creating')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Work Tasks' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Calendar' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Create/i })).toBeInTheDocument();
   });
 });
 
