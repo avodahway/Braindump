@@ -244,7 +244,12 @@ function ProductApp() {
           {error && (
             <>
               <div className="errorCard">{error}</div>
-              <SupportPrompt context="Processing error" />
+              <RecoveryPanel
+                canRetry={Boolean(preview)}
+                isProcessing={isProcessing}
+                onRetry={handleCreate}
+                context="Processing error"
+              />
             </>
           )}
           {(preview || result) && (
@@ -293,6 +298,7 @@ function ProductApp() {
                   </article>
                 );
               })}
+              {result?.errors.length ? <ResultRecoveryPanel result={result} /> : null}
               {result && <FeedbackPanel result={result} />}
             </>
           )}
@@ -647,16 +653,56 @@ function FeedbackPanel({ result }: { result: BrainDumpResponse }) {
   );
 }
 
-function SupportPrompt({ context }: { context: string }) {
+function RecoveryPanel({
+  canRetry,
+  isProcessing,
+  onRetry,
+  context
+}: {
+  canRetry: boolean;
+  isProcessing: boolean;
+  onRetry: () => void;
+  context: string;
+}) {
   return (
     <div className="feedbackPanel">
       <div>
-        <strong>Need help?</strong>
-        <span>Send what happened and what you expected. Include screenshots only if you are comfortable.</span>
+        <strong>{canRetry ? 'Nothing was created yet' : 'Need help?'}</strong>
+        <span>
+          {canRetry
+            ? 'Your reviewed actions are still here. Try again, or send support the error and what you expected.'
+            : 'Send what happened and what you expected. Include screenshots only if you are comfortable.'}
+        </span>
       </div>
-      <a href={supportRequestMailto(context)}>
+      <div className="feedbackActions">
+        {canRetry && (
+          <button className="secondaryButton smallButton" type="button" disabled={isProcessing} onClick={onRetry}>
+            <Sparkles size={17} />
+            {isProcessing ? 'Retrying' : 'Retry'}
+          </button>
+        )}
+        <a href={supportRequestMailto(context)}>
+          <MessageCircle size={17} />
+          Contact support
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function ResultRecoveryPanel({ result }: { result: BrainDumpResponse }) {
+  return (
+    <div className="feedbackPanel warningPanel">
+      <div>
+        <strong>Some items need attention</strong>
+        <span>
+          Brain Dump finished the request, but Google or the workspace reported an issue. Check the Errors section before
+          trying those items again.
+        </span>
+      </div>
+      <a href={feedbackMailto(result)}>
         <MessageCircle size={17} />
-        Contact support
+        Send report
       </a>
     </div>
   );

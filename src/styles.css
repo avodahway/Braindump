@@ -693,6 +693,18 @@ input:focus {
   line-height: 1.4;
 }
 
+.warningPanel {
+  border-color: rgba(231, 217, 181, 0.74);
+  background: #fff8e7;
+}
+
+.feedbackActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
 .feedbackPanel a {
   min-height: 38px;
   display: inline-flex;
@@ -706,6 +718,13 @@ input:focus {
   background: var(--green);
   font-size: 13px;
   font-weight: 850;
+}
+
+.smallButton {
+  min-height: 38px;
+  padding: 0 12px;
+  font-size: 13px;
+  box-shadow: none;
 }
 
 footer {
@@ -887,6 +906,11 @@ input:disabled {
   }
 
   .feedbackPanel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .feedbackActions {
     align-items: stretch;
     flex-direction: column;
   }

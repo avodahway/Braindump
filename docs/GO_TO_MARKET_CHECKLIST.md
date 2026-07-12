@@ -40,6 +40,7 @@
 - Confirm users understand they can remove wrong preview actions before creating.
 - Confirm vague calendar items stay in Needs Review and do not create Google Calendar events.
 - Add user-facing error messages for OAuth and provider failures.
+- Confirm failed Google writes keep reviewed actions available and show Retry/support options.
 - Invite 10 to 25 users.
 - Prepare OAuth verification submission.
 

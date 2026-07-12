@@ -1,11 +1,12 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 
 describe('App routes', () => {
   afterEach(() => {
     cleanup();
     localStorage.clear();
+    vi.unstubAllGlobals();
     window.history.pushState({}, '', '/');
   });
 
@@ -120,6 +121,80 @@ describe('App routes', () => {
 
     expect(await screen.findByRole('heading', { name: 'Needs Review' })).toBeInTheDocument();
     expect(screen.getByText('Calendar needs review: Spend this week on the porch replacement project work block')).toBeInTheDocument();
+  });
+
+  it('keeps reviewed actions available when public creation fails', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ status: 'connected', email: 'user@example.com', destinations: [] }))
+        )
+        .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Google workspace is not connected.' }), { status: 409 }))
+    );
+    renderAt('/app');
+
+    fireEvent.change(screen.getByPlaceholderText('Put everything here. Do not organize it.'), {
+      target: { value: 'Pay employees tomorrow' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Review/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Create/i }));
+
+    expect(await screen.findByText('Google workspace is not connected.')).toBeInTheDocument();
+    expect(screen.getByText('Your reviewed actions are still here. Try again, or send support the error and what you expected.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Retry/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Work Tasks' })).toBeInTheDocument();
+  });
+
+  it('shows recovery guidance when provider execution returns errors', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({
+        backendMode: 'private_apps_script',
+        publicApiBaseUrl: '',
+        backendUrl: 'https://script.example.com',
+        sharedSecret: ''
+      })
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            ok: false,
+            requestId: 'req-error',
+            summary: { calendar: 0, workTasks: 0, personalTasks: 0, projects: 0, waiting: 0, needsReview: 0 },
+            actions: [
+              {
+                type: 'work_task',
+                title: 'Pay employees tomorrow',
+                status: 'error',
+                notes: 'Google Tasks write failed',
+                sourceText: 'Pay employees tomorrow'
+              }
+            ],
+            errors: ['Google Tasks write failed']
+          })
+        )
+      )
+    );
+    renderAt('/app');
+
+    fireEvent.change(screen.getByPlaceholderText('Put everything here. Do not organize it.'), {
+      target: { value: 'Pay employees tomorrow' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Review/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Create/i }));
+
+    expect(await screen.findByText('Some items need attention')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Errors' })).toBeInTheDocument();
+    expect(screen.getByText('Google Tasks write failed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Send report/i })).toHaveAttribute('href', expect.stringContaining('mailto:'));
   });
 });
 

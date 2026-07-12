@@ -96,6 +96,7 @@ Good beta threshold:
 - Invite first 5 users.
 - Review execution logs daily during beta.
 - Keep a beta issue log.
+- Make the retry/support path visible when Google Tasks or Calendar rejects a write.
 - Expand to 10 to 25 users only after the first 5 complete real runs.
 
 ## User Onboarding Flow

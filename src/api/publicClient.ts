@@ -61,7 +61,21 @@ export async function processPublicBrainDump(
 
 async function readJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    throw new Error(`Public API returned ${response.status}`);
+    throw new Error(await publicApiErrorMessage(response));
   }
   return response.json() as Promise<T>;
+}
+
+async function publicApiErrorMessage(response: Response): Promise<string> {
+  const fallback = `Public API returned ${response.status}`;
+  try {
+    const body = (await response.json()) as { error?: unknown; errors?: unknown };
+    if (typeof body.error === 'string' && body.error.trim()) return body.error;
+    if (Array.isArray(body.errors) && body.errors.every((error) => typeof error === 'string')) {
+      return body.errors.join(' ');
+    }
+  } catch {
+    return fallback;
+  }
+  return fallback;
 }

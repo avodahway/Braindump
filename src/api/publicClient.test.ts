@@ -45,4 +45,20 @@ describe('public API client', () => {
       body: JSON.stringify({ requestId: 'req-1', text: 'Buy coffee', timezone: 'America/Chicago' })
     });
   });
+
+  it('uses backend error messages when public requests fail', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: 'Google workspace is not connected.' }), {
+        status: 409
+      })
+    );
+
+    await expect(
+      processPublicBrainDump(
+        'https://api.example.com',
+        { requestId: 'req-1', text: 'Buy coffee', timezone: 'America/Chicago' },
+        fetcher
+      )
+    ).rejects.toThrow('Google workspace is not connected.');
+  });
 });
