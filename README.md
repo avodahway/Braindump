@@ -38,6 +38,8 @@ When a Public API URL is configured in Settings, public mode posts to:
 - `POST /api/auth/google/disconnect`
 - `POST /api/brain-dump`
 
+With a Public API URL configured, the Connect button starts the backend OAuth flow and redirects the browser to the returned Google authorization URL. Without a Public API URL, public mode keeps using a local demo workspace.
+
 See `docs/PUBLIC_BACKEND_PLAN.md` for the product/backend path.
 
 The backend scaffold lives in `src/server/publicBackend.ts`. It implements the public API contract without real Google writes yet, including OAuth URL creation and request idempotency.

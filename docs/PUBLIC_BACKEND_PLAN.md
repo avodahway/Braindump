@@ -54,6 +54,8 @@ Initial routes are documented in `src/api/publicContract.ts`:
 
 The current PWA includes a safe demo connection in public mode. It creates local-only destinations so the onboarding and processing flow can be tested without Google OAuth credentials. When a Public API URL is configured, `src/api/publicClient.ts` sends real requests to the public backend contract instead of using the demo process path.
 
+`src/api/publicConnection.ts` is the frontend connection boundary. With a Public API URL configured, it starts backend OAuth and redirects to Google. Without one, it keeps the local demo connection path available.
+
 `src/server/publicBackend.ts` contains a framework-neutral backend scaffold for these routes. It is intentionally pure TypeScript so it can be adapted to a serverless function, a small Node service, or an edge runtime.
 
 `src/server/actionExecutor.ts` separates parsed actions from provider writes. The demo executor maps actions to user destinations now; a later Google executor can implement the same interface with real Tasks, Calendar, and workspace writes.

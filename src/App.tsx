@@ -11,9 +11,10 @@ import {
   Sparkles,
   UserCheck
 } from 'lucide-react';
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
-import { connectDemoWorkspace, disconnectWorkspace, loadWorkspace } from './api/workspace';
+import { connectPublicWorkspace, disconnectPublicWorkspace, refreshPublicWorkspace } from './api/publicConnection';
+import { loadWorkspace } from './api/workspace';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
 
 const groups = [
@@ -34,6 +35,18 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<BackendSettings>(() => loadSettings());
   const [workspace, setWorkspace] = useState<UserWorkspace>(() => loadWorkspace());
+
+  useEffect(() => {
+    if (settings.backendMode !== 'public' || !settings.publicApiBaseUrl) return;
+
+    refreshPublicWorkspace(settings)
+      .then((refreshedWorkspace) => {
+        if (refreshedWorkspace) setWorkspace(refreshedWorkspace);
+      })
+      .catch(() => {
+        setWorkspace({ status: 'not_connected', destinations: [] });
+      });
+  }, [settings]);
 
   const groupedActions = useMemo(() => {
     const map = new Map<string, ParsedAction[]>();
@@ -80,6 +93,25 @@ export function App() {
     setShowSettings(false);
   }
 
+  async function handleConnectPublic() {
+    setError('');
+    try {
+      const connectedWorkspace = await connectPublicWorkspace(settings);
+      if (connectedWorkspace) setWorkspace(connectedWorkspace);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not start Google connection.');
+    }
+  }
+
+  async function handleDisconnectPublic() {
+    setError('');
+    try {
+      setWorkspace(await disconnectPublicWorkspace(settings));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not disconnect Google.');
+    }
+  }
+
   return (
     <main className="appShell">
       <header className="brandHeader">
@@ -97,9 +129,10 @@ export function App() {
         <h2>What's on your mind?</h2>
         <SetupPanel
           mode={settings.backendMode}
+          hasPublicApi={Boolean(settings.publicApiBaseUrl)}
           workspace={workspace}
-          onConnect={() => setWorkspace(connectDemoWorkspace())}
-          onDisconnect={() => setWorkspace(disconnectWorkspace())}
+          onConnect={handleConnectPublic}
+          onDisconnect={handleDisconnectPublic}
           onOpenSettings={() => setShowSettings(true)}
         />
         <textarea
@@ -251,12 +284,14 @@ function Summary({ label, value }: { label: string; value: number }) {
 
 function SetupPanel({
   mode,
+  hasPublicApi,
   workspace,
   onConnect,
   onDisconnect,
   onOpenSettings
 }: {
   mode: BackendSettings['backendMode'];
+  hasPublicApi: boolean;
   workspace: UserWorkspace;
   onConnect: () => void;
   onDisconnect: () => void;
@@ -282,7 +317,7 @@ function SetupPanel({
       return (
         <div className="setupPanel connectedPanel">
           <div>
-            <strong>Demo Google workspace connected</strong>
+            <strong>{hasPublicApi ? 'Google workspace connected' : 'Demo Google workspace connected'}</strong>
             <span>{workspace.email}</span>
             <div className="destinationList" aria-label="Demo destinations">
               {workspace.destinations.map((destination) => (
@@ -302,7 +337,7 @@ function SetupPanel({
       <div className="setupPanel">
         <div>
           <strong>Connect Google</strong>
-          <span>Use a safe demo workspace now. Real OAuth is the next backend step.</span>
+          <span>{hasPublicApi ? 'Start Google OAuth through your public backend.' : 'Use a safe demo workspace now.'}</span>
         </div>
         <button type="button" onClick={onConnect}>
           <Cloud size={16} />
