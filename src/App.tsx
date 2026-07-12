@@ -8,6 +8,7 @@ import {
   FileText,
   FolderKanban,
   Lock,
+  MessageCircle,
   Mic,
   Settings,
   ShieldCheck,
@@ -19,6 +20,7 @@ import type { ReactNode } from 'react';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
 import { connectPublicWorkspace, disconnectPublicWorkspace, refreshPublicWorkspace } from './api/publicConnection';
 import { loadWorkspace } from './api/workspace';
+import { feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
 
 const groups = [
@@ -180,7 +182,12 @@ function ProductApp() {
 
       {(error || result) && (
         <section className="resultsPanel" aria-live="polite">
-          {error && <div className="errorCard">{error}</div>}
+          {error && (
+            <>
+              <div className="errorCard">{error}</div>
+              <SupportPrompt context="Processing error" />
+            </>
+          )}
           {result && (
             <>
               <div className="summaryGrid">
@@ -211,6 +218,7 @@ function ProductApp() {
                   </article>
                 );
               })}
+              <FeedbackPanel result={result} />
             </>
           )}
         </section>
@@ -372,6 +380,10 @@ function HomePage() {
             <Sparkles size={20} />
             Try preview mode
           </a>
+          <a href={supportRequestMailto('Public home page')}>
+            <MessageCircle size={20} />
+            Beta support
+          </a>
         </div>
       </section>
     </main>
@@ -413,7 +425,9 @@ function PrivacyPage() {
         calendar events directly in their Google account.
       </p>
       <h2>Contact</h2>
-      <p>Support email: TBD.</p>
+      <p>
+        Support email: <a href={supportRequestMailto('Privacy policy')}>{supportEmail}</a>.
+      </p>
     </PublicDocument>
   );
 }
@@ -450,7 +464,9 @@ function TermsPage() {
         sent automatically.
       </p>
       <h2>Contact</h2>
-      <p>Support email: TBD.</p>
+      <p>
+        Support email: <a href={supportRequestMailto('Terms of service')}>{supportEmail}</a>.
+      </p>
     </PublicDocument>
   );
 }
@@ -487,6 +503,7 @@ function PublicNav() {
         <a href="/app">App</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
+        <a href={supportRequestMailto('Public navigation')}>Support</a>
       </nav>
     </header>
   );
@@ -520,6 +537,36 @@ function Summary({ label, value }: { label: string; value: number }) {
     <div className="summaryCard">
       <span>{value}</span>
       <small>{label}</small>
+    </div>
+  );
+}
+
+function FeedbackPanel({ result }: { result: BrainDumpResponse }) {
+  return (
+    <div className="feedbackPanel">
+      <div>
+        <strong>Help shape the beta</strong>
+        <span>Tell us what Brain Dump routed well, what it missed, and what you expected instead.</span>
+      </div>
+      <a href={feedbackMailto(result)}>
+        <MessageCircle size={17} />
+        Send feedback
+      </a>
+    </div>
+  );
+}
+
+function SupportPrompt({ context }: { context: string }) {
+  return (
+    <div className="feedbackPanel">
+      <div>
+        <strong>Need help?</strong>
+        <span>Send what happened and what you expected. Include screenshots only if you are comfortable.</span>
+      </div>
+      <a href={supportRequestMailto(context)}>
+        <MessageCircle size={17} />
+        Contact support
+      </a>
     </div>
   );
 }

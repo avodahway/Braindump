@@ -271,6 +271,11 @@ a {
   font-weight: 800;
 }
 
+.legalDocument a {
+  color: var(--gold);
+  font-weight: 850;
+}
+
 .legalDocument {
   width: min(100%, 820px);
   margin: 0 auto;
@@ -556,6 +561,49 @@ input:focus {
   background: #fff1ee;
 }
 
+.feedbackPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 13px;
+  border: 1px solid rgba(39, 89, 70, 0.14);
+  border-radius: 8px;
+  background: #f5f8f4;
+}
+
+.feedbackPanel div {
+  display: grid;
+  gap: 4px;
+}
+
+.feedbackPanel strong {
+  color: var(--green);
+  font-size: 14px;
+}
+
+.feedbackPanel span {
+  color: rgba(24, 50, 40, 0.72);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.feedbackPanel a {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--paper);
+  background: var(--green);
+  font-size: 13px;
+  font-weight: 850;
+}
+
 footer {
   display: flex;
   align-items: center;
@@ -719,5 +767,10 @@ input:disabled {
 
   .actionRow {
     grid-template-columns: 1fr;
+  }
+
+  .feedbackPanel {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

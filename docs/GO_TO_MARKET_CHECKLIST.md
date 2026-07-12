@@ -3,6 +3,7 @@
 ## Phase 1: Private Beta Foundation
 
 - Decide support email.
+- Set `VITE_SUPPORT_EMAIL` for the public frontend build.
 - Decide product domain.
 - Publish basic home page.
 - Publish privacy policy draft page.

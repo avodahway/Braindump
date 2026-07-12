@@ -112,6 +112,7 @@ Good beta threshold:
 For beta, support can be founder-led:
 
 - Support email: decide before publishing.
+- Frontend support email: set `VITE_SUPPORT_EMAIL` before publishing.
 - Response promise: one business day.
 - Required support details: user email, approximate time, what they typed if they are comfortable sharing it, expected result, actual result.
 - Never ask beta users for Google passwords, tokens, or private calendar screenshots unless they volunteer redacted examples.

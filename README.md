@@ -15,6 +15,8 @@ The app starts in mock preview mode. It parses and groups results locally withou
 
 Public launch pages are available at `/`, `/privacy`, and `/terms`. The product tool is available at `/app`.
 
+Set `VITE_SUPPORT_EMAIL` at build time to show the live beta support address in public pages and feedback links.
+
 ## Checks
 
 ```sh
