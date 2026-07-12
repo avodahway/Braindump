@@ -37,6 +37,7 @@
 - Add clear output review UI if not already present.
 - Confirm review-before-create is understandable to beta users.
 - Confirm users understand they can remove wrong preview actions before creating.
+- Confirm vague calendar items stay in Needs Review and do not create Google Calendar events.
 - Add user-facing error messages for OAuth and provider failures.
 - Invite 10 to 25 users.
 - Prepare OAuth verification submission.

@@ -90,11 +90,34 @@ function responseFromApprovedActions(request: BrainDumpRequest): BrainDumpRespon
 }
 
 function markCreated(response: BrainDumpResponse): BrainDumpResponse {
+  const actions = response.actions.map((action): ParsedAction => {
+    if (action.status === 'needs_review' || calendarNeedsReview(action)) {
+      return {
+        ...action,
+        status: 'needs_review',
+        notes: calendarNeedsReview(action) ? `Calendar needs review: ${action.title}` : action.notes
+      };
+    }
+    return {
+      ...action,
+      status: 'created'
+    };
+  });
+
   return {
     ...response,
-    actions: response.actions.map((action): ParsedAction => ({
-      ...action,
-      status: action.status === 'needs_review' ? 'needs_review' : 'created'
-    }))
+    summary: {
+      calendar: actions.filter((action) => action.type === 'calendar' && action.status === 'created').length,
+      workTasks: actions.filter((action) => action.type === 'work_task' && action.status === 'created').length,
+      personalTasks: actions.filter((action) => action.type === 'personal_task' && action.status === 'created').length,
+      projects: actions.filter((action) => action.type === 'project' && action.status === 'created').length,
+      waiting: actions.filter((action) => action.type === 'waiting' && action.status === 'created').length,
+      needsReview: actions.filter((action) => action.status === 'needs_review').length
+    },
+    actions
   };
+}
+
+function calendarNeedsReview(action: ParsedAction): boolean {
+  return action.type === 'calendar' && (!action.calendarDate || !action.startTime || action.startTime === 'safe-default-required');
 }

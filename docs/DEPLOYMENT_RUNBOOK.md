@@ -92,9 +92,11 @@ After deploy:
 12. Review again, then click Create.
 13. Confirm Google Tasks has the work task.
 14. Confirm Google Calendar has the event.
-15. Click Disconnect.
-16. Confirm stored OAuth tokens and workspace connection records are removed.
-17. Confirm `/api/workspace` returns not connected afterward.
+15. Submit: `Spend 4 hours this week on the porch replacement project`.
+16. Confirm the calendar work block stays in Needs Review and is not created.
+17. Click Disconnect.
+18. Confirm stored OAuth tokens and workspace connection records are removed.
+19. Confirm `/api/workspace` returns not connected afterward.
 
 ## Rollback
 

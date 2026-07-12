@@ -81,7 +81,10 @@ function ProductApp() {
   const groupedActions = useMemo(() => {
     const map = new Map<string, ParsedAction[]>();
     groups.forEach((group) => map.set(group.key, []));
-    (result ?? preview)?.actions.forEach((action) => map.get(action.type)?.push(action));
+    (result ?? preview)?.actions.forEach((action) => {
+      const groupKey = action.status === 'error' || action.status === 'needs_review' ? action.status : action.type;
+      map.get(groupKey)?.push(action);
+    });
     return map;
   }, [preview, result]);
 

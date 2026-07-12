@@ -1,5 +1,5 @@
 import type { ParsedAction, UserWorkspace } from '../lib/types';
-import { destinationForAction, type ActionExecutor, type ExecutionResult } from './actionExecutor';
+import { calendarNeedsReview, destinationForAction, type ActionExecutor, type ExecutionResult } from './actionExecutor';
 
 export type GoogleTaskPayload = {
   taskListId: string;
@@ -62,15 +62,17 @@ export function createGoogleActionExecutor(clients: GoogleProviderClients): Acti
         }
 
         if (action.type === 'calendar') {
-          if (!action.calendarDate || !action.startTime || action.startTime === 'safe-default-required') {
+          const calendarDate = action.calendarDate;
+          const startTime = action.startTime;
+          if (calendarNeedsReview(action) || !calendarDate || !startTime) {
             return { status: 'needs_review', message: `Calendar needs review: ${action.title}` };
           }
 
           const event = await clients.calendar.createEvent({
             calendarId: destination.id,
             title: action.title,
-            date: action.calendarDate,
-            startTime: action.startTime,
+            date: calendarDate,
+            startTime,
             durationMinutes: action.durationMinutes ?? 60,
             notes: action.notes,
             timezone: context?.timezone

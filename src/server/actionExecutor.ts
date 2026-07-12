@@ -23,6 +23,10 @@ export function createDemoActionExecutor(): ActionExecutor {
         return { status: 'needs_review', message: `Needs review: ${action.title}` };
       }
 
+      if (calendarNeedsReview(action)) {
+        return { status: 'needs_review', message: `Calendar needs review: ${action.title}` };
+      }
+
       const destination = destinationForAction(action, workspace);
       if (!destination) {
         return {
@@ -45,6 +49,10 @@ export function destinationForAction(action: ParsedAction, workspace: UserWorksp
   if (!kind) return undefined;
   return workspace.destinations.find((destination) => destination.kind === kind && destination.isDefault) ??
     workspace.destinations.find((destination) => destination.kind === kind);
+}
+
+export function calendarNeedsReview(action: ParsedAction): boolean {
+  return action.type === 'calendar' && (!action.calendarDate || !action.startTime || action.startTime === 'safe-default-required');
 }
 
 function kindForAction(action: ParsedAction): UserDestination['kind'] | undefined {

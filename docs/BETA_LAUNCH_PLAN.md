@@ -69,6 +69,7 @@ Track these manually at first:
 - Trust: user says they would use it again with real work.
 - Review confidence: user understands the review step before creating actions.
 - Control: user can remove a wrong planned action before creating the rest.
+- Safety: vague calendar blocks remain in Needs Review after creation instead of becoming real events.
 - Accuracy: percentage of actions routed correctly.
 - Review rate: percentage of actions sent to Needs Review.
 - Failure rate: provider write errors per request.

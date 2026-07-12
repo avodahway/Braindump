@@ -76,6 +76,19 @@ describe('App routes', () => {
     expect(screen.queryByRole('heading', { name: 'Calendar' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Work Tasks' })).toBeInTheDocument();
   });
+
+  it('keeps unsafe calendar blocks in review after mock create', async () => {
+    renderAt('/app');
+
+    fireEvent.change(screen.getByPlaceholderText('Put everything here. Do not organize it.'), {
+      target: { value: 'Spend 4 hours this week on the porch replacement project' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Review/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Create/i }));
+
+    expect(await screen.findByRole('heading', { name: 'Needs Review' })).toBeInTheDocument();
+    expect(screen.getByText('Calendar needs review: Spend this week on the porch replacement project work block')).toBeInTheDocument();
+  });
 });
 
 function renderAt(path: string) {

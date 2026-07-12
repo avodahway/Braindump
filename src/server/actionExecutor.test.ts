@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ParsedAction, UserWorkspace } from '../lib/types';
-import { createDemoActionExecutor, destinationForAction } from './actionExecutor';
+import { calendarNeedsReview, createDemoActionExecutor, destinationForAction } from './actionExecutor';
 
 const workspace: UserWorkspace = {
   status: 'connected',
@@ -31,12 +31,41 @@ describe('action executor', () => {
   });
 
   it('returns an error when a destination is missing', async () => {
-    const result = await createDemoActionExecutor().execute(action('calendar'), {
+    const result = await createDemoActionExecutor().execute(action('work_task'), {
       ...workspace,
-      destinations: workspace.destinations.filter((destination) => destination.kind !== 'calendar')
+      destinations: workspace.destinations.filter((destination) => destination.kind !== 'work_tasks')
     });
 
     expect(result.status).toBe('error');
+  });
+
+  it('keeps unsafe calendar actions in review in demo execution', async () => {
+    const result = await createDemoActionExecutor().execute(
+      {
+        type: 'calendar',
+        title: 'Work block',
+        calendarDate: 'this week',
+        startTime: 'safe-default-required',
+        sourceText: 'Spend 4 hours this week'
+      },
+      workspace
+    );
+
+    expect(result.status).toBe('needs_review');
+    expect(result.providerId).toBeUndefined();
+  });
+
+  it('detects calendar actions that still need review', () => {
+    expect(calendarNeedsReview(action('calendar'))).toBe(true);
+    expect(
+      calendarNeedsReview({
+        type: 'calendar',
+        title: 'Lunch',
+        calendarDate: 'thursday',
+        startTime: '12:00 pm',
+        sourceText: 'Lunch Thursday at noon'
+      })
+    ).toBe(false);
   });
 });
 
