@@ -9,6 +9,13 @@ import {
   type OAuthSessionStore,
   type TokenExchangeClient
 } from './oauthSession';
+import {
+  clearSessionCookie,
+  createMemorySessionStore,
+  readSessionIdFromCookie,
+  sessionCookie,
+  type SessionStore
+} from './sessionStore';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -22,20 +29,22 @@ export type PublicBackendOptions = {
   executor?: ActionExecutor;
   oauthStore?: OAuthSessionStore;
   tokenClient?: TokenExchangeClient;
+  sessionStore?: SessionStore;
 };
 
 export function createPublicBackend(options: PublicBackendOptions) {
   const responsesByRequestId = new Map<string, BrainDumpResponse>();
-  let workspace = options.workspace ?? disconnectedWorkspace();
+  let fallbackWorkspace = options.workspace;
   const executor = options.executor ?? createDemoActionExecutor();
   const oauthStore = options.oauthStore ?? createMemoryOAuthStore();
+  const sessionStore = options.sessionStore ?? createMemorySessionStore();
 
   return {
     async handle(request: Request): Promise<Response> {
       const url = new URL(request.url);
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.workspace) {
-        return json(workspace);
+        return json((await readRequestWorkspace(request, sessionStore, oauthStore)) ?? fallbackWorkspace ?? disconnectedWorkspace());
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.googleConnect) {
@@ -54,26 +63,30 @@ export function createPublicBackend(options: PublicBackendOptions) {
         }
 
         try {
-          workspace = await completeOAuthSession({
+          const workspace = await completeOAuthSession({
             code,
             state,
             store: oauthStore,
             tokenClient: options.tokenClient
           });
+          const session = await sessionStore.createSession(workspace.email?.toLowerCase() ?? '');
           responsesByRequestId.clear();
-          return json(workspace);
+          return json(workspace, 200, { 'Set-Cookie': sessionCookie(session.id) });
         } catch (error) {
           return json({ error: error instanceof Error ? error.message : 'OAuth callback failed.' }, 400);
         }
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.googleDisconnect) {
-        workspace = disconnectedWorkspace();
+        const sessionId = readSessionIdFromCookie(request.headers.get('Cookie'));
+        if (sessionId) await sessionStore.deleteSession(sessionId);
+        fallbackWorkspace = undefined;
         responsesByRequestId.clear();
-        return json({ ok: true });
+        return json({ ok: true }, 200, { 'Set-Cookie': clearSessionCookie() });
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.brainDump) {
+        const workspace = (await readRequestWorkspace(request, sessionStore, oauthStore)) ?? fallbackWorkspace ?? disconnectedWorkspace();
         if (workspace.status !== 'connected') {
           return json({ error: 'Google workspace is not connected.' }, 409);
         }
@@ -144,11 +157,24 @@ function disconnectedWorkspace(): UserWorkspace {
   return { status: 'not_connected', destinations: [] };
 }
 
-function json(value: unknown, status = 200): Response {
+async function readRequestWorkspace(
+  request: Request,
+  sessionStore: SessionStore,
+  oauthStore: OAuthSessionStore
+): Promise<UserWorkspace | undefined> {
+  const sessionId = readSessionIdFromCookie(request.headers.get('Cookie'));
+  if (!sessionId) return undefined;
+  const session = await sessionStore.readSession(sessionId);
+  if (!session) return undefined;
+  return oauthStore.readWorkspace(session.userId);
+}
+
+function json(value: unknown, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(value), {
     status,
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...headers
     }
   });
 }

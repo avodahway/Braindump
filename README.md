@@ -50,6 +50,8 @@ Google REST client scaffolding lives in `src/server/googleProviderClients.ts`. I
 
 OAuth/session flow is scaffolded in `src/server/oauthSession.ts`, including state validation, token exchange interfaces, token storage interfaces, and default workspace creation.
 
+Cookie session handling is in `src/server/sessionStore.ts`. The public backend uses an HttpOnly `bd_session` cookie to associate later requests with the connected user.
+
 The Google OAuth token client lives in `src/server/googleOAuthClient.ts`. It expects the Google client secret from backend configuration, never from frontend source.
 
 `src/server/refreshingTokenProvider.ts` turns stored OAuth tokens into access tokens for provider writes and refreshes them when needed.

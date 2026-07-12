@@ -30,6 +30,7 @@ export type OAuthSessionStore = {
   consumeState(state: string): Promise<OAuthStateRecord | undefined>;
   readTokens(userId: string): Promise<GoogleTokenSet | undefined>;
   saveTokens(userId: string, tokens: GoogleTokenSet): Promise<void>;
+  readWorkspace(userId: string): Promise<UserWorkspace | undefined>;
   saveWorkspace(userId: string, workspace: UserWorkspace): Promise<void>;
 };
 
@@ -164,6 +165,9 @@ export function createMemoryOAuthStore(): OAuthSessionStore & {
     },
     async saveTokens(userId, tokenSet) {
       tokens.set(userId, tokenSet);
+    },
+    async readWorkspace(userId) {
+      return workspaces.get(userId);
     },
     async saveWorkspace(userId, workspace) {
       workspaces.set(userId, workspace);

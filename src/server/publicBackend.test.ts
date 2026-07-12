@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ParsedAction } from '../lib/types';
 import { createMemoryOAuthStore, type TokenExchangeClient } from './oauthSession';
 import { buildGoogleAuthorizationUrl, createPublicBackend } from './publicBackend';
+import { createMemorySessionStore, sessionCookieName } from './sessionStore';
 
 const googleOAuth = {
   clientId: 'client-id',
@@ -141,9 +142,11 @@ describe('public backend scaffold', () => {
 
   it('starts and completes OAuth through backend routes', async () => {
     const store = createMemoryOAuthStore();
+    const sessionStore = createMemorySessionStore(() => 1234);
     const backend = createPublicBackend({
       googleOAuth,
       oauthStore: store,
+      sessionStore,
       tokenClient: fakeTokenClient()
     });
 
@@ -164,6 +167,8 @@ describe('public backend scaffold', () => {
     expect(workspace.status).toBe('connected');
     expect(workspace.email).toBe('user@example.com');
     expect(store.tokens.has('user@example.com')).toBe(true);
+    expect(callbackResponse.headers.get('Set-Cookie')).toContain(`${sessionCookieName}=`);
+    expect(sessionStore.sessions.size).toBe(1);
   });
 
   it('rejects callback requests with invalid state', async () => {
@@ -179,6 +184,52 @@ describe('public backend scaffold', () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'Invalid OAuth state.' });
+  });
+
+  it('uses session cookies to read workspace and process requests', async () => {
+    const oauthStore = createMemoryOAuthStore();
+    const sessionStore = createMemorySessionStore(() => 1234);
+    await oauthStore.saveWorkspace('user@example.com', connectedWorkspace());
+    const session = await sessionStore.createSession('user@example.com');
+    const backend = createPublicBackend({ googleOAuth, oauthStore, sessionStore });
+
+    const workspaceResponse = await backend.handle(
+      new Request('https://api.example.com/api/workspace', {
+        headers: { Cookie: `${sessionCookieName}=${session.id}` }
+      })
+    );
+    const workspace = await workspaceResponse.json();
+    expect(workspace.status).toBe('connected');
+
+    const processResponse = await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        headers: { Cookie: `${sessionCookieName}=${session.id}` },
+        body: JSON.stringify({
+          requestId: 'req-session',
+          text: 'Buy coffee',
+          timezone: 'America/Chicago'
+        })
+      })
+    );
+    const result = await processResponse.json();
+    expect(result.summary.personalTasks).toBe(1);
+  });
+
+  it('clears the session on disconnect', async () => {
+    const sessionStore = createMemorySessionStore(() => 1234);
+    const session = await sessionStore.createSession('user@example.com');
+    const backend = createPublicBackend({ googleOAuth, sessionStore });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/auth/google/disconnect', {
+        method: 'POST',
+        headers: { Cookie: `${sessionCookieName}=${session.id}` }
+      })
+    );
+
+    expect(await sessionStore.readSession(session.id)).toBeUndefined();
+    expect(response.headers.get('Set-Cookie')).toContain('Max-Age=0');
   });
 });
 
