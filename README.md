@@ -39,6 +39,8 @@ When a Public API URL is configured in Settings, public mode posts to:
 
 See `docs/PUBLIC_BACKEND_PLAN.md` for the product/backend path.
 
+The backend scaffold lives in `src/server/publicBackend.ts`. It implements the public API contract without real Google writes yet, including OAuth URL creation and request idempotency.
+
 ## Private Apps Script Adapter
 
 `apps-script/BrainDumpBridge.gs` is retained as a private adapter for Cleveland Stewardship OS. It is not the default public backend.

@@ -53,6 +53,8 @@ Initial routes are documented in `src/api/publicContract.ts`:
 
 The current PWA includes a safe demo connection in public mode. It creates local-only destinations so the onboarding and processing flow can be tested without Google OAuth credentials. When a Public API URL is configured, `src/api/publicClient.ts` sends real requests to the public backend contract instead of using the demo process path.
 
+`src/server/publicBackend.ts` contains a framework-neutral backend scaffold for these routes. It is intentionally pure TypeScript so it can be adapted to a serverless function, a small Node service, or an edge runtime.
+
 ## Safety Rules
 
 - Never store Google client secrets in the PWA.
