@@ -1,6 +1,7 @@
 import { parseBrainDump } from '../lib/parser';
 import type { BrainDumpRequest, BrainDumpResponse, ParsedAction, UserWorkspace } from '../lib/types';
 import { publicBackendRoutes } from '../api/publicContract';
+import { createDemoActionExecutor, type ActionExecutor } from './actionExecutor';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -11,11 +12,13 @@ export type GoogleOAuthConfig = {
 export type PublicBackendOptions = {
   googleOAuth: GoogleOAuthConfig;
   workspace?: UserWorkspace;
+  executor?: ActionExecutor;
 };
 
 export function createPublicBackend(options: PublicBackendOptions) {
   const responsesByRequestId = new Map<string, BrainDumpResponse>();
   let workspace = options.workspace ?? demoWorkspace();
+  const executor = options.executor ?? createDemoActionExecutor();
 
   return {
     async handle(request: Request): Promise<Response> {
@@ -46,7 +49,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
           return json(responsesByRequestId.get(body.requestId));
         }
 
-        const response = markCreated(parseBrainDump(body.text, body.requestId));
+        const response = await executeParsedResponse(parseBrainDump(body.text, body.requestId), workspace, executor);
         responsesByRequestId.set(body.requestId, response);
         return json(response);
       }
@@ -67,13 +70,35 @@ export function buildGoogleAuthorizationUrl(config: GoogleOAuthConfig): string {
   return url.toString();
 }
 
-function markCreated(response: BrainDumpResponse): BrainDumpResponse {
+async function executeParsedResponse(
+  response: BrainDumpResponse,
+  workspace: UserWorkspace,
+  executor: ActionExecutor
+): Promise<BrainDumpResponse> {
+  const actions = await Promise.all(
+    response.actions.map(async (action): Promise<ParsedAction> => {
+      const result = await executor.execute(action, workspace);
+      return {
+        ...action,
+        status: result.status,
+        notes: result.status === 'error' ? result.message : action.notes
+      };
+    })
+  );
+
   return {
     ...response,
-    actions: response.actions.map((action): ParsedAction => ({
-      ...action,
-      status: action.status === 'needs_review' ? 'needs_review' : 'created'
-    }))
+    ok: actions.every((action) => action.status !== 'error'),
+    summary: {
+      calendar: actions.filter((action) => action.type === 'calendar' && action.status === 'created').length,
+      workTasks: actions.filter((action) => action.type === 'work_task' && action.status === 'created').length,
+      personalTasks: actions.filter((action) => action.type === 'personal_task' && action.status === 'created').length,
+      projects: actions.filter((action) => action.type === 'project' && action.status === 'created').length,
+      waiting: actions.filter((action) => action.type === 'waiting' && action.status === 'created').length,
+      needsReview: actions.filter((action) => action.status === 'needs_review').length
+    },
+    actions,
+    errors: actions.filter((action) => action.status === 'error').map((action) => action.notes ?? action.title)
   };
 }
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { ParsedAction } from '../lib/types';
 import { buildGoogleAuthorizationUrl, createPublicBackend } from './publicBackend';
 
 const googleOAuth = {
@@ -76,5 +77,33 @@ describe('public backend scaffold', () => {
     );
 
     expect(response.status).toBe(409);
+  });
+
+  it('uses the injected executor and returns execution failures', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      executor: {
+        async execute(action: ParsedAction) {
+          return action.type === 'calendar'
+            ? { status: 'error', message: 'Calendar write failed' }
+            : { status: 'created', message: 'Created' };
+        }
+      }
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        body: JSON.stringify({
+          requestId: 'req-executor',
+          text: 'Lunch with Jack Thursday at noon; put on calendar.',
+          timezone: 'America/Chicago'
+        })
+      })
+    );
+    const result = await response.json();
+
+    expect(result.ok).toBe(false);
+    expect(result.errors).toEqual(['Calendar write failed']);
   });
 });

@@ -55,6 +55,8 @@ The current PWA includes a safe demo connection in public mode. It creates local
 
 `src/server/publicBackend.ts` contains a framework-neutral backend scaffold for these routes. It is intentionally pure TypeScript so it can be adapted to a serverless function, a small Node service, or an edge runtime.
 
+`src/server/actionExecutor.ts` separates parsed actions from provider writes. The demo executor maps actions to user destinations now; a later Google executor can implement the same interface with real Tasks, Calendar, and workspace writes.
+
 ## Safety Rules
 
 - Never store Google client secrets in the PWA.
