@@ -28,12 +28,276 @@ body {
 
 button,
 textarea,
-input {
+input,
+a {
   font: inherit;
 }
 
 button {
   border: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.publicShell {
+  width: min(100%, 1120px);
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: max(18px, env(safe-area-inset-top)) 18px max(28px, env(safe-area-inset-bottom));
+  color: var(--cream);
+}
+
+.publicNav {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.navBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 850;
+}
+
+.navBrand img {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.publicNav nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.publicNav nav a {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: rgba(255, 253, 248, 0.82);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.publicNav nav a:hover {
+  background: rgba(255, 253, 248, 0.1);
+  color: var(--paper);
+}
+
+.homeHero {
+  min-height: min(720px, calc(100vh - 120px));
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(330px, 0.75fr);
+  align-items: center;
+  gap: 34px;
+  padding-bottom: 34px;
+}
+
+.homeHeroCopy {
+  display: grid;
+  justify-items: start;
+}
+
+.heroLogo {
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
+  margin-bottom: 22px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+}
+
+.homeHero h1,
+.legalDocument h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(52px, 8vw, 96px);
+  line-height: 0.95;
+  color: var(--paper);
+}
+
+.heroTagline {
+  margin: 16px 0 0;
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.heroLead {
+  max-width: 660px;
+  margin: 24px 0 0;
+  color: rgba(255, 253, 248, 0.84);
+  font-size: 22px;
+  line-height: 1.45;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.linkButton {
+  min-width: 148px;
+  padding: 0 22px;
+}
+
+.productPreview {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+}
+
+.previewInput {
+  min-height: 220px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 18px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: rgba(24, 50, 40, 0.76);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.previewInput span {
+  display: block;
+}
+
+.previewResults {
+  display: grid;
+  gap: 8px;
+}
+
+.previewResults div {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 26px 92px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid rgba(39, 89, 70, 0.14);
+  border-radius: 8px;
+  background: #f5f8f4;
+}
+
+.previewResults span {
+  color: rgba(24, 50, 40, 0.62);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.previewResults strong {
+  font-size: 15px;
+}
+
+.publicBand {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 253, 248, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.18);
+}
+
+.publicBand article {
+  min-height: 170px;
+  padding: 22px;
+  background: rgba(255, 253, 248, 0.08);
+}
+
+.publicBand h2,
+.publicContent h2,
+.legalDocument h2 {
+  margin: 14px 0 8px;
+  font-size: 22px;
+}
+
+.publicBand p,
+.publicContent p,
+.legalDocument p,
+.legalDocument li {
+  color: rgba(255, 253, 248, 0.78);
+  line-height: 1.65;
+}
+
+.publicContent {
+  max-width: 780px;
+  padding: 54px 0 20px;
+}
+
+.publicContent p {
+  font-size: 18px;
+}
+
+.publicLinkGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.publicLinkGrid a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 253, 248, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.08);
+  color: var(--paper);
+  font-weight: 800;
+}
+
+.legalDocument {
+  width: min(100%, 820px);
+  margin: 0 auto;
+  padding: 34px;
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.08);
+  border: 1px solid rgba(255, 253, 248, 0.18);
+}
+
+.legalDocument h1 {
+  font-size: clamp(42px, 7vw, 72px);
+}
+
+.documentSubtitle {
+  margin: 16px 0 34px;
+  color: var(--gold);
+  font-weight: 750;
+}
+
+.legalDocument h2 {
+  margin-top: 28px;
+  color: var(--paper);
+}
+
+.legalDocument ul {
+  margin: 10px 0 0;
+  padding-left: 22px;
 }
 
 .appShell {
@@ -368,6 +632,70 @@ input:disabled {
 }
 
 @media (max-width: 430px) {
+  .publicShell {
+    padding-inline: 14px;
+  }
+
+  .publicNav {
+    align-items: flex-start;
+  }
+
+  .publicNav nav {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .publicNav nav a {
+    min-height: 34px;
+    padding: 0 9px;
+    font-size: 13px;
+  }
+
+  .homeHero {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .heroLogo {
+    width: 78px;
+    height: 78px;
+    border-radius: 20px;
+  }
+
+  .homeHero h1 {
+    font-size: 54px;
+  }
+
+  .heroLead {
+    font-size: 18px;
+  }
+
+  .heroActions,
+  .heroActions .linkButton {
+    width: 100%;
+  }
+
+  .productPreview {
+    padding: 14px;
+  }
+
+  .previewResults div {
+    grid-template-columns: 24px 1fr;
+  }
+
+  .previewResults strong {
+    grid-column: 2;
+  }
+
+  .publicBand {
+    grid-template-columns: 1fr;
+  }
+
+  .legalDocument {
+    padding: 22px;
+  }
+
   .brandHeader {
     grid-template-columns: 54px 1fr 42px;
   }

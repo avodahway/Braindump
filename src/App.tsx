@@ -1,17 +1,21 @@
 import {
   AlertTriangle,
+  ArrowRight,
   CalendarDays,
   CheckCircle2,
   ClipboardList,
   Cloud,
+  FileText,
   FolderKanban,
   Lock,
   Mic,
   Settings,
+  ShieldCheck,
   Sparkles,
   UserCheck
 } from 'lucide-react';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
 import { connectPublicWorkspace, disconnectPublicWorkspace, refreshPublicWorkspace } from './api/publicConnection';
 import { loadWorkspace } from './api/workspace';
@@ -28,6 +32,27 @@ const groups = [
 ] as const;
 
 export function App() {
+  const route = useRoute();
+
+  if (route === '/privacy') return <PrivacyPage />;
+  if (route === '/terms') return <TermsPage />;
+  if (route === '/app') return <ProductApp />;
+  return <HomePage />;
+}
+
+function useRoute() {
+  const [route, setRoute] = useState(() => normalizedPath(window.location.pathname));
+
+  useEffect(() => {
+    const handlePopState = () => setRoute(normalizedPath(window.location.pathname));
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  return route;
+}
+
+function ProductApp() {
   const [text, setText] = useState(() => localStorage.getItem('brain-dump-draft') ?? '');
   const [result, setResult] = useState<BrainDumpResponse | null>(null);
   const [error, setError] = useState('');
@@ -271,6 +296,223 @@ export function App() {
       )}
     </main>
   );
+}
+
+function HomePage() {
+  return (
+    <main className="publicShell">
+      <PublicNav />
+      <section className="homeHero">
+        <div className="homeHeroCopy">
+          <img className="heroLogo" src="/icons/brain-dump-icon-180.png" alt="" />
+          <h1>Brain Dump</h1>
+          <p className="heroTagline">Get it out. We'll handle the rest.</p>
+          <p className="heroLead">
+            Turn messy thoughts into Google Tasks, calendar events, projects, and follow-ups in your own connected
+            workspace.
+          </p>
+          <div className="heroActions">
+            <a className="processButton linkButton" href="/app">
+              Open app
+              <ArrowRight size={19} />
+            </a>
+            <a className="secondaryButton linkButton" href="/privacy">
+              Privacy
+            </a>
+          </div>
+        </div>
+        <div className="productPreview" aria-label="Brain Dump preview">
+          <div className="previewInput">
+            <span>Pay employees tomorrow.</span>
+            <span>Lunch with Jack Thursday at noon; put on calendar.</span>
+            <span>Waiting on Aaron to send estimate.</span>
+          </div>
+          <div className="previewResults">
+            <PreviewRow icon={ClipboardList} label="Work task" value="Pay employees" />
+            <PreviewRow icon={CalendarDays} label="Calendar" value="Lunch with Jack" />
+            <PreviewRow icon={UserCheck} label="Waiting on" value="Aaron estimate" />
+          </div>
+        </div>
+      </section>
+
+      <section className="publicBand">
+        <article>
+          <ClipboardList size={26} />
+          <h2>Capture first</h2>
+          <p>Drop in scattered thoughts without sorting them first.</p>
+        </article>
+        <article>
+          <CalendarDays size={26} />
+          <h2>Route clearly</h2>
+          <p>Explicit tasks and events go to the places users already check.</p>
+        </article>
+        <article>
+          <ShieldCheck size={26} />
+          <h2>Stay private</h2>
+          <p>Each user connects their own Google account and can disconnect it.</p>
+        </article>
+      </section>
+
+      <section className="publicContent">
+        <h2>Built for beta</h2>
+        <p>
+          Brain Dump is preparing for a private beta with Google Tasks and Google Calendar. Email sending is not part of
+          beta; ambiguous items are held for review instead of being sent or scheduled automatically.
+        </p>
+        <div className="publicLinkGrid">
+          <a href="/privacy">
+            <ShieldCheck size={20} />
+            Privacy policy
+          </a>
+          <a href="/terms">
+            <FileText size={20} />
+            Terms of service
+          </a>
+          <a href="/app">
+            <Sparkles size={20} />
+            Try preview mode
+          </a>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function PrivacyPage() {
+  return (
+    <PublicDocument
+      title="Privacy Policy"
+      subtitle="Draft for beta planning. Final public launch language should be reviewed before broad release."
+    >
+      <h2>Overview</h2>
+      <p>
+        Brain Dump helps users turn free-form notes into tasks, calendar events, projects, and waiting-on reminders. The
+        app connects to a user's Google account only after the user grants permission.
+      </p>
+      <h2>Information collected</h2>
+      <ul>
+        <li>Email address and basic Google profile information.</li>
+        <li>Brain dump text submitted by the user and parsed actions created from that text.</li>
+        <li>OAuth tokens needed to keep the user's Google account connected.</li>
+        <li>Execution logs showing what Brain Dump attempted to create.</li>
+      </ul>
+      <h2>Google user data</h2>
+      <p>
+        Brain Dump uses Google user data only to provide user-facing app functionality. It does not sell Google user
+        data, use it for advertising, or share it with unrelated third parties.
+      </p>
+      <h2>Current Google access</h2>
+      <ul>
+        <li>Sign-in profile and email.</li>
+        <li>Google Tasks access to create task lists and tasks.</li>
+        <li>Google Calendar event access to create requested events.</li>
+      </ul>
+      <h2>User controls</h2>
+      <p>
+        Users can disconnect Google, stop using the app, request deletion of stored account records, and delete tasks or
+        calendar events directly in their Google account.
+      </p>
+      <h2>Contact</h2>
+      <p>Support email: TBD.</p>
+    </PublicDocument>
+  );
+}
+
+function TermsPage() {
+  return (
+    <PublicDocument
+      title="Terms of Service"
+      subtitle="Draft for beta planning. Final public launch language should be reviewed before broad release."
+    >
+      <h2>Service</h2>
+      <p>
+        Brain Dump helps users organize free-form text into tasks, calendar events, projects, and waiting-on reminders.
+      </p>
+      <h2>Beta status</h2>
+      <p>
+        During beta, Brain Dump is experimental. Features may change, fail, or be removed. Users should review created
+        tasks and calendar events for accuracy.
+      </p>
+      <h2>User responsibilities</h2>
+      <ul>
+        <li>Review created tasks and calendar events.</li>
+        <li>Keep their Google account secure.</li>
+        <li>Disconnect Brain Dump if they no longer want it connected.</li>
+      </ul>
+      <h2>Google account access</h2>
+      <p>
+        Brain Dump connects to Google only after the user grants permission. Users can revoke access through Brain Dump
+        or their Google Account settings.
+      </p>
+      <h2>No automatic email sending</h2>
+      <p>
+        Brain Dump does not send email during beta. Email-like requests should be captured for review instead of being
+        sent automatically.
+      </p>
+      <h2>Contact</h2>
+      <p>Support email: TBD.</p>
+    </PublicDocument>
+  );
+}
+
+function PublicDocument({
+  title,
+  subtitle,
+  children
+}: {
+  title: string;
+  subtitle: string;
+  children: ReactNode;
+}) {
+  return (
+    <main className="publicShell">
+      <PublicNav />
+      <article className="legalDocument">
+        <h1>{title}</h1>
+        <p className="documentSubtitle">{subtitle}</p>
+        {children}
+      </article>
+    </main>
+  );
+}
+
+function PublicNav() {
+  return (
+    <header className="publicNav">
+      <a className="navBrand" href="/">
+        <img src="/icons/brain-dump-icon-180.png" alt="" />
+        <span>Brain Dump</span>
+      </a>
+      <nav aria-label="Public navigation">
+        <a href="/app">App</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
+    </header>
+  );
+}
+
+function PreviewRow({
+  icon: Icon,
+  label,
+  value
+}: {
+  icon: typeof ClipboardList;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div>
+      <Icon size={18} />
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function normalizedPath(path: string): string {
+  if (path === '/privacy' || path === '/terms' || path === '/app') return path;
+  return '/';
 }
 
 function Summary({ label, value }: { label: string; value: number }) {

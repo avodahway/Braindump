@@ -7,6 +7,7 @@
 - Publish basic home page.
 - Publish privacy policy draft page.
 - Publish terms draft page.
+- Confirm `/`, `/privacy`, `/terms`, and `/app` routes work on the deployed frontend.
 - Pick frontend host.
 - Pick backend host.
 - Pick durable encrypted storage.

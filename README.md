@@ -13,6 +13,8 @@ pnpm dev
 
 The app starts in mock preview mode. It parses and groups results locally without touching any Google account.
 
+Public launch pages are available at `/`, `/privacy`, and `/terms`. The product tool is available at `/app`.
+
 ## Checks
 
 ```sh
