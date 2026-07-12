@@ -72,6 +72,8 @@ Calendar execution carries the request timezone through the executor context and
 
 `src/server/googleOAuthClient.ts` is the fetch-based Google OAuth token client. It exchanges authorization codes for tokens and reads the OpenID profile through injected backend config, including the client secret.
 
+`src/server/refreshingTokenProvider.ts` reads stored Google tokens and refreshes them before provider writes when they are near expiration.
+
 ## Safety Rules
 
 - Never store Google client secrets in the PWA.

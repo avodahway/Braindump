@@ -52,6 +52,8 @@ OAuth/session flow is scaffolded in `src/server/oauthSession.ts`, including stat
 
 The Google OAuth token client lives in `src/server/googleOAuthClient.ts`. It expects the Google client secret from backend configuration, never from frontend source.
 
+`src/server/refreshingTokenProvider.ts` turns stored OAuth tokens into access tokens for provider writes and refreshes them when needed.
+
 ## Private Apps Script Adapter
 
 `apps-script/BrainDumpBridge.gs` is retained as a private adapter for Cleveland Stewardship OS. It is not the default public backend.

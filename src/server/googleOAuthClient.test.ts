@@ -63,6 +63,35 @@ describe('Google OAuth client', () => {
     });
   });
 
+  it('refreshes tokens while preserving refresh token when Google omits it', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          access_token: 'new-access-token',
+          expires_in: 900,
+          scope: 'openid email'
+        })
+      )
+    );
+
+    const tokens = await createGoogleOAuthClient(config, fetcher, () => 1000).refreshTokens('existing-refresh-token');
+
+    expect(tokens).toEqual({
+      accessToken: 'new-access-token',
+      refreshToken: 'existing-refresh-token',
+      expiresAt: 901000,
+      scope: 'openid email'
+    });
+    expect(String(fetcher.mock.calls[0][1].body)).toContain('grant_type=refresh_token');
+    expect(String(fetcher.mock.calls[0][1].body)).toContain('refresh_token=existing-refresh-token');
+  });
+
+  it('raises token refresh errors', async () => {
+    await expect(
+      createGoogleOAuthClient(config, vi.fn().mockResolvedValue(new Response('{}', { status: 401 }))).refreshTokens('refresh')
+    ).rejects.toThrow('Google token refresh returned 401');
+  });
+
   it('raises token exchange and profile lookup errors', async () => {
     await expect(
       createGoogleOAuthClient(config, vi.fn().mockResolvedValue(new Response('{}', { status: 400 }))).exchangeCode('bad')

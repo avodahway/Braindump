@@ -85,6 +85,12 @@ function fakeTokenClient(): TokenExchangeClient {
       expiresAt: 2000,
       scope: 'openid email https://www.googleapis.com/auth/tasks'
     }),
+    refreshTokens: vi.fn().mockResolvedValue({
+      accessToken: 'new-access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: 3000,
+      scope: 'openid email https://www.googleapis.com/auth/tasks'
+    }),
     readProfile: vi.fn().mockResolvedValue({
       email: 'User@Example.com'
     })

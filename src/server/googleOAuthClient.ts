@@ -37,6 +37,29 @@ export function createGoogleOAuthClient(
       return toTokenSet(await response.json(), now());
     },
 
+    async refreshTokens(refreshToken) {
+      const body = new URLSearchParams({
+        refresh_token: refreshToken,
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        grant_type: 'refresh_token'
+      });
+
+      const response = await fetcher('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body
+      });
+
+      if (!response.ok) {
+        throw new Error(`Google token refresh returned ${response.status}`);
+      }
+
+      return toTokenSet(await response.json(), now(), refreshToken);
+    },
+
     async readProfile(tokens) {
       const response = await fetcher('https://openidconnect.googleapis.com/v1/userinfo', {
         headers: {
@@ -53,21 +76,26 @@ export function createGoogleOAuthClient(
   };
 }
 
-function toTokenSet(value: unknown, now: number): GoogleTokenSet {
+function toTokenSet(value: unknown, now: number, fallbackRefreshToken?: string): GoogleTokenSet {
   if (!isRecord(value) || typeof value.access_token !== 'string') {
     throw new Error('Google token response did not include an access token.');
   }
 
-  if (typeof value.refresh_token !== 'string') {
+  if (typeof value.refresh_token !== 'string' && !fallbackRefreshToken) {
     throw new Error('Google token response did not include a refresh token.');
   }
 
   const expiresIn = typeof value.expires_in === 'number' ? value.expires_in : 3600;
   const scope = typeof value.scope === 'string' ? value.scope : '';
 
+  const refreshToken = typeof value.refresh_token === 'string' ? value.refresh_token : fallbackRefreshToken;
+  if (!refreshToken) {
+    throw new Error('Google token response did not include a refresh token.');
+  }
+
   return {
     accessToken: value.access_token,
-    refreshToken: value.refresh_token,
+    refreshToken,
     expiresAt: now + expiresIn * 1000,
     scope
   };

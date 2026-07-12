@@ -206,6 +206,14 @@ function fakeTokenClient(): TokenExchangeClient {
         scope: googleOAuth.scopes.join(' ')
       };
     },
+    async refreshTokens() {
+      return {
+        accessToken: 'new-access-token',
+        refreshToken: 'refresh-token',
+        expiresAt: Date.now() + 3600,
+        scope: googleOAuth.scopes.join(' ')
+      };
+    },
     async readProfile() {
       return { email: 'user@example.com' };
     }

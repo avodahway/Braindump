@@ -21,12 +21,14 @@ export type GoogleProfile = {
 
 export type TokenExchangeClient = {
   exchangeCode(code: string): Promise<GoogleTokenSet>;
+  refreshTokens(refreshToken: string): Promise<GoogleTokenSet>;
   readProfile(tokens: GoogleTokenSet): Promise<GoogleProfile>;
 };
 
 export type OAuthSessionStore = {
   saveState(record: OAuthStateRecord): Promise<void>;
   consumeState(state: string): Promise<OAuthStateRecord | undefined>;
+  readTokens(userId: string): Promise<GoogleTokenSet | undefined>;
   saveTokens(userId: string, tokens: GoogleTokenSet): Promise<void>;
   saveWorkspace(userId: string, workspace: UserWorkspace): Promise<void>;
 };
@@ -156,6 +158,9 @@ export function createMemoryOAuthStore(): OAuthSessionStore & {
       const record = states.get(state);
       states.delete(state);
       return record;
+    },
+    async readTokens(userId) {
+      return tokens.get(userId);
     },
     async saveTokens(userId, tokenSet) {
       tokens.set(userId, tokenSet);
