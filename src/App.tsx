@@ -13,7 +13,8 @@ import {
 } from 'lucide-react';
 import { FormEvent, useMemo, useState } from 'react';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
-import type { BrainDumpResponse, ParsedAction } from './lib/types';
+import { connectDemoWorkspace, disconnectWorkspace, loadWorkspace } from './api/workspace';
+import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
 
 const groups = [
   { key: 'calendar', label: 'Calendar', icon: CalendarDays },
@@ -32,6 +33,7 @@ export function App() {
   const [isProcessing, setProcessing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<BackendSettings>(() => loadSettings());
+  const [workspace, setWorkspace] = useState<UserWorkspace>(() => loadWorkspace());
 
   const groupedActions = useMemo(() => {
     const map = new Map<string, ParsedAction[]>();
@@ -93,7 +95,13 @@ export function App() {
 
       <section className="capturePanel">
         <h2>What's on your mind?</h2>
-        <SetupPanel mode={settings.backendMode} onOpenSettings={() => setShowSettings(true)} />
+        <SetupPanel
+          mode={settings.backendMode}
+          workspace={workspace}
+          onConnect={() => setWorkspace(connectDemoWorkspace())}
+          onDisconnect={() => setWorkspace(disconnectWorkspace())}
+          onOpenSettings={() => setShowSettings(true)}
+        />
         <textarea
           value={text}
           onChange={(event) => handleDraft(event.target.value)}
@@ -232,7 +240,19 @@ function Summary({ label, value }: { label: string; value: number }) {
   );
 }
 
-function SetupPanel({ mode, onOpenSettings }: { mode: BackendSettings['backendMode']; onOpenSettings: () => void }) {
+function SetupPanel({
+  mode,
+  workspace,
+  onConnect,
+  onDisconnect,
+  onOpenSettings
+}: {
+  mode: BackendSettings['backendMode'];
+  workspace: UserWorkspace;
+  onConnect: () => void;
+  onDisconnect: () => void;
+  onOpenSettings: () => void;
+}) {
   if (mode === 'mock') {
     return (
       <div className="setupPanel">
@@ -249,15 +269,35 @@ function SetupPanel({ mode, onOpenSettings }: { mode: BackendSettings['backendMo
   }
 
   if (mode === 'public') {
+    if (workspace.status === 'connected') {
+      return (
+        <div className="setupPanel connectedPanel">
+          <div>
+            <strong>Demo Google workspace connected</strong>
+            <span>{workspace.email}</span>
+            <div className="destinationList" aria-label="Demo destinations">
+              {workspace.destinations.map((destination) => (
+                <small key={destination.id}>{destination.name}</small>
+              ))}
+            </div>
+          </div>
+          <button type="button" onClick={onDisconnect}>
+            <Cloud size={16} />
+            Disconnect
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="setupPanel">
         <div>
-          <strong>Google connection planned</strong>
-          <span>Next backend milestone will let each user connect their own account.</span>
+          <strong>Connect Google</strong>
+          <span>Use a safe demo workspace now. Real OAuth is the next backend step.</span>
         </div>
-        <button type="button" onClick={onOpenSettings}>
+        <button type="button" onClick={onConnect}>
           <Cloud size={16} />
-          Review
+          Connect
         </button>
       </div>
     );

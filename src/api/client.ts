@@ -1,5 +1,6 @@
 import { parseBrainDump } from '../lib/parser';
 import type { BrainDumpRequest, BrainDumpResponse, ParsedAction } from '../lib/types';
+import { loadWorkspace } from './workspace';
 
 const settingsKey = 'brain-dump-settings';
 
@@ -34,7 +35,11 @@ export async function processBrainDump(request: BrainDumpRequest): Promise<Brain
   }
 
   if (settings.backendMode === 'public') {
-    throw new Error('Public Google account setup is coming next. Use mock mode for now.');
+    if (loadWorkspace().status !== 'connected') {
+      throw new Error('Connect a Google workspace first, or switch back to mock preview.');
+    }
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    return markCreated(parseBrainDump(request.text, request.requestId));
   }
 
   if (!settings.backendUrl) {

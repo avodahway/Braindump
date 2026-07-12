@@ -131,6 +131,27 @@ button {
   color: rgba(24, 50, 40, 0.74);
 }
 
+.connectedPanel {
+  align-items: flex-start;
+}
+
+.destinationList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.destinationList small {
+  padding: 5px 8px;
+  border: 1px solid rgba(39, 89, 70, 0.16);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .setupPanel button {
   min-height: 38px;
   display: inline-flex;

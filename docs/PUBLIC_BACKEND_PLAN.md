@@ -51,6 +51,8 @@ Initial routes are documented in `src/api/publicContract.ts`:
 - `POST /api/auth/google/disconnect`
 - `POST /api/brain-dump`
 
+The current PWA includes a safe demo connection in public mode. It creates local-only destinations so the onboarding and processing flow can be tested without Google OAuth credentials.
+
 ## Safety Rules
 
 - Never store Google client secrets in the PWA.
