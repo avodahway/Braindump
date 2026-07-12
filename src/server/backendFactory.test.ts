@@ -101,7 +101,12 @@ describe('backend factory', () => {
       googleOAuth,
       storage,
       storageKeyPrefix: 'test',
-      tokenClient: callbackTokenClient()
+      tokenClient: callbackTokenClient(),
+      workspaceProvisioner: {
+        async provision(profile) {
+          return defaultWorkspace(profile.email);
+        }
+      }
     });
 
     const startResponse = await backend.handle(

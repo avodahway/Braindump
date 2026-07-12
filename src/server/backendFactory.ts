@@ -10,9 +10,15 @@ import {
 import { createGoogleActionExecutor } from './googleExecutor';
 import { createGoogleOAuthClient } from './googleOAuthClient';
 import { createGoogleRestProviderClients } from './googleProviderClients';
-import { createMemoryOAuthStore, type OAuthSessionStore, type TokenExchangeClient } from './oauthSession';
+import {
+  createMemoryOAuthStore,
+  type OAuthSessionStore,
+  type TokenExchangeClient,
+  type WorkspaceProvisioner
+} from './oauthSession';
 import { createRefreshingTokenProvider } from './refreshingTokenProvider';
 import { createMemorySessionStore, type SessionStore } from './sessionStore';
+import { createGoogleWorkspaceProvisioner } from './workspaceProvisioning';
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -29,6 +35,7 @@ export type BrainDumpBackendConfig = {
   storageCodec?: SecretCodec;
   storageKeyPrefix?: string;
   tokenClient?: TokenExchangeClient;
+  workspaceProvisioner?: WorkspaceProvisioner;
   executor?: ActionExecutor;
 };
 
@@ -71,12 +78,15 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
       nowMs: config.nowMs,
       nowDate: config.nowDate
     });
+  const workspaceProvisioner =
+    config.workspaceProvisioner ?? createGoogleWorkspaceProvisioner({ fetcher: config.fetcher });
 
   return createPublicBackend({
     googleOAuth: config.googleOAuth,
     oauthStore,
     sessionStore,
     tokenClient,
+    workspaceProvisioner,
     executor
   });
 }

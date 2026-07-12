@@ -25,6 +25,10 @@ export type TokenExchangeClient = {
   readProfile(tokens: GoogleTokenSet): Promise<GoogleProfile>;
 };
 
+export type WorkspaceProvisioner = {
+  provision(profile: GoogleProfile, tokens: GoogleTokenSet): Promise<UserWorkspace>;
+};
+
 export type OAuthSessionStore = {
   saveState(record: OAuthStateRecord): Promise<void>;
   consumeState(state: string): Promise<OAuthStateRecord | undefined>;
@@ -67,12 +71,14 @@ export async function completeOAuthSession({
   state,
   store,
   tokenClient,
+  workspaceProvisioner,
   now = Date.now()
 }: {
   code: string;
   state: string;
   store: OAuthSessionStore;
   tokenClient: TokenExchangeClient;
+  workspaceProvisioner?: WorkspaceProvisioner;
   now?: number;
 }): Promise<UserWorkspace> {
   const savedState = await store.consumeState(state);
@@ -87,7 +93,9 @@ export async function completeOAuthSession({
   const tokens = await tokenClient.exchangeCode(code);
   const profile = await tokenClient.readProfile(tokens);
   const userId = profile.email.toLowerCase();
-  const workspace = defaultWorkspace(profile.email);
+  const workspace = workspaceProvisioner
+    ? await workspaceProvisioner.provision(profile, tokens)
+    : defaultWorkspace(profile.email);
 
   await store.saveTokens(userId, tokens);
   await store.saveWorkspace(userId, workspace);

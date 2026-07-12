@@ -80,6 +80,8 @@ Calendar execution carries the request timezone through the executor context and
 
 `src/server/runtimeConfig.ts` and `src/server/runtimeHandler.ts` are the deployable backend entry point. Required environment values are `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `BRAIN_DUMP_PUBLIC_API_ORIGIN`. Optional values are `GOOGLE_OAUTH_SCOPES` and `BRAIN_DUMP_STORAGE_PREFIX`.
 
+`src/server/workspaceProvisioning.ts` provisions a public user's workspace after Google sign-in. It reuses existing `Brain Dump Work` and `Brain Dump Personal` task lists when present, or creates them in that user's Google Tasks account when missing.
+
 ## Safety Rules
 
 - Never store Google client secrets in the PWA.

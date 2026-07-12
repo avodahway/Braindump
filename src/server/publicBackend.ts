@@ -7,7 +7,8 @@ import {
   createMemoryOAuthStore,
   startOAuthSession,
   type OAuthSessionStore,
-  type TokenExchangeClient
+  type TokenExchangeClient,
+  type WorkspaceProvisioner
 } from './oauthSession';
 import {
   clearSessionCookie,
@@ -29,6 +30,7 @@ export type PublicBackendOptions = {
   executor?: ActionExecutor;
   oauthStore?: OAuthSessionStore;
   tokenClient?: TokenExchangeClient;
+  workspaceProvisioner?: WorkspaceProvisioner;
   sessionStore?: SessionStore;
 };
 
@@ -67,7 +69,8 @@ export function createPublicBackend(options: PublicBackendOptions) {
             code,
             state,
             store: oauthStore,
-            tokenClient: options.tokenClient
+            tokenClient: options.tokenClient,
+            workspaceProvisioner: options.workspaceProvisioner
           });
           const session = await sessionStore.createSession(workspace.email?.toLowerCase() ?? '');
           responsesByRequestId.clear();

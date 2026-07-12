@@ -43,6 +43,38 @@ describe('OAuth session helpers', () => {
     expect(tokenClient.exchangeCode).toHaveBeenCalledWith('auth-code');
   });
 
+  it('uses an injected workspace provisioner during OAuth completion', async () => {
+    const store = createMemoryOAuthStore();
+    await store.saveState({ state: 'state-1', createdAt: 1000 });
+
+    const workspace = await completeOAuthSession({
+      code: 'auth-code',
+      state: 'state-1',
+      store,
+      tokenClient: fakeTokenClient(),
+      workspaceProvisioner: {
+        async provision(profile) {
+          return {
+            ...defaultWorkspace(profile.email),
+            destinations: [
+              {
+                id: 'real-work-list-id',
+                name: 'Brain Dump Work',
+                provider: 'google_tasks',
+                kind: 'work_tasks',
+                isDefault: true
+              }
+            ]
+          };
+        }
+      },
+      now: 2000
+    });
+
+    expect(workspace.destinations[0].id).toBe('real-work-list-id');
+    expect(store.workspaces.get('user@example.com')?.destinations[0].id).toBe('real-work-list-id');
+  });
+
   it('rejects invalid and expired state', async () => {
     const store = createMemoryOAuthStore();
     await expect(
