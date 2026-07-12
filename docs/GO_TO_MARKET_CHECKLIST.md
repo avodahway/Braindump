@@ -9,6 +9,7 @@
 - Publish privacy policy draft page.
 - Publish terms draft page.
 - Confirm `/`, `/privacy`, `/terms`, and `/app` routes work on the deployed frontend.
+- Confirm `/app` explains setup progress, demo mode, Google connection, destinations, and disconnect.
 - Pick frontend host.
 - Pick backend host.
 - Pick durable encrypted storage.

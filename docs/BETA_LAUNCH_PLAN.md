@@ -102,9 +102,9 @@ Good beta threshold:
 
 1. User lands on product page.
 2. User opens Brain Dump.
-3. User sees mock preview mode first.
-4. User connects Google.
-5. Brain Dump creates or reuses the user's Brain Dump task lists.
+3. User sees setup progress and mock preview mode first.
+4. User connects Google through the public backend when invited.
+5. Brain Dump creates or reuses the user's Brain Dump task lists and shows the ready destinations.
 6. User enters a brain dump.
 7. Brain Dump shows parsed actions before or after execution, depending on the current UI milestone.
 8. User confirms created items in Google Tasks/Calendar.

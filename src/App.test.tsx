@@ -45,8 +45,26 @@ describe('App routes', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Brain Dump' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: "What's on your mind?" })).toBeInTheDocument();
+    expect(screen.getByText('Setup progress')).toBeInTheDocument();
+    expect(screen.getByText('Safe preview only. No Google account is connected.')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Put everything here. Do not organize it.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Review/i })).toBeInTheDocument();
+  });
+
+  it('shows demo connection readiness for public mode without a backend URL', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: '', backendUrl: '', sharedSecret: '' })
+    );
+    renderAt('/app');
+
+    expect(screen.getByText('Public backend URL needed before real Google sign-in.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Demo/i }));
+
+    expect(await screen.findByText('Demo Google workspace connected')).toBeInTheDocument();
+    expect(screen.getByText('demo@braindump.local')).toBeInTheDocument();
+    expect(screen.getByText('Demo-ready. Add the public API URL before inviting users.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Google destinations')).toBeInTheDocument();
   });
 
   it('previews actions before creating them', () => {

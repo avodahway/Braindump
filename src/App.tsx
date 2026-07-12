@@ -656,66 +656,152 @@ function SetupPanel({
   onDisconnect: () => void;
   onOpenSettings: () => void;
 }) {
+  const isConnected = workspace.status === 'connected';
+  const statusLabel = setupStatusLabel(mode, hasPublicApi, workspace);
+  const steps = setupSteps(mode, hasPublicApi, workspace);
+
   if (mode === 'mock') {
     return (
-      <div className="setupPanel">
-        <div>
-          <strong>Preview mode</strong>
-          <span>Brain Dump will show where items would go without touching Google.</span>
-        </div>
-        <button type="button" onClick={onOpenSettings}>
-          <Settings size={16} />
-          Setup
-        </button>
-      </div>
+      <OnboardingPanel
+        title="Preview mode"
+        description="Brain Dump will show where items would go without touching Google."
+        statusLabel={statusLabel}
+        steps={steps}
+        action={
+          <button type="button" onClick={onOpenSettings}>
+            <Settings size={16} />
+            Setup
+          </button>
+        }
+      />
     );
   }
 
   if (mode === 'public') {
-    if (workspace.status === 'connected') {
-      return (
-        <div className="setupPanel connectedPanel">
-          <div>
-            <strong>{hasPublicApi ? 'Google workspace connected' : 'Demo Google workspace connected'}</strong>
-            <span>{workspace.email}</span>
-            <div className="destinationList" aria-label="Demo destinations">
-              {workspace.destinations.map((destination) => (
-                <small key={destination.id}>{destination.name}</small>
-              ))}
-            </div>
-          </div>
-          <button type="button" onClick={onDisconnect}>
-            <Cloud size={16} />
-            Disconnect
-          </button>
-        </div>
-      );
-    }
-
     return (
-      <div className="setupPanel">
-        <div>
-          <strong>Connect Google</strong>
-          <span>{hasPublicApi ? 'Start Google OAuth through your public backend.' : 'Use a safe demo workspace now.'}</span>
-        </div>
-        <button type="button" onClick={onConnect}>
-          <Cloud size={16} />
-          Connect
-        </button>
-      </div>
+      <OnboardingPanel
+        title={isConnected ? (hasPublicApi ? 'Google workspace connected' : 'Demo Google workspace connected') : 'Connect Google'}
+        description={
+          isConnected
+            ? workspace.email ?? 'Ready to create reviewed actions.'
+            : hasPublicApi
+              ? 'Each user connects their own Google account before Brain Dump creates anything.'
+              : 'Use a safe demo workspace now, then add the public API URL before inviting real users.'
+        }
+        statusLabel={statusLabel}
+        steps={steps}
+        destinations={isConnected ? workspace.destinations.map((destination) => destination.name) : []}
+        action={
+          isConnected ? (
+            <button type="button" onClick={onDisconnect}>
+              <Cloud size={16} />
+              Disconnect
+            </button>
+          ) : (
+            <button type="button" onClick={onConnect}>
+              <Cloud size={16} />
+              {hasPublicApi ? 'Connect' : 'Demo'}
+            </button>
+          )
+        }
+      />
     );
   }
 
   return (
+    <OnboardingPanel
+      title="Private bridge mode"
+      description="Routes to one configured Apps Script bridge for CSOS testing."
+      statusLabel={statusLabel}
+      steps={steps}
+      action={
+        <button type="button" onClick={onOpenSettings}>
+          <Settings size={16} />
+          Edit
+        </button>
+      }
+    />
+  );
+}
+
+function OnboardingPanel({
+  title,
+  description,
+  statusLabel,
+  steps,
+  destinations = [],
+  action
+}: {
+  title: string;
+  description: string;
+  statusLabel: string;
+  steps: Array<{ label: string; complete: boolean }>;
+  destinations?: string[];
+  action: ReactNode;
+}) {
+  return (
     <div className="setupPanel">
-      <div>
-        <strong>Private bridge mode</strong>
-        <span>Routes to one configured Apps Script bridge for CSOS testing.</span>
+      <div className="setupPanelTop">
+        <div>
+          <span className="setupEyebrow">Setup progress</span>
+          <strong>{title}</strong>
+          <span>{description}</span>
+        </div>
+        {action}
       </div>
-      <button type="button" onClick={onOpenSettings}>
-        <Settings size={16} />
-        Edit
-      </button>
+      <ol className="setupSteps" aria-label="Setup progress">
+        {steps.map((step) => (
+          <li className={step.complete ? 'complete' : ''} key={step.label}>
+            <CheckCircle2 size={15} />
+            <span>{step.label}</span>
+          </li>
+        ))}
+      </ol>
+      <div className="setupStatus">
+        <ShieldCheck size={15} />
+        <span>{statusLabel}</span>
+      </div>
+      {destinations.length > 0 && (
+        <div className="destinationList" aria-label="Google destinations">
+          {destinations.map((destination) => (
+            <small key={destination}>{destination}</small>
+          ))}
+        </div>
+      )}
     </div>
   );
+}
+
+function setupStatusLabel(mode: BackendSettings['backendMode'], hasPublicApi: boolean, workspace: UserWorkspace): string {
+  if (mode === 'mock') return 'Safe preview only. No Google account is connected.';
+  if (mode === 'private_apps_script') return 'Private CSOS bridge is for founder testing, not public beta users.';
+  if (workspace.status === 'connected') {
+    return hasPublicApi ? 'Ready for reviewed actions in this user account.' : 'Demo-ready. Add the public API URL before inviting users.';
+  }
+  return hasPublicApi ? 'Ready to start Google sign-in.' : 'Public backend URL needed before real Google sign-in.';
+}
+
+function setupSteps(mode: BackendSettings['backendMode'], hasPublicApi: boolean, workspace: UserWorkspace) {
+  if (mode === 'mock') {
+    return [
+      { label: 'Preview parser', complete: true },
+      { label: 'Review actions', complete: true },
+      { label: 'Connect Google when ready', complete: false }
+    ];
+  }
+
+  if (mode === 'private_apps_script') {
+    return [
+      { label: 'Private bridge selected', complete: true },
+      { label: 'Public user account setup', complete: false },
+      { label: 'Per-user Google workspace', complete: false }
+    ];
+  }
+
+  const connected = workspace.status === 'connected';
+  return [
+    { label: hasPublicApi ? 'Public backend configured' : 'Public backend configured', complete: hasPublicApi },
+    { label: connected ? 'Google account connected' : 'Connect Google account', complete: connected },
+    { label: connected ? 'Workspace destinations ready' : 'Workspace destinations created after sign-in', complete: connected }
+  ];
 }
