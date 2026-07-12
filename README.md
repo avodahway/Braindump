@@ -62,6 +62,8 @@ The Google OAuth token client lives in `src/server/googleOAuthClient.ts`. It exp
 
 `src/server/workspaceProvisioning.ts` creates or reuses each public user's own `Brain Dump Work` and `Brain Dump Personal` Google Task lists after sign-in, so public users do not need to provide task-list IDs.
 
+`src/server/idempotencyStore.ts` keeps processed request IDs from writing twice. When the backend is configured with durable storage, duplicate requests return the original response even after a backend restart.
+
 ## Private Apps Script Adapter
 
 `apps-script/BrainDumpBridge.gs` is retained as a private adapter for Cleveland Stewardship OS. It is not the default public backend.

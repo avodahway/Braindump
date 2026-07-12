@@ -3,6 +3,7 @@ import type { ParsedAction } from '../lib/types';
 import { createMemoryOAuthStore, type TokenExchangeClient } from './oauthSession';
 import { buildGoogleAuthorizationUrl, createPublicBackend } from './publicBackend';
 import { createMemorySessionStore, sessionCookieName } from './sessionStore';
+import { createMemoryResponseStore } from './idempotencyStore';
 
 const googleOAuth = {
   clientId: 'client-id',
@@ -68,6 +69,33 @@ describe('public backend scaffold', () => {
     );
 
     expect(await first.json()).toEqual(await second.json());
+  });
+
+  it('uses an injected response store for duplicate request ids', async () => {
+    const responseStore = createMemoryResponseStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      workspace: connectedWorkspace(),
+      responseStore,
+      executor: {
+        async execute(action) {
+          return { status: 'created', message: `Created ${action.title}` };
+        }
+      }
+    });
+
+    await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        body: JSON.stringify({
+          requestId: 'req-store',
+          text: 'Buy coffee',
+          timezone: 'America/Chicago'
+        })
+      })
+    );
+
+    expect(await responseStore.readResponse('req-store')).toMatchObject({ requestId: 'req-store' });
   });
 
   it('blocks processing after disconnect', async () => {

@@ -128,6 +128,59 @@ describe('backend factory', () => {
     expect([...storage.values.keys()].some((key) => key.includes(':google-tokens:user@example.com'))).toBe(true);
     expect([...storage.values.keys()].some((key) => key.includes(':session:'))).toBe(true);
   });
+
+  it('deduplicates brain dump requests across backend instances that share durable storage', async () => {
+    const storage = createMemoryKeyValueStore();
+    const oauthStore = createMemoryOAuthStore();
+    const sessionStore = createMemorySessionStore(() => 1000);
+    await oauthStore.saveWorkspace('user@example.com', defaultWorkspace('user@example.com'));
+    const session = await sessionStore.createSession('user@example.com');
+    let executions = 0;
+
+    const createBackend = () =>
+      createBrainDumpBackend({
+        googleOAuth,
+        storage,
+        storageKeyPrefix: 'test',
+        oauthStore,
+        sessionStore,
+        tokenClient: callbackTokenClient(),
+        workspaceProvisioner: {
+          async provision(profile) {
+            return defaultWorkspace(profile.email);
+          }
+        },
+        executor: {
+          async execute() {
+            executions += 1;
+            return { status: 'created', message: 'Created' };
+          }
+        }
+      });
+
+    const requestBody = {
+      requestId: 'req-durable-idempotency',
+      text: 'Buy coffee',
+      timezone: 'America/Chicago'
+    };
+    const first = await createBackend().handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        headers: { Cookie: `${sessionCookieName}=${session.id}` },
+        body: JSON.stringify(requestBody)
+      })
+    );
+    const second = await createBackend().handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        headers: { Cookie: `${sessionCookieName}=${session.id}` },
+        body: JSON.stringify({ ...requestBody, text: 'Different text' })
+      })
+    );
+
+    expect(await second.json()).toEqual(await first.json());
+    expect(executions).toBe(1);
+  });
 });
 
 function fakeTokenClient(): TokenExchangeClient {

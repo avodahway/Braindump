@@ -17,6 +17,7 @@ import {
   sessionCookie,
   type SessionStore
 } from './sessionStore';
+import { createMemoryResponseStore, type ResponseStore } from './idempotencyStore';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -32,14 +33,15 @@ export type PublicBackendOptions = {
   tokenClient?: TokenExchangeClient;
   workspaceProvisioner?: WorkspaceProvisioner;
   sessionStore?: SessionStore;
+  responseStore?: ResponseStore;
 };
 
 export function createPublicBackend(options: PublicBackendOptions) {
-  const responsesByRequestId = new Map<string, BrainDumpResponse>();
   let fallbackWorkspace = options.workspace;
   const executor = options.executor ?? createDemoActionExecutor();
   const oauthStore = options.oauthStore ?? createMemoryOAuthStore();
   const sessionStore = options.sessionStore ?? createMemorySessionStore();
+  const responseStore = options.responseStore ?? createMemoryResponseStore();
 
   return {
     async handle(request: Request): Promise<Response> {
@@ -73,7 +75,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
             workspaceProvisioner: options.workspaceProvisioner
           });
           const session = await sessionStore.createSession(workspace.email?.toLowerCase() ?? '');
-          responsesByRequestId.clear();
+          await responseStore.clear();
           return json(workspace, 200, { 'Set-Cookie': sessionCookie(session.id) });
         } catch (error) {
           return json({ error: error instanceof Error ? error.message : 'OAuth callback failed.' }, 400);
@@ -84,7 +86,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
         const sessionId = readSessionIdFromCookie(request.headers.get('Cookie'));
         if (sessionId) await sessionStore.deleteSession(sessionId);
         fallbackWorkspace = undefined;
-        responsesByRequestId.clear();
+        await responseStore.clear();
         return json({ ok: true }, 200, { 'Set-Cookie': clearSessionCookie() });
       }
 
@@ -96,8 +98,9 @@ export function createPublicBackend(options: PublicBackendOptions) {
         }
 
         const body = (await request.json()) as BrainDumpRequest;
-        if (responsesByRequestId.has(body.requestId)) {
-          return json(responsesByRequestId.get(body.requestId));
+        const savedResponse = await responseStore.readResponse(body.requestId);
+        if (savedResponse) {
+          return json(savedResponse);
         }
 
         const response = await executeParsedResponse(
@@ -107,7 +110,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
           body,
           requestWorkspace?.userId
         );
-        responsesByRequestId.set(body.requestId, response);
+        await responseStore.saveResponse(body.requestId, response);
         return json(response);
       }
 

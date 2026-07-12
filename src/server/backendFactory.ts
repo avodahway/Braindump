@@ -19,6 +19,7 @@ import {
 import { createRefreshingTokenProvider } from './refreshingTokenProvider';
 import { createMemorySessionStore, type SessionStore } from './sessionStore';
 import { createGoogleWorkspaceProvisioner } from './workspaceProvisioning';
+import { createDurableResponseStore, createMemoryResponseStore, type ResponseStore } from './idempotencyStore';
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -36,6 +37,7 @@ export type BrainDumpBackendConfig = {
   storageKeyPrefix?: string;
   tokenClient?: TokenExchangeClient;
   workspaceProvisioner?: WorkspaceProvisioner;
+  responseStore?: ResponseStore;
   executor?: ActionExecutor;
 };
 
@@ -57,6 +59,14 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
           now: config.nowMs
         })
       : createMemorySessionStore(config.nowMs));
+  const responseStore =
+    config.responseStore ??
+    (config.storage
+      ? createDurableResponseStore(config.storage, {
+          keyPrefix: config.storageKeyPrefix,
+          codec: config.storageCodec
+        })
+      : createMemoryResponseStore());
   const tokenClient =
     config.tokenClient ??
     createGoogleOAuthClient(
@@ -87,6 +97,7 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
     sessionStore,
     tokenClient,
     workspaceProvisioner,
+    responseStore,
     executor
   });
 }

@@ -82,6 +82,8 @@ Calendar execution carries the request timezone through the executor context and
 
 `src/server/workspaceProvisioning.ts` provisions a public user's workspace after Google sign-in. It reuses existing `Brain Dump Work` and `Brain Dump Personal` task lists when present, or creates them in that user's Google Tasks account when missing.
 
+`src/server/idempotencyStore.ts` persists processed brain-dump responses by request id. With durable storage configured, retries and backend restarts return the first response instead of writing duplicate tasks or calendar events.
+
 ## Safety Rules
 
 - Never store Google client secrets in the PWA.
