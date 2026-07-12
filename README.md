@@ -33,15 +33,16 @@ No Google credentials are stored in the frontend. The PWA sends a JSON request t
 
 1. Open the existing Cleveland Stewardship OS Apps Script project.
 2. Copy `apps-script/BrainDumpBridge.gs` into that project.
-3. Set script properties as needed:
+3. Enable the Google Tasks Advanced Service if it is not already enabled.
+4. Set script properties as needed:
    - `BRAIN_DUMP_SHARED_SECRET`
    - `CSOS_SPREADSHEET_ID`
    - `CSOS_WORK_TASK_LIST_ID`
    - `CSOS_PERSONAL_TASK_LIST_ID`
    - `CSOS_WORK_CALENDAR_ID`
    - `CSOS_PERSONAL_CALENDAR_ID`
-4. Deploy as a Web App that executes as you and is accessible to the intended user.
-5. Paste the Web App URL into Brain Dump Settings.
+5. Deploy as a Web App that executes as you and is accessible to the intended user.
+6. Paste the Web App URL into Brain Dump Settings.
 
 Apps Script CORS can be awkward. This bridge accepts `text/plain` JSON to avoid browser preflight in the simple development path. If that becomes limiting, add a small same-origin serverless proxy and keep the frontend contract unchanged.
 
