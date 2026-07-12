@@ -15,12 +15,17 @@ const tokenProvider = createStaticTokenProvider({
 describe('Google REST provider clients', () => {
   it('posts tasks to the Google Tasks REST API', async () => {
     const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 'task-id' })));
-    const clients = createGoogleRestProviderClients({ tokenProvider, fetcher });
+    const clients = createGoogleRestProviderClients({
+      tokenProvider,
+      fetcher,
+      now: () => new Date('2026-07-12T09:00:00.000Z')
+    });
 
     await clients.tasks.createTask({
       taskListId: 'list id',
       title: 'Pay employees',
-      notes: 'Payroll run'
+      notes: 'Payroll run',
+      dueDate: 'tomorrow'
     });
 
     expect(fetcher).toHaveBeenCalledWith('https://tasks.googleapis.com/tasks/v1/lists/list%20id/tasks', {
@@ -32,9 +37,45 @@ describe('Google REST provider clients', () => {
       body: JSON.stringify({
         title: 'Pay employees',
         notes: 'Payroll run',
-        due: undefined
+        due: '2026-07-13T00:00:00.000Z'
       })
     });
+  });
+
+  it('resolves weekday task due dates from the backend clock', async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 'task-id' })));
+    const clients = createGoogleRestProviderClients({
+      tokenProvider,
+      fetcher,
+      now: () => new Date('2026-07-12T09:00:00.000Z')
+    });
+
+    await clients.tasks.createTask({
+      taskListId: 'list',
+      title: 'Send invoice',
+      dueDate: 'monday'
+    });
+
+    const [, init] = fetcher.mock.calls[0];
+    expect(JSON.parse(init.body)).toMatchObject({ due: '2026-07-13T00:00:00.000Z' });
+  });
+
+  it('resolves slash date task due dates', async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 'task-id' })));
+    const clients = createGoogleRestProviderClients({
+      tokenProvider,
+      fetcher,
+      now: () => new Date('2026-07-12T09:00:00.000Z')
+    });
+
+    await clients.tasks.createTask({
+      taskListId: 'list',
+      title: 'Order materials',
+      dueDate: '7/20/26'
+    });
+
+    const [, init] = fetcher.mock.calls[0];
+    expect(JSON.parse(init.body)).toMatchObject({ due: '2026-07-20T00:00:00.000Z' });
   });
 
   it('posts events to the Google Calendar REST API', async () => {

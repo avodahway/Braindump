@@ -66,7 +66,10 @@ describe('backend factory', () => {
     expect(calls).toHaveLength(1);
     expect(calls[0].url).toContain('/lists/brain-dump-work/tasks');
     expect(calls[0].authorization).toBe('Bearer fresh-token');
-    expect(calls[0].body).toMatchObject({ title: 'Pay employees tomorrow' });
+    expect(calls[0].body).toMatchObject({
+      title: 'Pay employees tomorrow',
+      due: '2026-07-13T00:00:00.000Z'
+    });
   });
 
   it('returns an execution error when no signed-in user can be resolved', async () => {

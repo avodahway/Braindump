@@ -33,7 +33,7 @@ export function createGoogleRestProviderClients(options: GoogleRestClientOptions
       async createTask(payload) {
         const response = await authedJson(fetcher, options.tokenProvider, googleTasksUrl(payload.taskListId), {
           method: 'POST',
-          body: JSON.stringify(toGoogleTask(payload))
+          body: JSON.stringify(toGoogleTask(payload, now()))
         });
         return { id: readProviderId(await response.json(), 'Google Tasks') };
       }
@@ -87,11 +87,11 @@ function googleCalendarUrl(calendarId: string): string {
   return `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`;
 }
 
-function toGoogleTask(payload: GoogleTaskPayload) {
+function toGoogleTask(payload: GoogleTaskPayload, now: Date) {
   return {
     title: payload.title,
     notes: payload.notes,
-    due: payload.dueDate ? dueDateToGoogleIso(payload.dueDate) : undefined
+    due: payload.dueDate ? dueDateToGoogleIso(payload.dueDate, now) : undefined
   };
 }
 
@@ -113,10 +113,10 @@ function toGoogleCalendarEvent(payload: GoogleCalendarPayload, now: Date) {
   };
 }
 
-function dueDateToGoogleIso(dateToken: string): string | undefined {
+function dueDateToGoogleIso(dateToken: string, now: Date): string | undefined {
   if (!dateToken) return undefined;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateToken)) return `${dateToken}T00:00:00.000Z`;
-  return undefined;
+  const date = resolveDateParts(dateToken, now);
+  return `${date.year}-${pad(date.month)}-${pad(date.day)}T00:00:00.000Z`;
 }
 
 function resolveLocalDateTime(dateToken: string, timeToken: string, now: Date): string {
@@ -133,6 +133,10 @@ function resolveDateParts(dateToken: string, now: Date): { year: number; month: 
     date.setDate(date.getDate() + 1);
     return toDateParts(date);
   }
+  if (token === 'next week') {
+    date.setDate(date.getDate() + 7);
+    return toDateParts(date);
+  }
 
   const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const weekday = weekdays.indexOf(token);
@@ -144,6 +148,11 @@ function resolveDateParts(dateToken: string, now: Date): { year: number; month: 
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(token)) {
     const [year, month, day] = token.split('-').map(Number);
+    return { year, month, day };
+  }
+  if (/^\d{1,2}\/\d{1,2}(?:\/\d{2,4})?$/.test(token)) {
+    const [month, day, rawYear] = token.split('/').map(Number);
+    const year = rawYear ? normalizeYear(rawYear) : date.getFullYear();
     return { year, month, day };
   }
   return toDateParts(date);
@@ -175,6 +184,10 @@ function toDateParts(date: Date): { year: number; month: number; day: number } {
 
 function pad(value: number): string {
   return String(value).padStart(2, '0');
+}
+
+function normalizeYear(year: number): number {
+  return year < 100 ? 2000 + year : year;
 }
 
 async function authedJson(
