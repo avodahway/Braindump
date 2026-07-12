@@ -46,6 +46,8 @@ The backend scaffold lives in `src/server/publicBackend.ts`. It implements the p
 
 Provider execution is split behind `src/server/actionExecutor.ts`. `src/server/googleExecutor.ts` defines the Google-ready adapter interface for Tasks, Calendar, projects, and waiting records.
 
+Google REST client scaffolding lives in `src/server/googleProviderClients.ts`. It accepts an injected access-token provider and fetch implementation, so real OAuth tokens can be supplied by the backend without putting secrets in the PWA.
+
 OAuth/session flow is scaffolded in `src/server/oauthSession.ts`, including state validation, token exchange interfaces, token storage interfaces, and default workspace creation.
 
 ## Private Apps Script Adapter
