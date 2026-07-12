@@ -51,7 +51,7 @@ Initial routes are documented in `src/api/publicContract.ts`:
 - `POST /api/auth/google/disconnect`
 - `POST /api/brain-dump`
 
-The current PWA includes a safe demo connection in public mode. It creates local-only destinations so the onboarding and processing flow can be tested without Google OAuth credentials.
+The current PWA includes a safe demo connection in public mode. It creates local-only destinations so the onboarding and processing flow can be tested without Google OAuth credentials. When a Public API URL is configured, `src/api/publicClient.ts` sends real requests to the public backend contract instead of using the demo process path.
 
 ## Safety Rules
 

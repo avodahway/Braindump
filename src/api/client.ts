@@ -1,11 +1,13 @@
 import { parseBrainDump } from '../lib/parser';
 import type { BrainDumpRequest, BrainDumpResponse, ParsedAction } from '../lib/types';
+import { processPublicBrainDump } from './publicClient';
 import { loadWorkspace } from './workspace';
 
 const settingsKey = 'brain-dump-settings';
 
 export type BackendSettings = {
   backendMode: 'mock' | 'public' | 'private_apps_script';
+  publicApiBaseUrl: string;
   backendUrl: string;
   sharedSecret: string;
 };
@@ -15,11 +17,12 @@ export function loadSettings(): BackendSettings {
     const parsed = JSON.parse(localStorage.getItem(settingsKey) ?? '{}') as Partial<BackendSettings>;
     return {
       backendMode: parsed.backendMode ?? (parsed.backendUrl ? 'private_apps_script' : 'mock'),
+      publicApiBaseUrl: parsed.publicApiBaseUrl ?? '',
       backendUrl: parsed.backendUrl ?? '',
       sharedSecret: parsed.sharedSecret ?? ''
     };
   } catch {
-    return { backendMode: 'mock', backendUrl: '', sharedSecret: '' };
+    return { backendMode: 'mock', publicApiBaseUrl: '', backendUrl: '', sharedSecret: '' };
   }
 }
 
@@ -35,6 +38,9 @@ export async function processBrainDump(request: BrainDumpRequest): Promise<Brain
   }
 
   if (settings.backendMode === 'public') {
+    if (settings.publicApiBaseUrl) {
+      return processPublicBrainDump(settings.publicApiBaseUrl, request);
+    }
     if (loadWorkspace().status !== 'connected') {
       throw new Error('Connect a Google workspace first, or switch back to mock preview.');
     }

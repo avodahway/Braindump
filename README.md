@@ -30,6 +30,13 @@ Brain Dump is moving toward a public multi-user model:
 
 No Google credentials should be stored in the frontend. The public backend should store refresh tokens server-side, encrypt secrets at rest, and let each user choose or create their own Brain Dump workspace.
 
+When a Public API URL is configured in Settings, public mode posts to:
+
+- `GET /api/workspace`
+- `POST /api/auth/google/start`
+- `POST /api/auth/google/disconnect`
+- `POST /api/brain-dump`
+
 See `docs/PUBLIC_BACKEND_PLAN.md` for the product/backend path.
 
 ## Private Apps Script Adapter

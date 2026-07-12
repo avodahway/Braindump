@@ -198,6 +198,15 @@ export function App() {
               </label>
             </fieldset>
             <label>
+              Public API URL
+              <input
+                value={settings.publicApiBaseUrl}
+                onChange={(event) => setSettings({ ...settings, publicApiBaseUrl: event.target.value })}
+                disabled={settings.backendMode !== 'public'}
+                placeholder="https://api.example.com"
+              />
+            </label>
+            <label>
               Private bridge URL
               <input
                 value={settings.backendUrl}
