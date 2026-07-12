@@ -13,6 +13,21 @@ const googleOAuth = {
 };
 
 describe('public backend scaffold', () => {
+  it('returns anonymous health status', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      now: () => new Date('2026-07-12T12:00:00.000Z')
+    });
+
+    const response = await backend.handle(new Request('https://api.example.com/api/health'));
+
+    expect(await response.json()).toEqual({
+      ok: true,
+      service: 'brain-dump-public-backend',
+      time: '2026-07-12T12:00:00.000Z'
+    });
+  });
+
   it('builds a Google OAuth authorization URL', () => {
     const url = new URL(buildGoogleAuthorizationUrl(googleOAuth));
 

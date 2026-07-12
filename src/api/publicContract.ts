@@ -8,6 +8,7 @@ export type PublicBackendContract = {
 };
 
 export const publicBackendRoutes = {
+  health: '/api/health',
   workspace: '/api/workspace',
   googleConnect: '/api/auth/google/start',
   googleCallback: '/api/auth/google/callback',

@@ -46,6 +46,7 @@ The public backend should infer the user from the session, not from frontend-sup
 
 Initial routes are documented in `src/api/publicContract.ts`:
 
+- `GET /api/health`
 - `GET /api/workspace`
 - `POST /api/auth/google/start`
 - `GET /api/auth/google/callback`

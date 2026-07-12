@@ -14,6 +14,7 @@
 - Pick durable encrypted storage.
 - Deploy staging frontend.
 - Deploy staging backend.
+- Confirm `GET /api/health` responds on staging.
 - Configure Google OAuth testing app.
 - Add first test users.
 - Run end-to-end Google OAuth smoke test.

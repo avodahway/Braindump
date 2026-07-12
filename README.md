@@ -49,6 +49,7 @@ See `docs/PUBLIC_BACKEND_PLAN.md` for the product/backend path.
 Go-to-market planning lives in:
 
 - `docs/BETA_LAUNCH_PLAN.md`
+- `docs/DEPLOYMENT_RUNBOOK.md`
 - `docs/GOOGLE_OAUTH_VERIFICATION.md`
 - `docs/GO_TO_MARKET_CHECKLIST.md`
 - `docs/PRIVACY_POLICY_DRAFT.md`

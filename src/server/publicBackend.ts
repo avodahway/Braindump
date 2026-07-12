@@ -52,6 +52,14 @@ export function createPublicBackend(options: PublicBackendOptions) {
     async handle(request: Request): Promise<Response> {
       const url = new URL(request.url);
 
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.health) {
+        return json({
+          ok: true,
+          service: 'brain-dump-public-backend',
+          time: now().toISOString()
+        });
+      }
+
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.workspace) {
         return json((await readRequestWorkspace(request, sessionStore, oauthStore))?.workspace ?? fallbackWorkspace ?? disconnectedWorkspace());
       }
