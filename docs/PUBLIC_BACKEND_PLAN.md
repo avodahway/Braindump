@@ -78,6 +78,8 @@ Calendar execution carries the request timezone through the executor context and
 
 `src/server/durableStore.ts` adds a framework-neutral key-value storage adapter for OAuth state, refresh tokens, workspaces, and sessions. A deployed backend can supply a managed store and encryption codec to `createBrainDumpBackend` without changing the parser, frontend, or Google execution code.
 
+`src/server/runtimeConfig.ts` and `src/server/runtimeHandler.ts` are the deployable backend entry point. Required environment values are `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `BRAIN_DUMP_PUBLIC_API_ORIGIN`. Optional values are `GOOGLE_OAUTH_SCOPES` and `BRAIN_DUMP_STORAGE_PREFIX`.
+
 ## Safety Rules
 
 - Never store Google client secrets in the PWA.

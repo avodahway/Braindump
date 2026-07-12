@@ -1,0 +1,68 @@
+import { publicBackendRoutes } from '../api/publicContract';
+import type { BrainDumpBackendConfig } from './backendFactory';
+
+export type RuntimeEnv = Record<string, string | undefined>;
+
+export type RuntimeConfigOptions = {
+  fetcher?: BrainDumpBackendConfig['fetcher'];
+  storage?: BrainDumpBackendConfig['storage'];
+  storageCodec?: BrainDumpBackendConfig['storageCodec'];
+  nowMs?: BrainDumpBackendConfig['nowMs'];
+  nowDate?: BrainDumpBackendConfig['nowDate'];
+};
+
+export const defaultGoogleScopes = [
+  'openid',
+  'email',
+  'profile',
+  'https://www.googleapis.com/auth/tasks',
+  'https://www.googleapis.com/auth/calendar.events'
+] as const;
+
+export function loadBrainDumpBackendConfig(
+  env: RuntimeEnv,
+  options: RuntimeConfigOptions = {}
+): BrainDumpBackendConfig {
+  const clientId = requiredEnv(env, 'GOOGLE_CLIENT_ID');
+  const clientSecret = requiredEnv(env, 'GOOGLE_CLIENT_SECRET');
+  const publicApiOrigin = normalizeOrigin(requiredEnv(env, 'BRAIN_DUMP_PUBLIC_API_ORIGIN'));
+  const scopes = parseScopes(env.GOOGLE_OAUTH_SCOPES);
+
+  return {
+    googleOAuth: {
+      clientId,
+      clientSecret,
+      redirectUri: `${publicApiOrigin}${publicBackendRoutes.googleCallback}`,
+      scopes
+    },
+    storageKeyPrefix: env.BRAIN_DUMP_STORAGE_PREFIX || 'brain-dump',
+    fetcher: options.fetcher,
+    storage: options.storage,
+    storageCodec: options.storageCodec,
+    nowMs: options.nowMs,
+    nowDate: options.nowDate
+  };
+}
+
+export function requiredEnv(env: RuntimeEnv, name: string): string {
+  const value = env[name]?.trim();
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+export function parseScopes(value: string | undefined): string[] {
+  const scopes = value
+    ?.split(/[\s,]+/)
+    .map((scope) => scope.trim())
+    .filter(Boolean);
+
+  return scopes && scopes.length > 0 ? scopes : [...defaultGoogleScopes];
+}
+
+function normalizeOrigin(value: string): string {
+  const withoutTrailingSlash = value.replace(/\/+$/, '');
+  const url = new URL(withoutTrailingSlash);
+  return url.origin === withoutTrailingSlash ? withoutTrailingSlash : `${url.origin}${url.pathname}`;
+}
