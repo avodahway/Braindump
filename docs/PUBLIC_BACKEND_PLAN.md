@@ -57,6 +57,8 @@ The current PWA includes a safe demo connection in public mode. It creates local
 
 `src/server/actionExecutor.ts` separates parsed actions from provider writes. The demo executor maps actions to user destinations now; a later Google executor can implement the same interface with real Tasks, Calendar, and workspace writes.
 
+`src/server/googleExecutor.ts` defines that Google-ready adapter boundary. It accepts injected clients for Tasks, Calendar, and workspace records so the OAuth/token layer can be added without changing parser or routing behavior.
+
 ## Safety Rules
 
 - Never store Google client secrets in the PWA.
