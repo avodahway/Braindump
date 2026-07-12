@@ -44,7 +44,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
       const url = new URL(request.url);
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.workspace) {
-        return json((await readRequestWorkspace(request, sessionStore, oauthStore)) ?? fallbackWorkspace ?? disconnectedWorkspace());
+        return json((await readRequestWorkspace(request, sessionStore, oauthStore))?.workspace ?? fallbackWorkspace ?? disconnectedWorkspace());
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.googleConnect) {
@@ -86,7 +86,8 @@ export function createPublicBackend(options: PublicBackendOptions) {
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.brainDump) {
-        const workspace = (await readRequestWorkspace(request, sessionStore, oauthStore)) ?? fallbackWorkspace ?? disconnectedWorkspace();
+        const requestWorkspace = await readRequestWorkspace(request, sessionStore, oauthStore);
+        const workspace = requestWorkspace?.workspace ?? fallbackWorkspace ?? disconnectedWorkspace();
         if (workspace.status !== 'connected') {
           return json({ error: 'Google workspace is not connected.' }, 409);
         }
@@ -96,7 +97,13 @@ export function createPublicBackend(options: PublicBackendOptions) {
           return json(responsesByRequestId.get(body.requestId));
         }
 
-        const response = await executeParsedResponse(parseBrainDump(body.text, body.requestId), workspace, executor, body);
+        const response = await executeParsedResponse(
+          parseBrainDump(body.text, body.requestId),
+          workspace,
+          executor,
+          body,
+          requestWorkspace?.userId
+        );
         responsesByRequestId.set(body.requestId, response);
         return json(response);
       }
@@ -121,13 +128,15 @@ async function executeParsedResponse(
   response: BrainDumpResponse,
   workspace: UserWorkspace,
   executor: ActionExecutor,
-  request: BrainDumpRequest
+  request: BrainDumpRequest,
+  userId?: string
 ): Promise<BrainDumpResponse> {
   const actions = await Promise.all(
     response.actions.map(async (action): Promise<ParsedAction> => {
       const result = await executor.execute(action, workspace, {
         requestId: request.requestId,
-        timezone: request.timezone
+        timezone: request.timezone,
+        userId
       });
       return {
         ...action,
@@ -161,12 +170,14 @@ async function readRequestWorkspace(
   request: Request,
   sessionStore: SessionStore,
   oauthStore: OAuthSessionStore
-): Promise<UserWorkspace | undefined> {
+): Promise<{ userId: string; workspace: UserWorkspace } | undefined> {
   const sessionId = readSessionIdFromCookie(request.headers.get('Cookie'));
   if (!sessionId) return undefined;
   const session = await sessionStore.readSession(sessionId);
   if (!session) return undefined;
-  return oauthStore.readWorkspace(session.userId);
+  const workspace = await oauthStore.readWorkspace(session.userId);
+  if (!workspace) return undefined;
+  return { userId: session.userId, workspace };
 }
 
 function json(value: unknown, status = 200, headers: Record<string, string> = {}): Response {

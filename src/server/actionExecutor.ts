@@ -9,6 +9,7 @@ export type ExecutionResult = {
 export type ExecutionContext = {
   requestId: string;
   timezone: string;
+  userId?: string;
 };
 
 export type ActionExecutor = {
