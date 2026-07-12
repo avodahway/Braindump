@@ -70,6 +70,8 @@ Calendar execution carries the request timezone through the executor context and
 
 `src/server/publicBackend.ts` now calls that OAuth flow directly for `/api/auth/google/start` and `/api/auth/google/callback`. The callback still uses injected token clients/stores, so real Google credentials can be added outside the PWA source.
 
+`src/server/googleOAuthClient.ts` is the fetch-based Google OAuth token client. It exchanges authorization codes for tokens and reads the OpenID profile through injected backend config, including the client secret.
+
 ## Safety Rules
 
 - Never store Google client secrets in the PWA.

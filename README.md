@@ -50,6 +50,8 @@ Google REST client scaffolding lives in `src/server/googleProviderClients.ts`. I
 
 OAuth/session flow is scaffolded in `src/server/oauthSession.ts`, including state validation, token exchange interfaces, token storage interfaces, and default workspace creation.
 
+The Google OAuth token client lives in `src/server/googleOAuthClient.ts`. It expects the Google client secret from backend configuration, never from frontend source.
+
 ## Private Apps Script Adapter
 
 `apps-script/BrainDumpBridge.gs` is retained as a private adapter for Cleveland Stewardship OS. It is not the default public backend.
