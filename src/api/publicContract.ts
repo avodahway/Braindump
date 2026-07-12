@@ -10,6 +10,7 @@ export type PublicBackendContract = {
 export const publicBackendRoutes = {
   workspace: '/api/workspace',
   googleConnect: '/api/auth/google/start',
+  googleCallback: '/api/auth/google/callback',
   googleDisconnect: '/api/auth/google/disconnect',
   brainDump: '/api/brain-dump'
 } as const;

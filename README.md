@@ -34,6 +34,7 @@ When a Public API URL is configured in Settings, public mode posts to:
 
 - `GET /api/workspace`
 - `POST /api/auth/google/start`
+- `GET /api/auth/google/callback`
 - `POST /api/auth/google/disconnect`
 - `POST /api/brain-dump`
 
@@ -42,6 +43,8 @@ See `docs/PUBLIC_BACKEND_PLAN.md` for the product/backend path.
 The backend scaffold lives in `src/server/publicBackend.ts`. It implements the public API contract without real Google writes yet, including OAuth URL creation and request idempotency.
 
 Provider execution is split behind `src/server/actionExecutor.ts`. `src/server/googleExecutor.ts` defines the Google-ready adapter interface for Tasks, Calendar, projects, and waiting records.
+
+OAuth/session flow is scaffolded in `src/server/oauthSession.ts`, including state validation, token exchange interfaces, token storage interfaces, and default workspace creation.
 
 ## Private Apps Script Adapter
 
