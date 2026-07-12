@@ -18,6 +18,7 @@ import {
   type SessionStore
 } from './sessionStore';
 import { createMemoryResponseStore, type ResponseStore } from './idempotencyStore';
+import { createMemoryExecutionLogStore, type ExecutionLogStore } from './executionLogStore';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -34,6 +35,8 @@ export type PublicBackendOptions = {
   workspaceProvisioner?: WorkspaceProvisioner;
   sessionStore?: SessionStore;
   responseStore?: ResponseStore;
+  executionLogStore?: ExecutionLogStore;
+  now?: () => Date;
 };
 
 export function createPublicBackend(options: PublicBackendOptions) {
@@ -42,6 +45,8 @@ export function createPublicBackend(options: PublicBackendOptions) {
   const oauthStore = options.oauthStore ?? createMemoryOAuthStore();
   const sessionStore = options.sessionStore ?? createMemorySessionStore();
   const responseStore = options.responseStore ?? createMemoryResponseStore();
+  const executionLogStore = options.executionLogStore ?? createMemoryExecutionLogStore();
+  const now = options.now ?? (() => new Date());
 
   return {
     async handle(request: Request): Promise<Response> {
@@ -76,6 +81,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
           });
           const session = await sessionStore.createSession(workspace.email?.toLowerCase() ?? '');
           await responseStore.clear();
+          await executionLogStore.clear();
           return json(workspace, 200, { 'Set-Cookie': sessionCookie(session.id) });
         } catch (error) {
           return json({ error: error instanceof Error ? error.message : 'OAuth callback failed.' }, 400);
@@ -87,6 +93,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
         if (sessionId) await sessionStore.deleteSession(sessionId);
         fallbackWorkspace = undefined;
         await responseStore.clear();
+        await executionLogStore.clear();
         return json({ ok: true }, 200, { 'Set-Cookie': clearSessionCookie() });
       }
 
@@ -108,7 +115,9 @@ export function createPublicBackend(options: PublicBackendOptions) {
           workspace,
           executor,
           body,
-          requestWorkspace?.userId
+          requestWorkspace?.userId,
+          executionLogStore,
+          now
         );
         await responseStore.saveResponse(body.requestId, response);
         return json(response);
@@ -135,7 +144,9 @@ async function executeParsedResponse(
   workspace: UserWorkspace,
   executor: ActionExecutor,
   request: BrainDumpRequest,
-  userId?: string
+  userId?: string,
+  executionLogStore: ExecutionLogStore = createMemoryExecutionLogStore(),
+  now: () => Date = () => new Date()
 ): Promise<BrainDumpResponse> {
   const actions = await Promise.all(
     response.actions.map(async (action): Promise<ParsedAction> => {
@@ -143,6 +154,16 @@ async function executeParsedResponse(
         requestId: request.requestId,
         timezone: request.timezone,
         userId
+      });
+      await executionLogStore.append({
+        requestId: request.requestId,
+        userId,
+        actionType: action.type,
+        title: action.title,
+        status: result.status,
+        message: result.message,
+        providerId: result.providerId,
+        createdAt: now().toISOString()
       });
       return {
         ...action,

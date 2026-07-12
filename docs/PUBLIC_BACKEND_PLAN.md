@@ -84,6 +84,8 @@ Calendar execution carries the request timezone through the executor context and
 
 `src/server/idempotencyStore.ts` persists processed brain-dump responses by request id. With durable storage configured, retries and backend restarts return the first response instead of writing duplicate tasks or calendar events.
 
+`src/server/executionLogStore.ts` records every attempted action with request id, user id, status, provider id, and error message when one occurs. Production storage can retain this as the audit trail for support and debugging.
+
 ## Safety Rules
 
 - Never store Google client secrets in the PWA.

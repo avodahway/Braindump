@@ -64,6 +64,8 @@ The Google OAuth token client lives in `src/server/googleOAuthClient.ts`. It exp
 
 `src/server/idempotencyStore.ts` keeps processed request IDs from writing twice. When the backend is configured with durable storage, duplicate requests return the original response even after a backend restart.
 
+`src/server/executionLogStore.ts` records each attempted action with request id, user id, status, provider id, and failure messages so the public backend has an audit trail.
+
 ## Private Apps Script Adapter
 
 `apps-script/BrainDumpBridge.gs` is retained as a private adapter for Cleveland Stewardship OS. It is not the default public backend.

@@ -181,6 +181,57 @@ describe('backend factory', () => {
     expect(await second.json()).toEqual(await first.json());
     expect(executions).toBe(1);
   });
+
+  it('persists execution logs through the shared durable storage option', async () => {
+    const storage = createMemoryKeyValueStore();
+    const oauthStore = createMemoryOAuthStore();
+    const sessionStore = createMemorySessionStore(() => 1000);
+    await oauthStore.saveWorkspace('user@example.com', defaultWorkspace('user@example.com'));
+    const session = await sessionStore.createSession('user@example.com');
+    const backend = createBrainDumpBackend({
+      googleOAuth,
+      storage,
+      storageKeyPrefix: 'test',
+      oauthStore,
+      sessionStore,
+      nowDate: () => new Date('2026-07-12T12:00:00.000Z'),
+      tokenClient: callbackTokenClient(),
+      workspaceProvisioner: {
+        async provision(profile) {
+          return defaultWorkspace(profile.email);
+        }
+      },
+      executor: {
+        async execute() {
+          return { status: 'created', message: 'Created', providerId: 'provider-id' };
+        }
+      }
+    });
+
+    await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        headers: { Cookie: `${sessionCookieName}=${session.id}` },
+        body: JSON.stringify({
+          requestId: 'req-log',
+          text: 'Buy coffee',
+          timezone: 'America/Chicago'
+        })
+      })
+    );
+
+    const saved = storage.values.get('test:execution-log:req-log');
+    expect(saved ? JSON.parse(saved) : []).toMatchObject([
+      {
+        requestId: 'req-log',
+        userId: 'user@example.com',
+        actionType: 'personal_task',
+        status: 'created',
+        providerId: 'provider-id',
+        createdAt: '2026-07-12T12:00:00.000Z'
+      }
+    ]);
+  });
 });
 
 function fakeTokenClient(): TokenExchangeClient {

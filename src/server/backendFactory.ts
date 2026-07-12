@@ -20,6 +20,11 @@ import { createRefreshingTokenProvider } from './refreshingTokenProvider';
 import { createMemorySessionStore, type SessionStore } from './sessionStore';
 import { createGoogleWorkspaceProvisioner } from './workspaceProvisioning';
 import { createDurableResponseStore, createMemoryResponseStore, type ResponseStore } from './idempotencyStore';
+import {
+  createDurableExecutionLogStore,
+  createMemoryExecutionLogStore,
+  type ExecutionLogStore
+} from './executionLogStore';
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -38,6 +43,7 @@ export type BrainDumpBackendConfig = {
   tokenClient?: TokenExchangeClient;
   workspaceProvisioner?: WorkspaceProvisioner;
   responseStore?: ResponseStore;
+  executionLogStore?: ExecutionLogStore;
   executor?: ActionExecutor;
 };
 
@@ -65,8 +71,16 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
       ? createDurableResponseStore(config.storage, {
           keyPrefix: config.storageKeyPrefix,
           codec: config.storageCodec
-        })
+      })
       : createMemoryResponseStore());
+  const executionLogStore =
+    config.executionLogStore ??
+    (config.storage
+      ? createDurableExecutionLogStore(config.storage, {
+          keyPrefix: config.storageKeyPrefix,
+          codec: config.storageCodec
+        })
+      : createMemoryExecutionLogStore());
   const tokenClient =
     config.tokenClient ??
     createGoogleOAuthClient(
@@ -98,6 +112,8 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
     tokenClient,
     workspaceProvisioner,
     responseStore,
+    executionLogStore,
+    now: config.nowDate,
     executor
   });
 }

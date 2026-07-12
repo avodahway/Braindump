@@ -4,6 +4,7 @@ import { createMemoryOAuthStore, type TokenExchangeClient } from './oauthSession
 import { buildGoogleAuthorizationUrl, createPublicBackend } from './publicBackend';
 import { createMemorySessionStore, sessionCookieName } from './sessionStore';
 import { createMemoryResponseStore } from './idempotencyStore';
+import { createMemoryExecutionLogStore } from './executionLogStore';
 
 const googleOAuth = {
   clientId: 'client-id',
@@ -113,9 +114,12 @@ describe('public backend scaffold', () => {
   });
 
   it('uses the injected executor and returns execution failures', async () => {
+    const executionLogStore = createMemoryExecutionLogStore();
     const backend = createPublicBackend({
       googleOAuth,
       workspace: connectedWorkspace(),
+      executionLogStore,
+      now: () => new Date('2026-07-12T12:00:00.000Z'),
       executor: {
         async execute(action: ParsedAction) {
           return action.type === 'calendar'
@@ -139,6 +143,18 @@ describe('public backend scaffold', () => {
 
     expect(result.ok).toBe(false);
     expect(result.errors).toEqual(['Calendar write failed']);
+    expect(await executionLogStore.readByRequest('req-executor')).toEqual([
+      {
+        requestId: 'req-executor',
+        userId: undefined,
+        actionType: 'calendar',
+        title: 'Lunch with Jack',
+        status: 'error',
+        message: 'Calendar write failed',
+        providerId: undefined,
+        createdAt: '2026-07-12T12:00:00.000Z'
+      }
+    ]);
   });
 
   it('passes request timezone into the executor context', async () => {
@@ -217,9 +233,16 @@ describe('public backend scaffold', () => {
   it('uses session cookies to read workspace and process requests', async () => {
     const oauthStore = createMemoryOAuthStore();
     const sessionStore = createMemorySessionStore(() => 1234);
+    const executionLogStore = createMemoryExecutionLogStore();
     await oauthStore.saveWorkspace('user@example.com', connectedWorkspace());
     const session = await sessionStore.createSession('user@example.com');
-    const backend = createPublicBackend({ googleOAuth, oauthStore, sessionStore });
+    const backend = createPublicBackend({
+      googleOAuth,
+      oauthStore,
+      sessionStore,
+      executionLogStore,
+      now: () => new Date('2026-07-12T12:00:00.000Z')
+    });
 
     const workspaceResponse = await backend.handle(
       new Request('https://api.example.com/api/workspace', {
@@ -242,6 +265,16 @@ describe('public backend scaffold', () => {
     );
     const result = await processResponse.json();
     expect(result.summary.personalTasks).toBe(1);
+    expect(await executionLogStore.readByRequest('req-session')).toMatchObject([
+      {
+        requestId: 'req-session',
+        userId: 'user@example.com',
+        actionType: 'personal_task',
+        title: 'Buy coffee',
+        status: 'created',
+        createdAt: '2026-07-12T12:00:00.000Z'
+      }
+    ]);
   });
 
   it('clears the session on disconnect', async () => {
