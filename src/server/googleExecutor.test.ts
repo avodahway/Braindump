@@ -47,7 +47,8 @@ describe('Google action executor', () => {
         startTime: '12:00 pm',
         durationMinutes: 60
       }),
-      workspace
+      workspace,
+      { requestId: 'req-1', timezone: 'America/Chicago' }
     );
     const needsReview = await executor.execute(
       action('calendar', { title: 'Work block', calendarDate: 'this week', startTime: 'safe-default-required' }),
@@ -57,6 +58,15 @@ describe('Google action executor', () => {
     expect(created.status).toBe('created');
     expect(needsReview.status).toBe('needs_review');
     expect(clients.calendar.createEvent).toHaveBeenCalledTimes(1);
+    expect(clients.calendar.createEvent).toHaveBeenCalledWith({
+      calendarId: 'calendar-id',
+      title: 'Lunch with Jack',
+      date: 'thursday',
+      startTime: '12:00 pm',
+      durationMinutes: 60,
+      notes: undefined,
+      timezone: 'America/Chicago'
+    });
   });
 
   it('creates project and waiting workspace records', async () => {

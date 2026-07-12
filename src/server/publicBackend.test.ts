@@ -112,6 +112,33 @@ describe('public backend scaffold', () => {
     expect(result.errors).toEqual(['Calendar write failed']);
   });
 
+  it('passes request timezone into the executor context', async () => {
+    let timezone = '';
+    const backend = createPublicBackend({
+      googleOAuth,
+      workspace: connectedWorkspace(),
+      executor: {
+        async execute(_action, _workspace, context) {
+          timezone = context?.timezone ?? '';
+          return { status: 'created', message: 'Created' };
+        }
+      }
+    });
+
+    await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        body: JSON.stringify({
+          requestId: 'req-timezone',
+          text: 'Buy coffee',
+          timezone: 'America/Chicago'
+        })
+      })
+    );
+
+    expect(timezone).toBe('America/Chicago');
+  });
+
   it('starts and completes OAuth through backend routes', async () => {
     const store = createMemoryOAuthStore();
     const backend = createPublicBackend({

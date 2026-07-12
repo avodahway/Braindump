@@ -6,8 +6,13 @@ export type ExecutionResult = {
   providerId?: string;
 };
 
+export type ExecutionContext = {
+  requestId: string;
+  timezone: string;
+};
+
 export type ActionExecutor = {
-  execute(action: ParsedAction, workspace: UserWorkspace): Promise<ExecutionResult>;
+  execute(action: ParsedAction, workspace: UserWorkspace, context?: ExecutionContext): Promise<ExecutionResult>;
 };
 
 export function createDemoActionExecutor(): ActionExecutor {

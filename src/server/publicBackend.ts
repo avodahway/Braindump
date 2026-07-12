@@ -83,7 +83,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
           return json(responsesByRequestId.get(body.requestId));
         }
 
-        const response = await executeParsedResponse(parseBrainDump(body.text, body.requestId), workspace, executor);
+        const response = await executeParsedResponse(parseBrainDump(body.text, body.requestId), workspace, executor, body);
         responsesByRequestId.set(body.requestId, response);
         return json(response);
       }
@@ -107,11 +107,15 @@ export function buildGoogleAuthorizationUrl(config: GoogleOAuthConfig): string {
 async function executeParsedResponse(
   response: BrainDumpResponse,
   workspace: UserWorkspace,
-  executor: ActionExecutor
+  executor: ActionExecutor,
+  request: BrainDumpRequest
 ): Promise<BrainDumpResponse> {
   const actions = await Promise.all(
     response.actions.map(async (action): Promise<ParsedAction> => {
-      const result = await executor.execute(action, workspace);
+      const result = await executor.execute(action, workspace, {
+        requestId: request.requestId,
+        timezone: request.timezone
+      });
       return {
         ...action,
         status: result.status,

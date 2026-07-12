@@ -51,7 +51,8 @@ describe('Google REST provider clients', () => {
       date: 'monday',
       startTime: '12:00 pm',
       durationMinutes: 60,
-      notes: 'Bring notes'
+      notes: 'Bring notes',
+      timezone: 'America/Chicago'
     });
 
     const [, init] = fetcher.mock.calls[0];
@@ -59,8 +60,8 @@ describe('Google REST provider clients', () => {
     expect(JSON.parse(init.body)).toMatchObject({
       summary: 'Lunch with Jack',
       description: 'Bring notes',
-      start: { dateTime: '2026-07-13T17:00:00.000Z' },
-      end: { dateTime: '2026-07-13T18:00:00.000Z' }
+      start: { dateTime: '2026-07-13T12:00:00', timeZone: 'America/Chicago' },
+      end: { dateTime: '2026-07-13T13:00:00', timeZone: 'America/Chicago' }
     });
   });
 

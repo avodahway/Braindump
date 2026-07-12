@@ -96,17 +96,19 @@ function toGoogleTask(payload: GoogleTaskPayload) {
 }
 
 function toGoogleCalendarEvent(payload: GoogleCalendarPayload, now: Date) {
-  const start = resolveDateTime(payload.date, payload.startTime, now);
-  const end = new Date(start.getTime() + payload.durationMinutes * 60000);
+  const start = resolveLocalDateTime(payload.date, payload.startTime, now);
+  const end = addMinutes(start, payload.durationMinutes);
 
   return {
     summary: payload.title,
     description: payload.notes,
     start: {
-      dateTime: start.toISOString()
+      dateTime: start,
+      timeZone: payload.timezone
     },
     end: {
-      dateTime: end.toISOString()
+      dateTime: end,
+      timeZone: payload.timezone
     }
   };
 }
@@ -117,20 +119,19 @@ function dueDateToGoogleIso(dateToken: string): string | undefined {
   return undefined;
 }
 
-function resolveDateTime(dateToken: string, timeToken: string, now: Date): Date {
-  const date = resolveDate(dateToken, now);
+function resolveLocalDateTime(dateToken: string, timeToken: string, now: Date): string {
+  const date = resolveDateParts(dateToken, now);
   const time = parseTime(timeToken);
-  date.setHours(time.hour, time.minute, 0, 0);
-  return date;
+  return `${date.year}-${pad(date.month)}-${pad(date.day)}T${pad(time.hour)}:${pad(time.minute)}:00`;
 }
 
-function resolveDate(dateToken: string, now: Date): Date {
+function resolveDateParts(dateToken: string, now: Date): { year: number; month: number; day: number } {
   const date = new Date(now);
   const token = dateToken.toLowerCase();
-  if (token === 'today') return date;
+  if (token === 'today') return toDateParts(date);
   if (token === 'tomorrow') {
     date.setDate(date.getDate() + 1);
-    return date;
+    return toDateParts(date);
   }
 
   const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -138,11 +139,14 @@ function resolveDate(dateToken: string, now: Date): Date {
   if (weekday >= 0) {
     const delta = (weekday - date.getDay() + 7) % 7 || 7;
     date.setDate(date.getDate() + delta);
-    return date;
+    return toDateParts(date);
   }
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(token)) return new Date(`${token}T00:00:00`);
-  return date;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(token)) {
+    const [year, month, day] = token.split('-').map(Number);
+    return { year, month, day };
+  }
+  return toDateParts(date);
 }
 
 function parseTime(timeToken: string): { hour: number; minute: number } {
@@ -153,6 +157,24 @@ function parseTime(timeToken: string): { hour: number; minute: number } {
   if (match[3] === 'pm' && hour !== 12) hour += 12;
   if (match[3] === 'am' && hour === 12) hour = 0;
   return { hour, minute };
+}
+
+function addMinutes(localDateTime: string, minutes: number): string {
+  const date = new Date(`${localDateTime}Z`);
+  date.setUTCMinutes(date.getUTCMinutes() + minutes);
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:00`;
+}
+
+function toDateParts(date: Date): { year: number; month: number; day: number } {
+  return {
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    day: date.getDate()
+  };
+}
+
+function pad(value: number): string {
+  return String(value).padStart(2, '0');
 }
 
 async function authedJson(

@@ -15,6 +15,7 @@ export type GoogleCalendarPayload = {
   startTime: string;
   durationMinutes: number;
   notes?: string;
+  timezone?: string;
 };
 
 export type WorkspaceRecordPayload = {
@@ -39,7 +40,7 @@ export type GoogleProviderClients = {
 
 export function createGoogleActionExecutor(clients: GoogleProviderClients): ActionExecutor {
   return {
-    async execute(action, workspace) {
+    async execute(action, workspace, context) {
       if (action.type === 'needs_review') {
         return { status: 'needs_review', message: `Needs review: ${action.title}` };
       }
@@ -71,7 +72,8 @@ export function createGoogleActionExecutor(clients: GoogleProviderClients): Acti
             date: action.calendarDate,
             startTime: action.startTime,
             durationMinutes: action.durationMinutes ?? 60,
-            notes: action.notes
+            notes: action.notes,
+            timezone: context?.timezone
           });
           return created(`Calendar event created: ${action.title}`, event.id);
         }

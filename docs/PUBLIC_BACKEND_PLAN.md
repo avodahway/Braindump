@@ -64,6 +64,8 @@ The current PWA includes a safe demo connection in public mode. It creates local
 
 `src/server/googleProviderClients.ts` contains fetch-based Google REST clients for Tasks and Calendar, plus an in-memory workspace record client. Production can replace the memory workspace with a database-backed implementation while keeping the executor contract stable.
 
+Calendar execution carries the request timezone through the executor context and sends Google Calendar local `dateTime` values with a `timeZone`, avoiding server-runtime timezone assumptions.
+
 `src/server/oauthSession.ts` defines the OAuth state, token exchange, token storage, and default workspace creation flow. It uses interfaces for the token client and storage so production can plug in encrypted storage later.
 
 `src/server/publicBackend.ts` now calls that OAuth flow directly for `/api/auth/google/start` and `/api/auth/google/callback`. The callback still uses injected token clients/stores, so real Google credentials can be added outside the PWA source.
