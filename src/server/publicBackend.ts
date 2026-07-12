@@ -2,6 +2,13 @@ import { parseBrainDump } from '../lib/parser';
 import type { BrainDumpRequest, BrainDumpResponse, ParsedAction, UserWorkspace } from '../lib/types';
 import { publicBackendRoutes } from '../api/publicContract';
 import { createDemoActionExecutor, type ActionExecutor } from './actionExecutor';
+import {
+  completeOAuthSession,
+  createMemoryOAuthStore,
+  startOAuthSession,
+  type OAuthSessionStore,
+  type TokenExchangeClient
+} from './oauthSession';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -13,12 +20,15 @@ export type PublicBackendOptions = {
   googleOAuth: GoogleOAuthConfig;
   workspace?: UserWorkspace;
   executor?: ActionExecutor;
+  oauthStore?: OAuthSessionStore;
+  tokenClient?: TokenExchangeClient;
 };
 
 export function createPublicBackend(options: PublicBackendOptions) {
   const responsesByRequestId = new Map<string, BrainDumpResponse>();
-  let workspace = options.workspace ?? demoWorkspace();
+  let workspace = options.workspace ?? disconnectedWorkspace();
   const executor = options.executor ?? createDemoActionExecutor();
+  const oauthStore = options.oauthStore ?? createMemoryOAuthStore();
 
   return {
     async handle(request: Request): Promise<Response> {
@@ -29,12 +39,36 @@ export function createPublicBackend(options: PublicBackendOptions) {
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.googleConnect) {
-        workspace = demoWorkspace();
-        return json({ authorizationUrl: buildGoogleAuthorizationUrl(options.googleOAuth) });
+        return json(await startOAuthSession(options.googleOAuth, oauthStore));
+      }
+
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.googleCallback) {
+        if (!options.tokenClient) {
+          return json({ error: 'OAuth token client is not configured.' }, 501);
+        }
+
+        const code = url.searchParams.get('code');
+        const state = url.searchParams.get('state');
+        if (!code || !state) {
+          return json({ error: 'Missing OAuth code or state.' }, 400);
+        }
+
+        try {
+          workspace = await completeOAuthSession({
+            code,
+            state,
+            store: oauthStore,
+            tokenClient: options.tokenClient
+          });
+          responsesByRequestId.clear();
+          return json(workspace);
+        } catch (error) {
+          return json({ error: error instanceof Error ? error.message : 'OAuth callback failed.' }, 400);
+        }
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.googleDisconnect) {
-        workspace = { status: 'not_connected', destinations: [] };
+        workspace = disconnectedWorkspace();
         responsesByRequestId.clear();
         return json({ ok: true });
       }
@@ -102,48 +136,8 @@ async function executeParsedResponse(
   };
 }
 
-function demoWorkspace(): UserWorkspace {
-  return {
-    status: 'connected',
-    email: 'demo@braindump.local',
-    destinations: [
-      {
-        id: 'tasks-work',
-        name: 'Brain Dump Work',
-        provider: 'google_tasks',
-        kind: 'work_tasks',
-        isDefault: true
-      },
-      {
-        id: 'tasks-personal',
-        name: 'Brain Dump Personal',
-        provider: 'google_tasks',
-        kind: 'personal_tasks',
-        isDefault: true
-      },
-      {
-        id: 'calendar',
-        name: 'Brain Dump Calendar',
-        provider: 'google_calendar',
-        kind: 'calendar',
-        isDefault: true
-      },
-      {
-        id: 'projects',
-        name: 'Brain Dump Projects',
-        provider: 'brain_dump_workspace',
-        kind: 'projects',
-        isDefault: true
-      },
-      {
-        id: 'waiting',
-        name: 'Brain Dump Waiting On',
-        provider: 'brain_dump_workspace',
-        kind: 'waiting',
-        isDefault: true
-      }
-    ]
-  };
+function disconnectedWorkspace(): UserWorkspace {
+  return { status: 'not_connected', destinations: [] };
 }
 
 function json(value: unknown, status = 200): Response {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ParsedAction } from '../lib/types';
+import { createMemoryOAuthStore, type TokenExchangeClient } from './oauthSession';
 import { buildGoogleAuthorizationUrl, createPublicBackend } from './publicBackend';
 
 const googleOAuth = {
@@ -19,7 +20,10 @@ describe('public backend scaffold', () => {
   });
 
   it('returns workspace and processes brain dumps through the public route', async () => {
-    const backend = createPublicBackend({ googleOAuth });
+    const backend = createPublicBackend({
+      googleOAuth,
+      workspace: connectedWorkspace()
+    });
 
     const workspaceResponse = await backend.handle(new Request('https://api.example.com/api/workspace'));
     const workspace = await workspaceResponse.json();
@@ -42,7 +46,7 @@ describe('public backend scaffold', () => {
   });
 
   it('returns the same response for duplicate request ids', async () => {
-    const backend = createPublicBackend({ googleOAuth });
+    const backend = createPublicBackend({ googleOAuth, workspace: connectedWorkspace() });
     const request = {
       requestId: 'req-duplicate',
       text: 'Buy coffee',
@@ -66,7 +70,7 @@ describe('public backend scaffold', () => {
   });
 
   it('blocks processing after disconnect', async () => {
-    const backend = createPublicBackend({ googleOAuth });
+    const backend = createPublicBackend({ googleOAuth, workspace: connectedWorkspace() });
 
     await backend.handle(new Request('https://api.example.com/api/auth/google/disconnect', { method: 'POST' }));
     const response = await backend.handle(
@@ -82,6 +86,7 @@ describe('public backend scaffold', () => {
   it('uses the injected executor and returns execution failures', async () => {
     const backend = createPublicBackend({
       googleOAuth,
+      workspace: connectedWorkspace(),
       executor: {
         async execute(action: ParsedAction) {
           return action.type === 'calendar'
@@ -106,4 +111,76 @@ describe('public backend scaffold', () => {
     expect(result.ok).toBe(false);
     expect(result.errors).toEqual(['Calendar write failed']);
   });
+
+  it('starts and completes OAuth through backend routes', async () => {
+    const store = createMemoryOAuthStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      oauthStore: store,
+      tokenClient: fakeTokenClient()
+    });
+
+    const startResponse = await backend.handle(
+      new Request('https://api.example.com/api/auth/google/start', { method: 'POST' })
+    );
+    const start = await startResponse.json();
+    const authorization = new URL(start.authorizationUrl);
+
+    expect(authorization.searchParams.get('state')).toBe(start.state);
+    expect(store.states.has(start.state)).toBe(true);
+
+    const callbackResponse = await backend.handle(
+      new Request(`https://api.example.com/api/auth/google/callback?code=auth-code&state=${start.state}`)
+    );
+    const workspace = await callbackResponse.json();
+
+    expect(workspace.status).toBe('connected');
+    expect(workspace.email).toBe('user@example.com');
+    expect(store.tokens.has('user@example.com')).toBe(true);
+  });
+
+  it('rejects callback requests with invalid state', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      oauthStore: createMemoryOAuthStore(),
+      tokenClient: fakeTokenClient()
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/auth/google/callback?code=auth-code&state=bad')
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Invalid OAuth state.' });
+  });
 });
+
+function connectedWorkspace() {
+  return {
+    status: 'connected' as const,
+    email: 'demo@braindump.local',
+    destinations: [
+      { id: 'tasks-work', name: 'Brain Dump Work', provider: 'google_tasks' as const, kind: 'work_tasks' as const, isDefault: true },
+      { id: 'tasks-personal', name: 'Brain Dump Personal', provider: 'google_tasks' as const, kind: 'personal_tasks' as const, isDefault: true },
+      { id: 'calendar', name: 'Brain Dump Calendar', provider: 'google_calendar' as const, kind: 'calendar' as const, isDefault: true },
+      { id: 'projects', name: 'Brain Dump Projects', provider: 'brain_dump_workspace' as const, kind: 'projects' as const, isDefault: true },
+      { id: 'waiting', name: 'Brain Dump Waiting On', provider: 'brain_dump_workspace' as const, kind: 'waiting' as const, isDefault: true }
+    ]
+  };
+}
+
+function fakeTokenClient(): TokenExchangeClient {
+  return {
+    async exchangeCode() {
+      return {
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        expiresAt: Date.now() + 3600,
+        scope: googleOAuth.scopes.join(' ')
+      };
+    },
+    async readProfile() {
+      return { email: 'user@example.com' };
+    }
+  };
+}

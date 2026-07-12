@@ -62,6 +62,8 @@ The current PWA includes a safe demo connection in public mode. It creates local
 
 `src/server/oauthSession.ts` defines the OAuth state, token exchange, token storage, and default workspace creation flow. It uses interfaces for the token client and storage so production can plug in encrypted storage later.
 
+`src/server/publicBackend.ts` now calls that OAuth flow directly for `/api/auth/google/start` and `/api/auth/google/callback`. The callback still uses injected token clients/stores, so real Google credentials can be added outside the PWA source.
+
 ## Safety Rules
 
 - Never store Google client secrets in the PWA.
