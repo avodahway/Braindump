@@ -32,6 +32,7 @@ export type BrainDumpBackendConfig = {
   googleOAuth: GoogleOAuthConfig & {
     clientSecret: string;
   };
+  frontendAppUrl?: string;
   fetcher?: Fetcher;
   nowMs?: () => number;
   nowDate?: () => Date;
@@ -107,6 +108,7 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
 
   return createPublicBackend({
     googleOAuth: config.googleOAuth,
+    frontendAppUrl: config.frontendAppUrl,
     oauthStore,
     sessionStore,
     tokenClient,

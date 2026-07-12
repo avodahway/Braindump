@@ -28,6 +28,7 @@ export type GoogleOAuthConfig = {
 
 export type PublicBackendOptions = {
   googleOAuth: GoogleOAuthConfig;
+  frontendAppUrl?: string;
   workspace?: UserWorkspace;
   executor?: ActionExecutor;
   oauthStore?: OAuthSessionStore;
@@ -90,9 +91,18 @@ export function createPublicBackend(options: PublicBackendOptions) {
           const session = await sessionStore.createSession(workspace.email?.toLowerCase() ?? '');
           await responseStore.clear();
           await executionLogStore.clear();
+          if (options.frontendAppUrl) {
+            return redirect(callbackReturnUrl(options.frontendAppUrl, { connected: 'google' }), {
+              'Set-Cookie': sessionCookie(session.id)
+            });
+          }
           return json(workspace, 200, { 'Set-Cookie': sessionCookie(session.id) });
         } catch (error) {
-          return json({ error: error instanceof Error ? error.message : 'OAuth callback failed.' }, 400);
+          const message = error instanceof Error ? error.message : 'OAuth callback failed.';
+          if (options.frontendAppUrl) {
+            return redirect(callbackReturnUrl(options.frontendAppUrl, { connection: 'error', reason: message }));
+          }
+          return json({ error: message }, 400);
         }
       }
 
@@ -245,4 +255,20 @@ function json(value: unknown, status = 200, headers: Record<string, string> = {}
       ...headers
     }
   });
+}
+
+function redirect(location: string, headers: Record<string, string> = {}): Response {
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: location,
+      ...headers
+    }
+  });
+}
+
+function callbackReturnUrl(frontendAppUrl: string, params: Record<string, string>): string {
+  const url = new URL(frontendAppUrl);
+  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+  return url.toString();
 }

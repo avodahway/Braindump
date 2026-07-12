@@ -654,6 +654,17 @@ input:focus {
   background: #fff1ee;
 }
 
+.successCard {
+  margin-bottom: 14px;
+  border: 1px solid rgba(39, 89, 70, 0.22);
+  border-radius: 8px;
+  padding: 13px;
+  color: var(--green);
+  background: #eef7ef;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .feedbackPanel {
   display: flex;
   align-items: center;

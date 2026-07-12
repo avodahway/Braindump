@@ -35,6 +35,7 @@ export function loadBrainDumpBackendConfig(
       redirectUri: `${publicApiOrigin}${publicBackendRoutes.googleCallback}`,
       scopes
     },
+    frontendAppUrl: frontendAppUrl(env.BRAIN_DUMP_FRONTEND_ORIGIN),
     storageKeyPrefix: env.BRAIN_DUMP_STORAGE_PREFIX || 'brain-dump',
     fetcher: options.fetcher,
     storage: options.storage,
@@ -65,4 +66,9 @@ function normalizeOrigin(value: string): string {
   const withoutTrailingSlash = value.replace(/\/+$/, '');
   const url = new URL(withoutTrailingSlash);
   return url.origin === withoutTrailingSlash ? withoutTrailingSlash : `${url.origin}${url.pathname}`;
+}
+
+function frontendAppUrl(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? `${normalizeOrigin(trimmed)}/app` : undefined;
 }

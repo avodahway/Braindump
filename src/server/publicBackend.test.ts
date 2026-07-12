@@ -270,6 +270,28 @@ describe('public backend scaffold', () => {
     expect(sessionStore.sessions.size).toBe(1);
   });
 
+  it('redirects OAuth callbacks back to the app when a frontend URL is configured', async () => {
+    const store = createMemoryOAuthStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      frontendAppUrl: 'https://app.example.com/app',
+      oauthStore: store,
+      tokenClient: fakeTokenClient()
+    });
+
+    const startResponse = await backend.handle(
+      new Request('https://api.example.com/api/auth/google/start', { method: 'POST' })
+    );
+    const start = await startResponse.json();
+    const callbackResponse = await backend.handle(
+      new Request(`https://api.example.com/api/auth/google/callback?code=auth-code&state=${start.state}`)
+    );
+
+    expect(callbackResponse.status).toBe(302);
+    expect(callbackResponse.headers.get('Location')).toBe('https://app.example.com/app?connected=google');
+    expect(callbackResponse.headers.get('Set-Cookie')).toContain(`${sessionCookieName}=`);
+  });
+
   it('rejects callback requests with invalid state', async () => {
     const backend = createPublicBackend({
       googleOAuth,
@@ -283,6 +305,25 @@ describe('public backend scaffold', () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'Invalid OAuth state.' });
+  });
+
+  it('redirects OAuth callback errors back to the app when configured', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      frontendAppUrl: 'https://app.example.com/app',
+      oauthStore: createMemoryOAuthStore(),
+      tokenClient: fakeTokenClient()
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/auth/google/callback?code=auth-code&state=bad')
+    );
+    const location = new URL(response.headers.get('Location') ?? '');
+
+    expect(response.status).toBe(302);
+    expect(location.origin + location.pathname).toBe('https://app.example.com/app');
+    expect(location.searchParams.get('connection')).toBe('error');
+    expect(location.searchParams.get('reason')).toBe('Invalid OAuth state.');
   });
 
   it('uses session cookies to read workspace and process requests', async () => {

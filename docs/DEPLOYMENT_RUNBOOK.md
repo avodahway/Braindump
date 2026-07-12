@@ -22,6 +22,7 @@ Backend:
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `BRAIN_DUMP_PUBLIC_API_ORIGIN`
+- `BRAIN_DUMP_FRONTEND_ORIGIN`
 
 Optional backend:
 
@@ -71,8 +72,9 @@ The frontend host must serve `index.html` for those routes.
 9. Add privacy and terms URLs.
 10. Create a Web OAuth client.
 11. Add redirect URI: `${BRAIN_DUMP_PUBLIC_API_ORIGIN}/api/auth/google/callback`.
-12. Keep app in testing mode for private beta.
-13. Add invited beta users as test users.
+12. Set `BRAIN_DUMP_FRONTEND_ORIGIN` to the frontend origin so OAuth returns users to `/app`.
+13. Keep app in testing mode for private beta.
+14. Add invited beta users as test users.
 
 ## Smoke Test
 
@@ -85,7 +87,7 @@ After deploy:
 5. Check backend health: `GET /api/health`.
 6. In app settings, set Public API URL.
 7. Click Connect Google.
-8. Complete OAuth with a test user.
+8. Complete OAuth with a test user and confirm the app returns to `/app?connected=google`, then clears the query.
 9. Submit: `Pay employees tomorrow. Lunch with Jack Thursday at noon; put on calendar.`
 10. Confirm the review step appears before anything is created.
 11. Remove one preview action and confirm it disappears.

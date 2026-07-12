@@ -67,6 +67,20 @@ describe('App routes', () => {
     expect(screen.getByLabelText('Google destinations')).toBeInTheDocument();
   });
 
+  it('shows a friendly message after Google callback success', () => {
+    renderAt('/app?connected=google');
+
+    expect(screen.getByText('Google connected. Your workspace is ready for reviewed actions.')).toBeInTheDocument();
+    expect(window.location.search).toBe('');
+  });
+
+  it('shows a friendly message after Google callback failure', () => {
+    renderAt('/app?connection=error&reason=Invalid%20OAuth%20state.');
+
+    expect(screen.getByText('Google connection failed: Invalid OAuth state.')).toBeInTheDocument();
+    expect(window.location.search).toBe('');
+  });
+
   it('previews actions before creating them', () => {
     renderAt('/app');
 

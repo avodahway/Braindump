@@ -65,6 +65,7 @@ function ProductApp() {
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<BackendSettings>(() => loadSettings());
   const [workspace, setWorkspace] = useState<UserWorkspace>(() => loadWorkspace());
+  const [connectionNotice, setConnectionNotice] = useState('');
 
   useEffect(() => {
     if (settings.backendMode !== 'public' || !settings.publicApiBaseUrl) return;
@@ -77,6 +78,25 @@ function ProductApp() {
         setWorkspace({ status: 'not_connected', destinations: [] });
       });
   }, [settings]);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const connected = url.searchParams.get('connected');
+    const connection = url.searchParams.get('connection');
+    const reason = url.searchParams.get('reason');
+    if (!connected && !connection) return;
+
+    if (connected === 'google') {
+      setConnectionNotice('Google connected. Your workspace is ready for reviewed actions.');
+    } else if (connection === 'error') {
+      setError(reason ? `Google connection failed: ${reason}` : 'Google connection failed. Try connecting again.');
+    }
+
+    url.searchParams.delete('connected');
+    url.searchParams.delete('connection');
+    url.searchParams.delete('reason');
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  }, []);
 
   const groupedActions = useMemo(() => {
     const map = new Map<string, ParsedAction[]>();
@@ -188,6 +208,7 @@ function ProductApp() {
           onDisconnect={handleDisconnectPublic}
           onOpenSettings={() => setShowSettings(true)}
         />
+        {connectionNotice && <div className="successCard">{connectionNotice}</div>}
         <textarea
           value={text}
           onChange={(event) => handleDraft(event.target.value)}

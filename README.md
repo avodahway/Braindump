@@ -71,7 +71,7 @@ The Google OAuth token client lives in `src/server/googleOAuthClient.ts`. It exp
 
 `src/server/durableStore.ts` provides the production storage boundary. Deployments can pass a key-value store plus an encryption codec into the backend factory so OAuth tokens and sessions survive restarts without putting secrets in the frontend.
 
-`src/server/runtimeConfig.ts` and `src/server/runtimeHandler.ts` provide the deployment entry point. A backend host should provide `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `BRAIN_DUMP_PUBLIC_API_ORIGIN`; the handler builds the Google callback URL and public API routes from those values.
+`src/server/runtimeConfig.ts` and `src/server/runtimeHandler.ts` provide the deployment entry point. A backend host should provide `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BRAIN_DUMP_PUBLIC_API_ORIGIN`, and `BRAIN_DUMP_FRONTEND_ORIGIN`; the handler builds the Google callback URL and sends completed OAuth users back to `/app`.
 
 `src/server/workspaceProvisioning.ts` creates or reuses each public user's own `Brain Dump Work` and `Brain Dump Personal` Google Task lists after sign-in, so public users do not need to provide task-list IDs.
 
