@@ -93,7 +93,8 @@ After deploy:
 13. Confirm Google Tasks has the work task.
 14. Confirm Google Calendar has the event.
 15. Click Disconnect.
-16. Confirm `/api/workspace` returns not connected afterward.
+16. Confirm stored OAuth tokens and workspace connection records are removed.
+17. Confirm `/api/workspace` returns not connected afterward.
 
 ## Rollback
 

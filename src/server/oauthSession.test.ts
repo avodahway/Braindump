@@ -107,6 +107,22 @@ describe('OAuth session helpers', () => {
       'waiting'
     ]);
   });
+
+  it('deletes stored connection data', async () => {
+    const store = createMemoryOAuthStore();
+    await store.saveTokens('user@example.com', {
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: 2000,
+      scope: googleOAuth.scopes.join(' ')
+    });
+    await store.saveWorkspace('user@example.com', defaultWorkspace('user@example.com'));
+
+    await store.deleteConnection('user@example.com');
+
+    expect(await store.readTokens('user@example.com')).toBeUndefined();
+    expect(await store.readWorkspace('user@example.com')).toBeUndefined();
+  });
 });
 
 function fakeTokenClient(): TokenExchangeClient {

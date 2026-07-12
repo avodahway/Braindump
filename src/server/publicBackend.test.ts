@@ -334,8 +334,16 @@ describe('public backend scaffold', () => {
 
   it('clears the session on disconnect', async () => {
     const sessionStore = createMemorySessionStore(() => 1234);
+    const oauthStore = createMemoryOAuthStore();
+    await oauthStore.saveTokens('user@example.com', {
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: 2000,
+      scope: googleOAuth.scopes.join(' ')
+    });
+    await oauthStore.saveWorkspace('user@example.com', connectedWorkspace());
     const session = await sessionStore.createSession('user@example.com');
-    const backend = createPublicBackend({ googleOAuth, sessionStore });
+    const backend = createPublicBackend({ googleOAuth, oauthStore, sessionStore });
 
     const response = await backend.handle(
       new Request('https://api.example.com/api/auth/google/disconnect', {
@@ -345,6 +353,8 @@ describe('public backend scaffold', () => {
     );
 
     expect(await sessionStore.readSession(session.id)).toBeUndefined();
+    expect(await oauthStore.readTokens('user@example.com')).toBeUndefined();
+    expect(await oauthStore.readWorkspace('user@example.com')).toBeUndefined();
     expect(response.headers.get('Set-Cookie')).toContain('Max-Age=0');
   });
 });

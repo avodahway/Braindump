@@ -74,6 +74,10 @@ export function createDurableOAuthStore(
     },
     async saveWorkspace(userId, workspace) {
       await writeJson(store, codec, key(prefix, 'workspace', userId), workspace);
+    },
+    async deleteConnection(userId) {
+      await store.delete(key(prefix, 'google-tokens', userId));
+      await store.delete(key(prefix, 'workspace', userId));
     }
   };
 }

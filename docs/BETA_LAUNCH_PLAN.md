@@ -136,5 +136,6 @@ Move from private beta to public beta only when:
 - Privacy policy and terms are published.
 - Backend storage is durable and encrypted.
 - Disconnect flow is tested.
+- Disconnect removes stored tokens and workspace connection records.
 - Execution logs show no duplicate-write pattern.
 - At least 10 beta users complete real workflows.

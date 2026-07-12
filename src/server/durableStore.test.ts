@@ -29,6 +29,24 @@ describe('durable store adapters', () => {
     expect(await store.readWorkspace('user@example.com')).toEqual(workspace);
   });
 
+  it('deletes durable OAuth tokens and workspace records', async () => {
+    const kv = createMemoryKeyValueStore();
+    const store = createDurableOAuthStore(kv, { keyPrefix: 'test' });
+
+    await store.saveTokens('user@example.com', {
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: 1234,
+      scope: 'openid email'
+    });
+    await store.saveWorkspace('user@example.com', defaultWorkspace('user@example.com'));
+
+    await store.deleteConnection('user@example.com');
+
+    expect(await store.readTokens('user@example.com')).toBeUndefined();
+    expect(await store.readWorkspace('user@example.com')).toBeUndefined();
+  });
+
   it('persists sessions and deletes them', async () => {
     const kv = createMemoryKeyValueStore();
     const store = createDurableSessionStore(kv, { keyPrefix: 'test', now: () => 2000 });

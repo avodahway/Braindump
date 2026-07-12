@@ -98,7 +98,11 @@ export function createPublicBackend(options: PublicBackendOptions) {
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.googleDisconnect) {
         const sessionId = readSessionIdFromCookie(request.headers.get('Cookie'));
-        if (sessionId) await sessionStore.deleteSession(sessionId);
+        if (sessionId) {
+          const session = await sessionStore.readSession(sessionId);
+          if (session) await oauthStore.deleteConnection(session.userId);
+          await sessionStore.deleteSession(sessionId);
+        }
         fallbackWorkspace = undefined;
         await responseStore.clear();
         await executionLogStore.clear();

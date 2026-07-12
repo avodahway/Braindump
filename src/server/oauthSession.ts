@@ -36,6 +36,7 @@ export type OAuthSessionStore = {
   saveTokens(userId: string, tokens: GoogleTokenSet): Promise<void>;
   readWorkspace(userId: string): Promise<UserWorkspace | undefined>;
   saveWorkspace(userId: string, workspace: UserWorkspace): Promise<void>;
+  deleteConnection(userId: string): Promise<void>;
 };
 
 export type OAuthStartResult = {
@@ -179,6 +180,10 @@ export function createMemoryOAuthStore(): OAuthSessionStore & {
     },
     async saveWorkspace(userId, workspace) {
       workspaces.set(userId, workspace);
+    },
+    async deleteConnection(userId) {
+      tokens.delete(userId);
+      workspaces.delete(userId);
     }
   };
 }

@@ -75,6 +75,8 @@ Users can:
 - Request deletion of stored account records.
 - Delete tasks and calendar events directly in their Google account.
 
+Disconnecting Google removes the stored OAuth tokens and workspace connection records that Brain Dump uses for future writes. It does not delete tasks or calendar events already created in the user's Google account.
+
 ## Data Deletion
 
 Before public launch, publish a clear data deletion contact and response process. The product should support deleting stored sessions, OAuth tokens, user workspace records, execution logs, and idempotency records associated with a user.
