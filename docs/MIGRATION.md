@@ -1,6 +1,6 @@
-# Cleveland Stewardship OS Migration
+# Cleveland Stewardship OS Private Adapter
 
-Brain Dump v1 uses the Cleveland Stewardship OS Apps Script project as the execution bridge.
+Brain Dump can use the Cleveland Stewardship OS Apps Script project as a private execution bridge. This path is not the default public backend.
 
 ## Required IDs
 

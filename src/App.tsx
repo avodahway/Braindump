@@ -81,6 +81,12 @@ export function App() {
 
       <section className="capturePanel">
         <h2>What's on your mind?</h2>
+        {settings.backendMode === 'public' && (
+          <div className="setupNotice">
+            <strong>Public account setup is next.</strong>
+            <span>For now, Brain Dump can preview routing in mock mode without touching anyone's Google account.</span>
+          </div>
+        )}
         <textarea
           value={text}
           onChange={(event) => handleDraft(event.target.value)}
@@ -146,19 +152,51 @@ export function App() {
         <div className="modalBackdrop" role="presentation">
           <form className="settingsModal" onSubmit={handleSettingsSubmit}>
             <h2>Settings</h2>
+            <fieldset>
+              <legend>Backend mode</legend>
+              <label className="radioOption">
+                <input
+                  checked={settings.backendMode === 'mock'}
+                  onChange={() => setSettings({ ...settings, backendMode: 'mock' })}
+                  name="backendMode"
+                  type="radio"
+                />
+                Mock preview
+              </label>
+              <label className="radioOption">
+                <input
+                  checked={settings.backendMode === 'public'}
+                  onChange={() => setSettings({ ...settings, backendMode: 'public' })}
+                  name="backendMode"
+                  type="radio"
+                />
+                Public Google account setup
+              </label>
+              <label className="radioOption">
+                <input
+                  checked={settings.backendMode === 'private_apps_script'}
+                  onChange={() => setSettings({ ...settings, backendMode: 'private_apps_script' })}
+                  name="backendMode"
+                  type="radio"
+                />
+                Private CSOS Apps Script bridge
+              </label>
+            </fieldset>
             <label>
-              Backend URL
+              Private bridge URL
               <input
                 value={settings.backendUrl}
                 onChange={(event) => setSettings({ ...settings, backendUrl: event.target.value })}
+                disabled={settings.backendMode !== 'private_apps_script'}
                 placeholder="Apps Script web app URL"
               />
             </label>
             <label>
-              Shared secret
+              Private shared secret
               <input
                 value={settings.sharedSecret}
                 onChange={(event) => setSettings({ ...settings, sharedSecret: event.target.value })}
+                disabled={settings.backendMode !== 'private_apps_script'}
                 type="password"
                 placeholder="Optional during development"
               />

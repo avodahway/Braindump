@@ -4,15 +4,21 @@ import type { BrainDumpRequest, BrainDumpResponse, ParsedAction } from '../lib/t
 const settingsKey = 'brain-dump-settings';
 
 export type BackendSettings = {
+  backendMode: 'mock' | 'public' | 'private_apps_script';
   backendUrl: string;
   sharedSecret: string;
 };
 
 export function loadSettings(): BackendSettings {
   try {
-    return JSON.parse(localStorage.getItem(settingsKey) ?? '{"backendUrl":"","sharedSecret":""}');
+    const parsed = JSON.parse(localStorage.getItem(settingsKey) ?? '{}') as Partial<BackendSettings>;
+    return {
+      backendMode: parsed.backendMode ?? (parsed.backendUrl ? 'private_apps_script' : 'mock'),
+      backendUrl: parsed.backendUrl ?? '',
+      sharedSecret: parsed.sharedSecret ?? ''
+    };
   } catch {
-    return { backendUrl: '', sharedSecret: '' };
+    return { backendMode: 'mock', backendUrl: '', sharedSecret: '' };
   }
 }
 
@@ -22,9 +28,17 @@ export function saveSettings(settings: BackendSettings): void {
 
 export async function processBrainDump(request: BrainDumpRequest): Promise<BrainDumpResponse> {
   const settings = loadSettings();
-  if (!settings.backendUrl) {
+  if (settings.backendMode === 'mock') {
     await new Promise((resolve) => setTimeout(resolve, 450));
     return markCreated(parseBrainDump(request.text, request.requestId));
+  }
+
+  if (settings.backendMode === 'public') {
+    throw new Error('Public Google account setup is coming next. Use mock mode for now.');
+  }
+
+  if (!settings.backendUrl) {
+    throw new Error('Add the private Apps Script bridge URL in Settings first.');
   }
 
   const response = await fetch(settings.backendUrl, {

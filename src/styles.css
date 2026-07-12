@@ -108,6 +108,22 @@ button {
   font-size: 25px;
 }
 
+.setupNotice {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px solid rgba(39, 89, 70, 0.2);
+  border-radius: 8px;
+  background: #f1f6f2;
+  color: var(--green);
+  font-size: 13px;
+}
+
+.setupNotice span {
+  color: rgba(24, 50, 40, 0.74);
+}
+
 textarea {
   width: 100%;
   min-height: 310px;
@@ -265,6 +281,35 @@ footer {
   font-weight: 800;
 }
 
+fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+legend {
+  padding: 0 4px;
+  color: rgba(24, 50, 40, 0.72);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.settingsModal .radioOption {
+  grid-template-columns: 18px 1fr;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.radioOption input {
+  width: 18px;
+  min-height: 18px;
+}
+
 input {
   width: 100%;
   min-height: 48px;
@@ -272,6 +317,11 @@ input {
   border-radius: 8px;
   padding: 0 12px;
   outline: none;
+}
+
+input:disabled {
+  color: rgba(24, 50, 40, 0.48);
+  background: #f3f1ed;
 }
 
 @media (max-width: 430px) {

@@ -1,6 +1,6 @@
 # Brain Dump
 
-Brain Dump is an installable React + TypeScript + Vite PWA for turning a free-form brain dump into routed actions for Google Calendar, Google Tasks, Cleveland Stewardship OS projects, waiting-on items, and later Gmail.
+Brain Dump is an installable React + TypeScript + Vite PWA for turning a free-form brain dump into routed actions for Google Calendar, Google Tasks, projects, waiting-on items, and later Gmail.
 
 Tagline: **Get it out. We'll handle the rest.**
 
@@ -11,7 +11,7 @@ pnpm install
 pnpm dev
 ```
 
-The app starts with a mocked backend. Leave Settings -> Backend URL blank to test parsing and grouped results locally.
+The app starts in mock preview mode. It parses and groups results locally without touching any Google account.
 
 ## Checks
 
@@ -20,16 +20,21 @@ pnpm test
 pnpm build
 ```
 
-## Backend Settings
+## Backend Direction
 
-Open the Settings button in the app and enter:
+Brain Dump is moving toward a public multi-user model:
 
-- Backend URL: deployed Google Apps Script web app URL.
-- Shared secret: optional development secret that must match the Apps Script property `BRAIN_DUMP_SHARED_SECRET`.
+- Mock preview: local parser and fake created results.
+- Public Google account setup: planned OAuth backend where each user connects their own Google account.
+- Private CSOS bridge: optional adapter for one Cleveland Stewardship OS Apps Script deployment.
 
-No Google credentials are stored in the frontend. The PWA sends a JSON request to the Apps Script bridge, and Apps Script performs Google Calendar, Tasks, and Sheet writes server-side.
+No Google credentials should be stored in the frontend. The public backend should store refresh tokens server-side, encrypt secrets at rest, and let each user choose or create their own Brain Dump workspace.
 
-## Apps Script Deployment
+See `docs/PUBLIC_BACKEND_PLAN.md` for the product/backend path.
+
+## Private Apps Script Adapter
+
+`apps-script/BrainDumpBridge.gs` is retained as a private adapter for Cleveland Stewardship OS. It is not the default public backend.
 
 1. Open the existing Cleveland Stewardship OS Apps Script project.
 2. Copy `apps-script/BrainDumpBridge.gs` into that project.
@@ -44,7 +49,7 @@ No Google credentials are stored in the frontend. The PWA sends a JSON request t
 5. Deploy as a Web App that executes as you and is accessible to the intended user.
 6. Paste the Web App URL into Brain Dump Settings.
 
-Apps Script CORS can be awkward. This bridge accepts `text/plain` JSON to avoid browser preflight in the simple development path. If that becomes limiting, add a small same-origin serverless proxy and keep the frontend contract unchanged.
+Apps Script CORS can be awkward. This bridge accepts `text/plain` JSON to avoid browser preflight in the private development path. It should not be used as the default backend for public users.
 
 ## Migration Note
 
