@@ -42,6 +42,14 @@ With a Public API URL configured, the Connect button starts the backend OAuth fl
 
 See `docs/PUBLIC_BACKEND_PLAN.md` for the product/backend path.
 
+Go-to-market planning lives in:
+
+- `docs/BETA_LAUNCH_PLAN.md`
+- `docs/GOOGLE_OAUTH_VERIFICATION.md`
+- `docs/GO_TO_MARKET_CHECKLIST.md`
+- `docs/PRIVACY_POLICY_DRAFT.md`
+- `docs/TERMS_OF_SERVICE_DRAFT.md`
+
 The backend scaffold lives in `src/server/publicBackend.ts`. It implements the public API contract without real Google writes yet, including OAuth URL creation and request idempotency.
 
 Provider execution is split behind `src/server/actionExecutor.ts`. `src/server/googleExecutor.ts` defines the Google-ready adapter interface for Tasks, Calendar, projects, and waiting records.
