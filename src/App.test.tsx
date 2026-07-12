@@ -62,6 +62,20 @@ describe('App routes', () => {
     expect(screen.getByRole('heading', { name: 'Calendar' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Create/i })).toBeInTheDocument();
   });
+
+  it('removes individual preview actions before creating', () => {
+    renderAt('/app');
+
+    fireEvent.change(screen.getByPlaceholderText('Put everything here. Do not organize it.'), {
+      target: { value: 'Pay employees tomorrow. Lunch with Jack Thursday at noon; put on calendar.' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Review/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Remove Lunch with Jack/i }));
+
+    expect(screen.queryByText('Lunch with Jack')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Calendar' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Work Tasks' })).toBeInTheDocument();
+  });
 });
 
 function renderAt(path: string) {

@@ -34,7 +34,7 @@ export async function processBrainDump(request: BrainDumpRequest): Promise<Brain
   const settings = loadSettings();
   if (settings.backendMode === 'mock') {
     await new Promise((resolve) => setTimeout(resolve, 450));
-    return markCreated(parseBrainDump(request.text, request.requestId));
+    return markCreated(request.approvedActions ? responseFromApprovedActions(request) : parseBrainDump(request.text, request.requestId));
   }
 
   if (settings.backendMode === 'public') {
@@ -45,7 +45,7 @@ export async function processBrainDump(request: BrainDumpRequest): Promise<Brain
       throw new Error('Connect a Google workspace first, or switch back to mock preview.');
     }
     await new Promise((resolve) => setTimeout(resolve, 450));
-    return markCreated(parseBrainDump(request.text, request.requestId));
+    return markCreated(request.approvedActions ? responseFromApprovedActions(request) : parseBrainDump(request.text, request.requestId));
   }
 
   if (!settings.backendUrl) {
@@ -69,6 +69,24 @@ export async function processBrainDump(request: BrainDumpRequest): Promise<Brain
   }
 
   return response.json();
+}
+
+function responseFromApprovedActions(request: BrainDumpRequest): BrainDumpResponse {
+  const actions = request.approvedActions ?? [];
+  return {
+    ok: true,
+    requestId: request.requestId,
+    summary: {
+      calendar: actions.filter((action) => action.type === 'calendar').length,
+      workTasks: actions.filter((action) => action.type === 'work_task').length,
+      personalTasks: actions.filter((action) => action.type === 'personal_task').length,
+      projects: actions.filter((action) => action.type === 'project').length,
+      waiting: actions.filter((action) => action.type === 'waiting').length,
+      needsReview: actions.filter((action) => action.type === 'needs_review').length
+    },
+    actions,
+    errors: []
+  };
 }
 
 function markCreated(response: BrainDumpResponse): BrainDumpResponse {

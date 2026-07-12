@@ -36,6 +36,7 @@
 - Add feedback/support link inside app.
 - Add clear output review UI if not already present.
 - Confirm review-before-create is understandable to beta users.
+- Confirm users understand they can remove wrong preview actions before creating.
 - Add user-facing error messages for OAuth and provider failures.
 - Invite 10 to 25 users.
 - Prepare OAuth verification submission.

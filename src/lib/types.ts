@@ -24,6 +24,7 @@ export type BrainDumpRequest = {
   requestId: string;
   text: string;
   timezone: string;
+  approvedActions?: ParsedAction[];
 };
 
 export type BrainDumpResponse = {

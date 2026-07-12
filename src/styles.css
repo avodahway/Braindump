@@ -560,9 +560,10 @@ input:focus {
 }
 
 .resultItem {
+  position: relative;
   display: grid;
   gap: 3px;
-  padding: 10px 0;
+  padding: 10px 44px 10px 0;
 }
 
 .resultItem strong {
@@ -572,6 +573,21 @@ input:focus {
 .resultItem span {
   color: rgba(24, 50, 40, 0.72);
   font-size: 13px;
+}
+
+.removeActionButton {
+  position: absolute;
+  top: 9px;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--green);
+  background: #edf3ef;
+  border: 1px solid #dce9e1;
+  cursor: pointer;
 }
 
 .errorCard {

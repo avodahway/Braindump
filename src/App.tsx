@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Cloud,
+  X,
   FileText,
   FolderKanban,
   Lock,
@@ -110,7 +111,8 @@ function ProductApp() {
       const response = await processBrainDump({
         requestId: reviewed.requestId,
         text: trimmed,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        approvedActions: reviewed.actions
       });
       setResult(response);
       setPreview(null);
@@ -129,6 +131,10 @@ function ProductApp() {
     setPreview(null);
     setResult(null);
     localStorage.setItem('brain-dump-draft', value);
+  }
+
+  function handleRemovePreviewAction(actionToRemove: ParsedAction) {
+    setPreview((current) => (current ? removePreviewAction(current, actionToRemove) : current));
   }
 
   function handleSettingsSubmit(event: FormEvent) {
@@ -191,7 +197,12 @@ function ProductApp() {
             Dictate
           </button>
           {preview ? (
-            <button className="processButton" type="button" onClick={handleCreate} disabled={isProcessing}>
+            <button
+              className="processButton"
+              type="button"
+              onClick={handleCreate}
+              disabled={isProcessing || preview.actions.length === 0}
+            >
               <Sparkles size={20} />
               {isProcessing ? 'Creating' : 'Create'}
             </button>
@@ -243,6 +254,16 @@ function ProductApp() {
                       <div className="resultItem" key={`${action.type}-${action.title}-${action.sourceText}`}>
                         <strong>{action.title}</strong>
                         <span>{action.notes}</span>
+                        {preview && (
+                          <button
+                            className="removeActionButton"
+                            type="button"
+                            aria-label={`Remove ${action.title}`}
+                            onClick={() => handleRemovePreviewAction(action)}
+                          >
+                            <X size={15} />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </article>
@@ -334,6 +355,22 @@ function ProductApp() {
       )}
     </main>
   );
+}
+
+function removePreviewAction(response: BrainDumpResponse, actionToRemove: ParsedAction): BrainDumpResponse {
+  const actions = response.actions.filter((action) => action !== actionToRemove);
+  return {
+    ...response,
+    summary: {
+      calendar: actions.filter((action) => action.type === 'calendar').length,
+      workTasks: actions.filter((action) => action.type === 'work_task').length,
+      personalTasks: actions.filter((action) => action.type === 'personal_task').length,
+      projects: actions.filter((action) => action.type === 'project').length,
+      waiting: actions.filter((action) => action.type === 'waiting').length,
+      needsReview: actions.filter((action) => action.type === 'needs_review').length
+    },
+    actions
+  };
 }
 
 function HomePage() {

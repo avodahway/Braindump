@@ -114,6 +114,46 @@ describe('public backend scaffold', () => {
     expect(await responseStore.readResponse('req-store')).toMatchObject({ requestId: 'req-store' });
   });
 
+  it('executes approved actions instead of reparsing the original text', async () => {
+    const createdTitles: string[] = [];
+    const backend = createPublicBackend({
+      googleOAuth,
+      workspace: connectedWorkspace(),
+      executor: {
+        async execute(action) {
+          createdTitles.push(action.title);
+          return { status: 'created', message: `Created ${action.title}` };
+        }
+      }
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        body: JSON.stringify({
+          requestId: 'req-approved',
+          text: 'Pay employees tomorrow. Lunch with Jack Thursday at noon; put on calendar.',
+          timezone: 'America/Chicago',
+          approvedActions: [
+            {
+              type: 'work_task',
+              title: 'Pay employees tomorrow',
+              status: 'planned',
+              dueDate: 'tomorrow',
+              notes: 'Pay employees tomorrow.',
+              sourceText: 'Pay employees tomorrow.'
+            }
+          ]
+        })
+      })
+    );
+    const result = await response.json();
+
+    expect(createdTitles).toEqual(['Pay employees tomorrow']);
+    expect(result.summary.workTasks).toBe(1);
+    expect(result.summary.calendar).toBe(0);
+  });
+
   it('blocks processing after disconnect', async () => {
     const backend = createPublicBackend({ googleOAuth, workspace: connectedWorkspace() });
 

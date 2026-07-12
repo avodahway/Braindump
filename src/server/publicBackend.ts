@@ -119,7 +119,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
         }
 
         const response = await executeParsedResponse(
-          parseBrainDump(body.text, body.requestId),
+          body.approvedActions ? responseFromApprovedActions(body) : parseBrainDump(body.text, body.requestId),
           workspace,
           executor,
           body,
@@ -194,6 +194,24 @@ async function executeParsedResponse(
     },
     actions,
     errors: actions.filter((action) => action.status === 'error').map((action) => action.notes ?? action.title)
+  };
+}
+
+function responseFromApprovedActions(request: BrainDumpRequest): BrainDumpResponse {
+  const actions = request.approvedActions ?? [];
+  return {
+    ok: true,
+    requestId: request.requestId,
+    summary: {
+      calendar: actions.filter((action) => action.type === 'calendar').length,
+      workTasks: actions.filter((action) => action.type === 'work_task').length,
+      personalTasks: actions.filter((action) => action.type === 'personal_task').length,
+      projects: actions.filter((action) => action.type === 'project').length,
+      waiting: actions.filter((action) => action.type === 'waiting').length,
+      needsReview: actions.filter((action) => action.type === 'needs_review').length
+    },
+    actions,
+    errors: []
   };
 }
 

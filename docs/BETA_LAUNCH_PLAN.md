@@ -68,6 +68,7 @@ Track these manually at first:
 - First value: user confirms at least one created task/event was correct.
 - Trust: user says they would use it again with real work.
 - Review confidence: user understands the review step before creating actions.
+- Control: user can remove a wrong planned action before creating the rest.
 - Accuracy: percentage of actions routed correctly.
 - Review rate: percentage of actions sent to Needs Review.
 - Failure rate: provider write errors per request.

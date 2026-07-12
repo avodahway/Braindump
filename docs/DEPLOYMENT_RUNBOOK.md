@@ -88,11 +88,12 @@ After deploy:
 8. Complete OAuth with a test user.
 9. Submit: `Pay employees tomorrow. Lunch with Jack Thursday at noon; put on calendar.`
 10. Confirm the review step appears before anything is created.
-11. Click Create.
-12. Confirm Google Tasks has the work task.
-13. Confirm Google Calendar has the event.
-14. Click Disconnect.
-15. Confirm `/api/workspace` returns not connected afterward.
+11. Remove one preview action and confirm it disappears.
+12. Review again, then click Create.
+13. Confirm Google Tasks has the work task.
+14. Confirm Google Calendar has the event.
+15. Click Disconnect.
+16. Confirm `/api/workspace` returns not connected afterward.
 
 ## Rollback
 
