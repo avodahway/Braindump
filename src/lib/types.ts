@@ -42,6 +42,26 @@ export type BrainDumpResponse = {
   errors: string[];
 };
 
+export type AnalyticsEventName =
+  | 'app_opened'
+  | 'connect_started'
+  | 'connect_completed'
+  | 'connect_failed'
+  | 'review_created'
+  | 'create_completed'
+  | 'create_failed'
+  | 'disconnect_completed';
+
+export type AnalyticsEvent = {
+  name: AnalyticsEventName;
+  requestId?: string;
+  mode?: string;
+  summary?: BrainDumpResponse['summary'];
+  errorCount?: number;
+  actionCount?: number;
+  createdAt?: string;
+};
+
 export type ConnectionStatus = 'mock' | 'not_connected' | 'connected' | 'private_bridge';
 
 export type UserDestination = {

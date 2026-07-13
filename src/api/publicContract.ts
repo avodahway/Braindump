@@ -13,5 +13,6 @@ export const publicBackendRoutes = {
   googleConnect: '/api/auth/google/start',
   googleCallback: '/api/auth/google/callback',
   googleDisconnect: '/api/auth/google/disconnect',
+  events: '/api/events',
   brainDump: '/api/brain-dump'
 } as const;

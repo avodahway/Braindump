@@ -129,6 +129,26 @@ describe('backend factory', () => {
     expect([...storage.values.keys()].some((key) => key.includes(':session:'))).toBe(true);
   });
 
+  it('can compose analytics storage from a shared durable store', async () => {
+    const storage = createMemoryKeyValueStore();
+    const backend = createBrainDumpBackend({
+      googleOAuth,
+      storage,
+      storageKeyPrefix: 'test',
+      tokenClient: callbackTokenClient()
+    });
+
+    await backend.handle(
+      new Request('https://api.example.com/api/events', {
+        method: 'POST',
+        body: JSON.stringify({ name: 'app_opened', mode: 'public' })
+      })
+    );
+
+    expect([...storage.values.keys()].some((key) => key === 'test:analytics-events')).toBe(true);
+    expect([...storage.values.values()][0]).not.toContain('Pay employees');
+  });
+
   it('deduplicates brain dump requests across backend instances that share durable storage', async () => {
     const storage = createMemoryKeyValueStore();
     const oauthStore = createMemoryOAuthStore();

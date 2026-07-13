@@ -1,4 +1,4 @@
-import type { BrainDumpRequest, BrainDumpResponse, UserWorkspace } from '../lib/types';
+import type { AnalyticsEvent, BrainDumpRequest, BrainDumpResponse, UserWorkspace } from '../lib/types';
 import { publicBackendRoutes } from './publicContract';
 
 type JsonFetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -55,6 +55,23 @@ export async function processPublicBrainDump(
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(request)
+    })
+  );
+}
+
+export async function trackPublicEvent(
+  baseUrl: string,
+  event: AnalyticsEvent,
+  fetcher: JsonFetcher = fetch
+): Promise<{ ok: true }> {
+  return readJson<{ ok: true }>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.events), {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(event)
     })
   );
 }

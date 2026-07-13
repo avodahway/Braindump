@@ -74,6 +74,7 @@ Track these manually at first:
 - Review rate: percentage of actions sent to Needs Review.
 - Failure rate: provider write errors per request.
 - Support load: number of founder interventions per user.
+- Privacy-safe event counts: app opened, connect started/completed, review created, create completed/failed, disconnect completed.
 
 Good beta threshold:
 
@@ -97,6 +98,7 @@ Good beta threshold:
 - Review execution logs daily during beta.
 - Keep a beta issue log.
 - Make the retry/support path visible when Google Tasks or Calendar rejects a write.
+- Confirm analytics events do not include brain dump text, action titles, or source text.
 - Expand to 10 to 25 users only after the first 5 complete real runs.
 
 ## User Onboarding Flow

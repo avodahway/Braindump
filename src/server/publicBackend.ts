@@ -19,6 +19,7 @@ import {
 } from './sessionStore';
 import { createMemoryResponseStore, type ResponseStore } from './idempotencyStore';
 import { createMemoryExecutionLogStore, type ExecutionLogStore } from './executionLogStore';
+import { createMemoryAnalyticsStore, sanitizeAnalyticsEvent, type AnalyticsStore } from './analyticsStore';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -37,6 +38,7 @@ export type PublicBackendOptions = {
   sessionStore?: SessionStore;
   responseStore?: ResponseStore;
   executionLogStore?: ExecutionLogStore;
+  analyticsStore?: AnalyticsStore;
   now?: () => Date;
 };
 
@@ -47,6 +49,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
   const sessionStore = options.sessionStore ?? createMemorySessionStore();
   const responseStore = options.responseStore ?? createMemoryResponseStore();
   const executionLogStore = options.executionLogStore ?? createMemoryExecutionLogStore();
+  const analyticsStore = options.analyticsStore ?? createMemoryAnalyticsStore();
   const now = options.now ?? (() => new Date());
 
   return {
@@ -117,6 +120,18 @@ export function createPublicBackend(options: PublicBackendOptions) {
         await responseStore.clear();
         await executionLogStore.clear();
         return json({ ok: true }, 200, { 'Set-Cookie': clearSessionCookie() });
+      }
+
+      if (request.method === 'POST' && url.pathname === publicBackendRoutes.events) {
+        const event = sanitizeAnalyticsEvent(await request.json());
+        if (!event) return json({ error: 'Invalid analytics event.' }, 400);
+        const session = await readRequestSession(request, sessionStore);
+        await analyticsStore.append({
+          ...event,
+          userId: session?.userId,
+          createdAt: now().toISOString()
+        });
+        return json({ ok: true });
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.brainDump) {
@@ -245,6 +260,11 @@ async function readRequestWorkspace(
   const workspace = await oauthStore.readWorkspace(session.userId);
   if (!workspace) return undefined;
   return { userId: session.userId, workspace };
+}
+
+async function readRequestSession(request: Request, sessionStore: SessionStore) {
+  const sessionId = readSessionIdFromCookie(request.headers.get('Cookie'));
+  return sessionId ? sessionStore.readSession(sessionId) : undefined;
 }
 
 function json(value: unknown, status = 200, headers: Record<string, string> = {}): Response {

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { trackEvent } from './api/analytics';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
 import { connectPublicWorkspace, disconnectPublicWorkspace, refreshPublicWorkspace } from './api/publicConnection';
 import { loadWorkspace } from './api/workspace';
@@ -70,6 +71,8 @@ function ProductApp() {
   useEffect(() => {
     if (settings.backendMode !== 'public' || !settings.publicApiBaseUrl) return;
 
+    trackEvent({ name: 'app_opened', mode: settings.backendMode });
+
     refreshPublicWorkspace(settings)
       .then((refreshedWorkspace) => {
         if (refreshedWorkspace) setWorkspace(refreshedWorkspace);
@@ -88,8 +91,10 @@ function ProductApp() {
 
     if (connected === 'google') {
       setConnectionNotice('Google connected. Your workspace is ready for reviewed actions.');
+      trackEvent({ name: 'connect_completed', mode: 'public' });
     } else if (connection === 'error') {
       setError(reason ? `Google connection failed: ${reason}` : 'Google connection failed. Try connecting again.');
+      trackEvent({ name: 'connect_failed', mode: 'public', errorCount: 1 });
     }
 
     url.searchParams.delete('connected');
@@ -116,7 +121,15 @@ function ProductApp() {
     }
     setError('');
     setResult(null);
-    setPreview(parseBrainDump(trimmed, crypto.randomUUID()));
+    const parsed = parseBrainDump(trimmed, crypto.randomUUID());
+    setPreview(parsed);
+    trackEvent({
+      name: 'review_created',
+      requestId: parsed.requestId,
+      mode: settings.backendMode,
+      summary: parsed.summary,
+      actionCount: parsed.actions.length
+    });
   }
 
   async function handleCreate() {
@@ -141,9 +154,24 @@ function ProductApp() {
       setPreview(null);
       setText('');
       localStorage.removeItem('brain-dump-draft');
+      trackEvent({
+        name: 'create_completed',
+        requestId: response.requestId,
+        mode: settings.backendMode,
+        summary: response.summary,
+        actionCount: response.actions.length,
+        errorCount: response.errors.length
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Brain Dump could not process that.');
       localStorage.setItem('brain-dump-draft', text);
+      trackEvent({
+        name: 'create_failed',
+        requestId: reviewed.requestId,
+        mode: settings.backendMode,
+        actionCount: reviewed.actions.length,
+        errorCount: 1
+      });
     } finally {
       setProcessing(false);
     }
@@ -168,6 +196,7 @@ function ProductApp() {
 
   async function handleConnectPublic() {
     setError('');
+    trackEvent({ name: 'connect_started', mode: settings.backendMode });
     try {
       const connectedWorkspace = await connectPublicWorkspace(settings);
       if (connectedWorkspace) setWorkspace(connectedWorkspace);
@@ -180,6 +209,7 @@ function ProductApp() {
     setError('');
     try {
       setWorkspace(await disconnectPublicWorkspace(settings));
+      trackEvent({ name: 'disconnect_completed', mode: settings.backendMode });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not disconnect Google.');
     }

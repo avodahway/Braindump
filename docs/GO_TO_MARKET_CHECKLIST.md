@@ -50,6 +50,7 @@
 - Move OAuth app from testing when ready.
 - Publish production privacy policy and terms.
 - Add lightweight analytics that do not capture brain dump content.
+- Confirm analytics stores only event names, request IDs, counts, summaries, and timestamps.
 - Add backup/export plan for user records.
 - Announce public beta to a narrow audience.
 

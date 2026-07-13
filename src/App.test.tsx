@@ -130,12 +130,16 @@ describe('App routes', () => {
     );
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ status: 'connected', email: 'user@example.com', destinations: [] }))
-        )
-        .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Google workspace is not connected.' }), { status: 409 }))
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === 'https://api.example.com/api/workspace') {
+          return new Response(JSON.stringify({ status: 'connected', email: 'user@example.com', destinations: [] }));
+        }
+        if (url === 'https://api.example.com/api/brain-dump') {
+          return new Response(JSON.stringify({ error: 'Google workspace is not connected.' }), { status: 409 });
+        }
+        return new Response(JSON.stringify({ ok: true }));
+      })
     );
     renderAt('/app');
 
@@ -149,6 +153,54 @@ describe('App routes', () => {
     expect(screen.getByText('Your reviewed actions are still here. Try again, or send support the error and what you expected.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Retry/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Work Tasks' })).toBeInTheDocument();
+  });
+
+  it('tracks review and create events without sending brain dump text', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
+      const url = String(input);
+      if (url === 'https://api.example.com/api/workspace') {
+        return new Response(JSON.stringify({ status: 'connected', email: 'user@example.com', destinations: [] }));
+      }
+      if (url === 'https://api.example.com/api/brain-dump') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            requestId: 'req-public-create',
+            summary: { calendar: 0, workTasks: 1, personalTasks: 0, projects: 0, waiting: 0, needsReview: 0 },
+            actions: [
+              {
+                type: 'work_task',
+                title: 'Pay employees tomorrow',
+                status: 'created',
+                sourceText: 'Pay employees tomorrow'
+              }
+            ],
+            errors: []
+          })
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/app');
+
+    fireEvent.change(screen.getByPlaceholderText('Put everything here. Do not organize it.'), {
+      target: { value: 'Pay employees tomorrow' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Review/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Create/i }));
+
+    await screen.findByText('Pay employees tomorrow');
+    const eventBodies = fetcher.mock.calls
+      .filter(([url]) => String(url) === 'https://api.example.com/api/events')
+      .map(([, init]) => JSON.parse(String(init?.body)));
+
+    expect(eventBodies.map((body) => body.name)).toContain('review_created');
+    expect(JSON.stringify(eventBodies)).not.toContain('Pay employees tomorrow');
   });
 
   it('shows recovery guidance when provider execution returns errors', async () => {

@@ -19,6 +19,7 @@ User content:
 - Parsed actions created from that text.
 - Project and waiting-on records created by Brain Dump.
 - Execution logs showing what Brain Dump attempted to create.
+- Privacy-safe product events, such as connect, review, create, error, and disconnect counts.
 
 Google data:
 
@@ -65,6 +66,8 @@ Brain Dump does not share personal data except:
 ## Retention
 
 During beta, retain execution logs and submitted brain dump records only as long as needed for support, debugging, and product improvement. Define a concrete retention window before public launch.
+
+Product analytics should not include brain dump text, action titles, source text, Google tokens, or calendar/task content.
 
 ## User Controls
 

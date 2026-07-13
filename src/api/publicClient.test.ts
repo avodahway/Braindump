@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { normalizeApiBaseUrl, processPublicBrainDump, publicApiUrl, startPublicGoogleConnection } from './publicClient';
+import {
+  normalizeApiBaseUrl,
+  processPublicBrainDump,
+  publicApiUrl,
+  startPublicGoogleConnection,
+  trackPublicEvent
+} from './publicClient';
 
 describe('public API client', () => {
   it('normalizes API base URLs', () => {
@@ -60,5 +66,18 @@ describe('public API client', () => {
         fetcher
       )
     ).rejects.toThrow('Google workspace is not connected.');
+  });
+
+  it('posts analytics events without requiring brain dump text', async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true })));
+
+    await trackPublicEvent('https://api.example.com', { name: 'review_created', requestId: 'req-1', actionCount: 2 }, fetcher);
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/events', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'review_created', requestId: 'req-1', actionCount: 2 })
+    });
   });
 });

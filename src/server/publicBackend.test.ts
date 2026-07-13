@@ -5,6 +5,7 @@ import { buildGoogleAuthorizationUrl, createPublicBackend } from './publicBacken
 import { createMemorySessionStore, sessionCookieName } from './sessionStore';
 import { createMemoryResponseStore } from './idempotencyStore';
 import { createMemoryExecutionLogStore } from './executionLogStore';
+import { createMemoryAnalyticsStore } from './analyticsStore';
 
 const googleOAuth = {
   clientId: 'client-id',
@@ -397,6 +398,42 @@ describe('public backend scaffold', () => {
     expect(await oauthStore.readTokens('user@example.com')).toBeUndefined();
     expect(await oauthStore.readWorkspace('user@example.com')).toBeUndefined();
     expect(response.headers.get('Set-Cookie')).toContain('Max-Age=0');
+  });
+
+  it('stores privacy-safe analytics events without brain dump text', async () => {
+    const analyticsStore = createMemoryAnalyticsStore();
+    const sessionStore = createMemorySessionStore(() => 1234);
+    const session = await sessionStore.createSession('user@example.com');
+    const backend = createPublicBackend({
+      googleOAuth,
+      sessionStore,
+      analyticsStore,
+      now: () => new Date('2026-07-12T12:00:00.000Z')
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/events', {
+        method: 'POST',
+        headers: { Cookie: `${sessionCookieName}=${session.id}` },
+        body: JSON.stringify({
+          name: 'review_created',
+          requestId: 'req-analytics',
+          text: 'Pay employees tomorrow',
+          actionCount: 1
+        })
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(analyticsStore.records).toEqual([
+      {
+        name: 'review_created',
+        requestId: 'req-analytics',
+        actionCount: 1,
+        userId: 'user@example.com',
+        createdAt: '2026-07-12T12:00:00.000Z'
+      }
+    ]);
   });
 });
 

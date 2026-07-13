@@ -25,6 +25,7 @@ import {
   createMemoryExecutionLogStore,
   type ExecutionLogStore
 } from './executionLogStore';
+import { createDurableAnalyticsStore, createMemoryAnalyticsStore, type AnalyticsStore } from './analyticsStore';
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -45,6 +46,7 @@ export type BrainDumpBackendConfig = {
   workspaceProvisioner?: WorkspaceProvisioner;
   responseStore?: ResponseStore;
   executionLogStore?: ExecutionLogStore;
+  analyticsStore?: AnalyticsStore;
   executor?: ActionExecutor;
 };
 
@@ -82,6 +84,14 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
           codec: config.storageCodec
         })
       : createMemoryExecutionLogStore());
+  const analyticsStore =
+    config.analyticsStore ??
+    (config.storage
+      ? createDurableAnalyticsStore(config.storage, {
+          keyPrefix: config.storageKeyPrefix,
+          codec: config.storageCodec
+        })
+      : createMemoryAnalyticsStore());
   const tokenClient =
     config.tokenClient ??
     createGoogleOAuthClient(
@@ -115,6 +125,7 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
     workspaceProvisioner,
     responseStore,
     executionLogStore,
+    analyticsStore,
     now: config.nowDate,
     executor
   });
