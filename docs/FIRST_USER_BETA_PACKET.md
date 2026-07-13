@@ -2,6 +2,8 @@
 
 Use this packet for the first 5 invited testers. Keep the first round small, watched, and practical.
 
+Use `docs/BETA_LAUNCH_WORKSHEET.md` for deployment-specific URLs, support email, OAuth test users, and launch-day checks.
+
 ## Founder Prep Checklist
 
 - Deploy the frontend and backend to staging or beta production.

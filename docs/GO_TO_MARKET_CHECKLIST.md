@@ -20,6 +20,7 @@
 - Add first test users.
 - Run end-to-end Google OAuth smoke test.
 - Prepare first-user beta packet.
+- Prepare beta launch worksheet with URL, support email, OAuth test users, and admin-token checks.
 
 ## Phase 2: First Five Users
 
