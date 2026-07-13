@@ -76,6 +76,7 @@ Track these manually at first:
 - Support load: number of founder interventions per user.
 - Privacy-safe event counts: app opened, connect started/completed, review created, create completed/failed, disconnect completed.
 - Admin metrics: protected count summary from `/api/admin/metrics`, not raw brain dump content.
+- Backup readiness: encrypted snapshot and restore checklist from `/api/admin/backup-plan`.
 
 Good beta threshold:
 
@@ -101,6 +102,7 @@ Good beta threshold:
 - Make the retry/support path visible when Google Tasks or Calendar rejects a write.
 - Confirm analytics events do not include brain dump text, action titles, or source text.
 - Set `BRAIN_DUMP_ADMIN_TOKEN` before using the beta metrics endpoint.
+- Review `/api/admin/backup-plan` and test a staging restore before first live beta users.
 - Expand to 10 to 25 users only after the first 5 complete real runs.
 
 ## User Onboarding Flow

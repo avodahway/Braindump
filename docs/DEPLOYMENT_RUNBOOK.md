@@ -51,6 +51,7 @@ The frontend host must serve `index.html` for those routes.
 - `POST /api/brain-dump`
 - `POST /api/events`
 - `GET /api/admin/metrics`
+- `GET /api/admin/backup-plan`
 
 `GET /api/health` is anonymous and should return:
 
@@ -103,6 +104,22 @@ After deploy:
 18. Confirm stored OAuth tokens and workspace connection records are removed.
 19. Confirm `/api/workspace` returns not connected afterward.
 20. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
+21. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
+
+## Backup And Restore
+
+Before inviting real beta users:
+
+1. Use a backend storage provider with encrypted snapshots or point-in-time recovery.
+2. Set `BRAIN_DUMP_STORAGE_PREFIX` to a stable production value.
+3. Set `BRAIN_DUMP_ADMIN_TOKEN` to a long random value.
+4. Call `GET /api/admin/backup-plan` with `X-Brain-Dump-Admin-Token`.
+5. Confirm the plan covers OAuth tokens, workspaces, sessions, idempotency responses, execution logs, and analytics events.
+6. Take a provider-level encrypted snapshot before every backend deploy during beta.
+7. Test restore in staging with a non-production Google account.
+8. After restore, verify `/api/health`, `/api/workspace`, duplicate request behavior, `/api/admin/metrics`, and Disconnect Google.
+
+Do not export Google refresh tokens to local files, spreadsheets, or support notes. Use encrypted provider snapshots for secret-bearing records.
 
 ## Rollback
 
@@ -110,6 +127,7 @@ After deploy:
 - Revert backend to prior deployment.
 - Disable the OAuth client if a bad release affects sign-in.
 - Keep execution logs and idempotency records for incident review.
+- Use the latest known-good encrypted storage snapshot if the backend storage layer is corrupted.
 
 ## Do Not Launch Publicly Until
 

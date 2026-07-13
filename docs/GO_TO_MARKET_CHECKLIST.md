@@ -53,6 +53,8 @@
 - Confirm analytics stores only event names, request IDs, counts, summaries, and timestamps.
 - Protect `/api/admin/metrics` with `BRAIN_DUMP_ADMIN_TOKEN`.
 - Add backup/export plan for user records.
+- Protect `/api/admin/backup-plan` with `BRAIN_DUMP_ADMIN_TOKEN`.
+- Test encrypted storage snapshot restore in staging.
 - Announce public beta to a narrow audience.
 
 ## Pricing Hypotheses

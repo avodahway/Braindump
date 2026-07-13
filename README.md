@@ -77,6 +77,8 @@ The Google OAuth token client lives in `src/server/googleOAuthClient.ts`. It exp
 
 `POST /api/events` stores privacy-safe beta events, and `GET /api/admin/metrics` returns a protected count summary when `BRAIN_DUMP_ADMIN_TOKEN` is configured. Analytics events must not include brain dump text, action titles, or source text.
 
+`GET /api/admin/backup-plan` returns a protected beta backup and restore checklist. Secret-bearing records such as Google refresh tokens should be backed up only through encrypted provider snapshots, not local exports.
+
 `src/server/idempotencyStore.ts` keeps processed request IDs from writing twice. When the backend is configured with durable storage, duplicate requests return the original response even after a backend restart.
 
 `src/server/executionLogStore.ts` records each attempted action with request id, user id, status, provider id, and failure messages so the public backend has an audit trail.

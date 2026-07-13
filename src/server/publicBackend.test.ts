@@ -479,6 +479,30 @@ describe('public backend scaffold', () => {
 
     expect(response.status).toBe(404);
   });
+
+  it('protects the beta backup plan with an admin token', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      adminToken: 'admin-secret',
+      storageKeyPrefix: 'prod',
+      now: () => new Date('2026-07-12T12:00:00.000Z')
+    });
+
+    const unauthorized = await backend.handle(new Request('https://api.example.com/api/admin/backup-plan'));
+    const authorized = await backend.handle(
+      new Request('https://api.example.com/api/admin/backup-plan', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-secret' }
+      })
+    );
+    const plan = await authorized.json();
+
+    expect(unauthorized.status).toBe(401);
+    expect(plan).toMatchObject({
+      generatedAt: '2026-07-12T12:00:00.000Z',
+      storagePrefix: 'prod'
+    });
+    expect(JSON.stringify(plan)).toContain('Do not export tokens');
+  });
 });
 
 function connectedWorkspace() {

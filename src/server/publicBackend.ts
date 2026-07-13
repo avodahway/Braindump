@@ -20,6 +20,7 @@ import {
 import { createMemoryResponseStore, type ResponseStore } from './idempotencyStore';
 import { createMemoryExecutionLogStore, type ExecutionLogStore } from './executionLogStore';
 import { createMemoryAnalyticsStore, sanitizeAnalyticsEvent, summarizeAnalytics, type AnalyticsStore } from './analyticsStore';
+import { buildBackupPlan } from './backupPlan';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -40,6 +41,7 @@ export type PublicBackendOptions = {
   executionLogStore?: ExecutionLogStore;
   analyticsStore?: AnalyticsStore;
   adminToken?: string;
+  storageKeyPrefix?: string;
   now?: () => Date;
 };
 
@@ -136,11 +138,20 @@ export function createPublicBackend(options: PublicBackendOptions) {
       }
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminMetrics) {
-        if (!options.adminToken) return json({ error: 'Admin metrics are not configured.' }, 404);
-        if (request.headers.get('X-Brain-Dump-Admin-Token') !== options.adminToken) {
-          return json({ error: 'Unauthorized.' }, 401);
-        }
+        const adminError = requireAdmin(request, options.adminToken, 'Admin metrics are not configured.');
+        if (adminError) return adminError;
         return json(summarizeAnalytics(await analyticsStore.readAll()));
+      }
+
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminBackupPlan) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin backup plan is not configured.');
+        if (adminError) return adminError;
+        return json(
+          buildBackupPlan({
+            storagePrefix: options.storageKeyPrefix,
+            generatedAt: now().toISOString()
+          })
+        );
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.brainDump) {
@@ -300,4 +311,12 @@ function callbackReturnUrl(frontendAppUrl: string, params: Record<string, string
   const url = new URL(frontendAppUrl);
   Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
   return url.toString();
+}
+
+function requireAdmin(request: Request, adminToken: string | undefined, missingMessage: string): Response | undefined {
+  if (!adminToken) return json({ error: missingMessage }, 404);
+  if (request.headers.get('X-Brain-Dump-Admin-Token') !== adminToken) {
+    return json({ error: 'Unauthorized.' }, 401);
+  }
+  return undefined;
 }
