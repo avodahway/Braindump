@@ -28,6 +28,7 @@ Optional backend:
 
 - `GOOGLE_OAUTH_SCOPES`
 - `BRAIN_DUMP_STORAGE_PREFIX`
+- `BRAIN_DUMP_ADMIN_TOKEN`
 
 See `.env.example`.
 
@@ -48,6 +49,8 @@ The frontend host must serve `index.html` for those routes.
 - `GET /api/auth/google/callback`
 - `POST /api/auth/google/disconnect`
 - `POST /api/brain-dump`
+- `POST /api/events`
+- `GET /api/admin/metrics`
 
 `GET /api/health` is anonymous and should return:
 
@@ -99,6 +102,7 @@ After deploy:
 17. Click Disconnect.
 18. Confirm stored OAuth tokens and workspace connection records are removed.
 19. Confirm `/api/workspace` returns not connected afterward.
+20. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
 
 ## Rollback
 

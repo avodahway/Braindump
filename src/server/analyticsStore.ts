@@ -13,6 +13,16 @@ export type AnalyticsStore = {
   clear(): Promise<void>;
 };
 
+export type AnalyticsMetrics = {
+  totalEvents: number;
+  uniqueUsers: number;
+  uniqueRequests: number;
+  totalActions: number;
+  totalErrors: number;
+  byName: Partial<Record<AnalyticsEventName, number>>;
+  latestEventAt?: string;
+};
+
 export type DurableAnalyticsStoreOptions = {
   keyPrefix?: string;
   codec?: SecretCodec;
@@ -66,6 +76,34 @@ export function sanitizeAnalyticsEvent(value: unknown): AnalyticsEvent | undefin
   if (typeof value.actionCount === 'number') event.actionCount = value.actionCount;
   if (isSummary(value.summary)) event.summary = value.summary;
   return event;
+}
+
+export function summarizeAnalytics(records: AnalyticsRecord[]): AnalyticsMetrics {
+  const byName: Partial<Record<AnalyticsEventName, number>> = {};
+  const users = new Set<string>();
+  const requests = new Set<string>();
+  let totalActions = 0;
+  let totalErrors = 0;
+  let latestEventAt: string | undefined;
+
+  records.forEach((record) => {
+    byName[record.name] = (byName[record.name] ?? 0) + 1;
+    if (record.userId) users.add(record.userId);
+    if (record.requestId) requests.add(record.requestId);
+    totalActions += record.actionCount ?? 0;
+    totalErrors += record.errorCount ?? 0;
+    if (!latestEventAt || record.createdAt > latestEventAt) latestEventAt = record.createdAt;
+  });
+
+  return {
+    totalEvents: records.length,
+    uniqueUsers: users.size,
+    uniqueRequests: requests.size,
+    totalActions,
+    totalErrors,
+    byName,
+    latestEventAt
+  };
 }
 
 async function readRecords(store: KeyValueStore, codec: SecretCodec, storeKey: string): Promise<AnalyticsRecord[]> {

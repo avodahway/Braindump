@@ -14,5 +14,6 @@ export const publicBackendRoutes = {
   googleCallback: '/api/auth/google/callback',
   googleDisconnect: '/api/auth/google/disconnect',
   events: '/api/events',
+  adminMetrics: '/api/admin/metrics',
   brainDump: '/api/brain-dump'
 } as const;

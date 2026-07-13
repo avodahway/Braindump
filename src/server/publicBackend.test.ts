@@ -435,6 +435,50 @@ describe('public backend scaffold', () => {
       }
     ]);
   });
+
+  it('protects beta analytics metrics with an admin token', async () => {
+    const analyticsStore = createMemoryAnalyticsStore();
+    await analyticsStore.append({
+      name: 'review_created',
+      requestId: 'req-1',
+      userId: 'user@example.com',
+      actionCount: 2,
+      createdAt: '2026-07-12T12:00:00.000Z'
+    });
+    const backend = createPublicBackend({
+      googleOAuth,
+      analyticsStore,
+      adminToken: 'admin-secret'
+    });
+
+    const unauthorized = await backend.handle(new Request('https://api.example.com/api/admin/metrics'));
+    const authorized = await backend.handle(
+      new Request('https://api.example.com/api/admin/metrics', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-secret' }
+      })
+    );
+
+    expect(unauthorized.status).toBe(401);
+    expect(await authorized.json()).toEqual({
+      totalEvents: 1,
+      uniqueUsers: 1,
+      uniqueRequests: 1,
+      totalActions: 2,
+      totalErrors: 0,
+      byName: {
+        review_created: 1
+      },
+      latestEventAt: '2026-07-12T12:00:00.000Z'
+    });
+  });
+
+  it('does not expose beta analytics metrics until configured', async () => {
+    const backend = createPublicBackend({ googleOAuth });
+
+    const response = await backend.handle(new Request('https://api.example.com/api/admin/metrics'));
+
+    expect(response.status).toBe(404);
+  });
 });
 
 function connectedWorkspace() {

@@ -51,6 +51,7 @@
 - Publish production privacy policy and terms.
 - Add lightweight analytics that do not capture brain dump content.
 - Confirm analytics stores only event names, request IDs, counts, summaries, and timestamps.
+- Protect `/api/admin/metrics` with `BRAIN_DUMP_ADMIN_TOKEN`.
 - Add backup/export plan for user records.
 - Announce public beta to a narrow audience.
 

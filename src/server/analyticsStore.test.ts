@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createMemoryKeyValueStore } from './durableStore';
-import { createDurableAnalyticsStore, createMemoryAnalyticsStore, sanitizeAnalyticsEvent } from './analyticsStore';
+import { createDurableAnalyticsStore, createMemoryAnalyticsStore, sanitizeAnalyticsEvent, summarizeAnalytics } from './analyticsStore';
 
 describe('analytics store', () => {
   it('stores privacy-safe event records in memory', async () => {
@@ -52,5 +52,37 @@ describe('analytics store', () => {
     });
 
     expect(sanitizeAnalyticsEvent({ name: 'unknown' })).toBeUndefined();
+  });
+
+  it('summarizes event counts without exposing event payload text', () => {
+    expect(
+      summarizeAnalytics([
+        {
+          name: 'review_created',
+          requestId: 'req-1',
+          userId: 'user@example.com',
+          actionCount: 3,
+          createdAt: '2026-07-12T12:00:00.000Z'
+        },
+        {
+          name: 'create_failed',
+          requestId: 'req-1',
+          userId: 'user@example.com',
+          errorCount: 1,
+          createdAt: '2026-07-12T12:01:00.000Z'
+        }
+      ])
+    ).toEqual({
+      totalEvents: 2,
+      uniqueUsers: 1,
+      uniqueRequests: 1,
+      totalActions: 3,
+      totalErrors: 1,
+      byName: {
+        review_created: 1,
+        create_failed: 1
+      },
+      latestEventAt: '2026-07-12T12:01:00.000Z'
+    });
   });
 });

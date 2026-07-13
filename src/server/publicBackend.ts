@@ -19,7 +19,7 @@ import {
 } from './sessionStore';
 import { createMemoryResponseStore, type ResponseStore } from './idempotencyStore';
 import { createMemoryExecutionLogStore, type ExecutionLogStore } from './executionLogStore';
-import { createMemoryAnalyticsStore, sanitizeAnalyticsEvent, type AnalyticsStore } from './analyticsStore';
+import { createMemoryAnalyticsStore, sanitizeAnalyticsEvent, summarizeAnalytics, type AnalyticsStore } from './analyticsStore';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -39,6 +39,7 @@ export type PublicBackendOptions = {
   responseStore?: ResponseStore;
   executionLogStore?: ExecutionLogStore;
   analyticsStore?: AnalyticsStore;
+  adminToken?: string;
   now?: () => Date;
 };
 
@@ -132,6 +133,14 @@ export function createPublicBackend(options: PublicBackendOptions) {
           createdAt: now().toISOString()
         });
         return json({ ok: true });
+      }
+
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminMetrics) {
+        if (!options.adminToken) return json({ error: 'Admin metrics are not configured.' }, 404);
+        if (request.headers.get('X-Brain-Dump-Admin-Token') !== options.adminToken) {
+          return json({ error: 'Unauthorized.' }, 401);
+        }
+        return json(summarizeAnalytics(await analyticsStore.readAll()));
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.brainDump) {

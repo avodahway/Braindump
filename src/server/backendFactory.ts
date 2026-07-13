@@ -47,6 +47,7 @@ export type BrainDumpBackendConfig = {
   responseStore?: ResponseStore;
   executionLogStore?: ExecutionLogStore;
   analyticsStore?: AnalyticsStore;
+  adminToken?: string;
   executor?: ActionExecutor;
 };
 
@@ -126,6 +127,7 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
     responseStore,
     executionLogStore,
     analyticsStore,
+    adminToken: config.adminToken,
     now: config.nowDate,
     executor
   });

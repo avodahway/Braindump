@@ -9,6 +9,7 @@ describe('runtime config', () => {
       GOOGLE_CLIENT_SECRET: 'client-secret',
       BRAIN_DUMP_PUBLIC_API_ORIGIN: 'https://api.example.com/',
       BRAIN_DUMP_FRONTEND_ORIGIN: 'https://braindump.example.com/',
+      BRAIN_DUMP_ADMIN_TOKEN: 'admin-secret',
       BRAIN_DUMP_STORAGE_PREFIX: 'prod',
       GOOGLE_OAUTH_SCOPES: 'openid,email https://www.googleapis.com/auth/tasks'
     });
@@ -20,6 +21,7 @@ describe('runtime config', () => {
       scopes: ['openid', 'email', 'https://www.googleapis.com/auth/tasks']
     });
     expect(config.frontendAppUrl).toBe('https://braindump.example.com/app');
+    expect(config.adminToken).toBe('admin-secret');
     expect(config.storageKeyPrefix).toBe('prod');
   });
 
