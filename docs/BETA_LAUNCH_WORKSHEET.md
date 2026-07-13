@@ -53,6 +53,8 @@ curl -i "[PUBLIC_API_ORIGIN]/api/admin/metrics"
 curl -i -H "X-Brain-Dump-Admin-Token: [ADMIN_TOKEN]" "[PUBLIC_API_ORIGIN]/api/admin/metrics"
 curl -i "[PUBLIC_API_ORIGIN]/api/admin/backup-plan"
 curl -i -H "X-Brain-Dump-Admin-Token: [ADMIN_TOKEN]" "[PUBLIC_API_ORIGIN]/api/admin/backup-plan"
+curl -i "[PUBLIC_API_ORIGIN]/api/admin/readiness"
+curl -i -H "X-Brain-Dump-Admin-Token: [ADMIN_TOKEN]" "[PUBLIC_API_ORIGIN]/api/admin/readiness"
 ```
 
 Expected:
@@ -61,6 +63,7 @@ Expected:
 - Requests with the admin header return JSON.
 - Metrics response contains counts only.
 - Backup plan response says not to export Google refresh tokens.
+- Readiness response returns `ready: true` before invite emails go out.
 
 ## Launch-Day Command Checklist
 
@@ -84,6 +87,7 @@ Check deployed backend:
 
 ```sh
 curl -i "[PUBLIC_API_ORIGIN]/api/health"
+curl -i -H "X-Brain-Dump-Admin-Token: [ADMIN_TOKEN]" "[PUBLIC_API_ORIGIN]/api/admin/readiness"
 ```
 
 Manual app smoke test:

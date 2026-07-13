@@ -503,6 +503,31 @@ describe('public backend scaffold', () => {
     });
     expect(JSON.stringify(plan)).toContain('Do not export tokens');
   });
+
+  it('returns protected launch readiness without exposing secrets', async () => {
+    const backend = createPublicBackend({
+      googleOAuth: {
+        ...googleOAuth,
+        scopes: [...googleOAuth.scopes, 'https://www.googleapis.com/auth/calendar.events']
+      },
+      frontendAppUrl: 'https://app.example.com/app',
+      adminToken: 'admin-secret',
+      storageMode: 'durable',
+      now: () => new Date('2026-07-12T12:00:00.000Z')
+    });
+
+    const unauthorized = await backend.handle(new Request('https://api.example.com/api/admin/readiness'));
+    const authorized = await backend.handle(
+      new Request('https://api.example.com/api/admin/readiness', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-secret' }
+      })
+    );
+    const report = await authorized.json();
+
+    expect(unauthorized.status).toBe(401);
+    expect(report.ready).toBe(true);
+    expect(JSON.stringify(report)).not.toContain('client-secret');
+  });
 });
 
 function connectedWorkspace() {

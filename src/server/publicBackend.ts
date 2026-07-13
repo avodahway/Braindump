@@ -21,6 +21,7 @@ import { createMemoryResponseStore, type ResponseStore } from './idempotencyStor
 import { createMemoryExecutionLogStore, type ExecutionLogStore } from './executionLogStore';
 import { createMemoryAnalyticsStore, sanitizeAnalyticsEvent, summarizeAnalytics, type AnalyticsStore } from './analyticsStore';
 import { buildBackupPlan } from './backupPlan';
+import { buildReadinessReport } from './readinessReport';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -42,6 +43,7 @@ export type PublicBackendOptions = {
   analyticsStore?: AnalyticsStore;
   adminToken?: string;
   storageKeyPrefix?: string;
+  storageMode?: 'memory' | 'durable';
   now?: () => Date;
 };
 
@@ -150,6 +152,22 @@ export function createPublicBackend(options: PublicBackendOptions) {
           buildBackupPlan({
             storagePrefix: options.storageKeyPrefix,
             generatedAt: now().toISOString()
+          })
+        );
+      }
+
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminReadiness) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin readiness is not configured.');
+        if (adminError) return adminError;
+        return json(
+          buildReadinessReport({
+            generatedAt: now().toISOString(),
+            googleClientId: options.googleOAuth.clientId,
+            googleRedirectUri: options.googleOAuth.redirectUri,
+            googleScopes: options.googleOAuth.scopes,
+            frontendAppUrl: options.frontendAppUrl,
+            adminTokenConfigured: Boolean(options.adminToken),
+            storageMode: options.storageMode ?? 'memory'
           })
         );
       }

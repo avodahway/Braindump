@@ -17,6 +17,7 @@ describe('first-user beta packet', () => {
     expect(worksheet).toContain('[BETA_APP_URL]');
     expect(worksheet).toContain('## OAuth Test Users');
     expect(worksheet).toContain('## Admin Token Checks');
+    expect(worksheet).toContain('/api/admin/readiness');
     expect(worksheet).toContain('pnpm test');
     expect(worksheet).toContain('pnpm build');
   });

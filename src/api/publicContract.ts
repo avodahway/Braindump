@@ -16,5 +16,6 @@ export const publicBackendRoutes = {
   events: '/api/events',
   adminMetrics: '/api/admin/metrics',
   adminBackupPlan: '/api/admin/backup-plan',
+  adminReadiness: '/api/admin/readiness',
   brainDump: '/api/brain-dump'
 } as const;

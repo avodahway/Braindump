@@ -58,6 +58,7 @@
 - Add backup/export plan for user records.
 - Protect `/api/admin/backup-plan` with `BRAIN_DUMP_ADMIN_TOKEN`.
 - Test encrypted storage snapshot restore in staging.
+- Confirm `/api/admin/readiness` returns `ready: true`.
 - Announce public beta to a narrow audience.
 
 ## Pricing Hypotheses
