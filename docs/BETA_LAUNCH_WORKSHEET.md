@@ -80,6 +80,7 @@ Check deployed frontend:
 [BETA_APP_URL]/
 [BETA_APP_URL]/privacy
 [BETA_APP_URL]/terms
+[BETA_APP_URL]/support
 [BETA_APP_URL]/app
 ```
 

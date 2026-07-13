@@ -18,7 +18,7 @@ describe('App routes', () => {
     expect(screen.getByRole('link', { name: /Open app/i })).toHaveAttribute('href', '/app');
     expect(screen.getByRole('link', { name: /Beta support/i })).toHaveAttribute(
       'href',
-      expect.stringContaining('mailto:')
+      '/support'
     );
   });
 
@@ -39,6 +39,18 @@ describe('App routes', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Terms of Service' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Beta status' })).toBeInTheDocument();
     expect(screen.getByText(/Brain Dump does not send email during beta/i)).toBeInTheDocument();
+  });
+
+  it('renders the support page with data request guidance', () => {
+    renderAt('/support');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Support' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Account and data requests' })).toBeInTheDocument();
+    expect(screen.getByText(/Brain Dump support will not ask for your Google password/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /support@braindump.app/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('mailto:')
+    );
   });
 
   it('renders the product tool at the app route', () => {

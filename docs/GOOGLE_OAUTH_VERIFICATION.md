@@ -60,7 +60,7 @@ Publish these before public OAuth verification:
 - Home page explaining what Brain Dump does.
 - Privacy policy explaining Google data access, use, storage, sharing, retention, and disconnect.
 - Terms of service.
-- Support/contact page or visible support email.
+- Support/contact page at `/support` with visible support email.
 
 ## Demo Video Script
 

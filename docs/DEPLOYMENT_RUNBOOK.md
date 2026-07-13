@@ -37,6 +37,7 @@ See `.env.example`.
 - `/`
 - `/app`
 - `/privacy`
+- `/support`
 - `/terms`
 
 The frontend host must serve `index.html` for those routes.
@@ -88,25 +89,26 @@ After deploy:
 1. Open `/`.
 2. Open `/privacy`.
 3. Open `/terms`.
-4. Open `/app`.
-5. Check backend health: `GET /api/health`.
-6. In app settings, set Public API URL.
-7. Click Connect Google.
-8. Complete OAuth with a test user and confirm the app returns to `/app?connected=google`, then clears the query.
-9. Submit: `Pay employees tomorrow. Lunch with Jack Thursday at noon; put on calendar.`
-10. Confirm the review step appears before anything is created.
-11. Remove one preview action and confirm it disappears.
-12. Review again, then click Create.
-13. Confirm Google Tasks has the work task.
-14. Confirm Google Calendar has the event.
-15. Submit: `Spend 4 hours this week on the porch replacement project`.
-16. Confirm the calendar work block stays in Needs Review and is not created.
-17. Click Disconnect.
-18. Confirm stored OAuth tokens and workspace connection records are removed.
-19. Confirm `/api/workspace` returns not connected afterward.
-20. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
-21. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
-22. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users.
+4. Open `/support`.
+5. Open `/app`.
+6. Check backend health: `GET /api/health`.
+7. In app settings, set Public API URL.
+8. Click Connect Google.
+9. Complete OAuth with a test user and confirm the app returns to `/app?connected=google`, then clears the query.
+10. Submit: `Pay employees tomorrow. Lunch with Jack Thursday at noon; put on calendar.`
+11. Confirm the review step appears before anything is created.
+12. Remove one preview action and confirm it disappears.
+13. Review again, then click Create.
+14. Confirm Google Tasks has the work task.
+15. Confirm Google Calendar has the event.
+16. Submit: `Spend 4 hours this week on the porch replacement project`.
+17. Confirm the calendar work block stays in Needs Review and is not created.
+18. Click Disconnect.
+19. Confirm stored OAuth tokens and workspace connection records are removed.
+20. Confirm `/api/workspace` returns not connected afterward.
+21. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
+22. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
+23. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users.
 
 ## Backup And Restore
 

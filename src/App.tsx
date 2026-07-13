@@ -41,6 +41,7 @@ export function App() {
 
   if (route === '/privacy') return <PrivacyPage />;
   if (route === '/terms') return <TermsPage />;
+  if (route === '/support') return <SupportPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
 }
@@ -507,7 +508,7 @@ function HomePage() {
             <Sparkles size={20} />
             Try preview mode
           </a>
-          <a href={supportRequestMailto('Public home page')}>
+          <a href="/support">
             <MessageCircle size={20} />
             Beta support
           </a>
@@ -598,6 +599,38 @@ function TermsPage() {
   );
 }
 
+function SupportPage() {
+  return (
+    <PublicDocument
+      title="Support"
+      subtitle="Help for beta users, Google account connection, and data requests."
+    >
+      <h2>Contact</h2>
+      <p>
+        Email <a href={supportRequestMailto('Support page')}>{supportEmail}</a> with what happened and what you expected.
+        Include screenshots only if you are comfortable sharing them.
+      </p>
+      <h2>What to include</h2>
+      <ul>
+        <li>Your Google account email used with Brain Dump.</li>
+        <li>Approximate time of the issue.</li>
+        <li>Whether you were connecting Google, reviewing actions, creating items, or disconnecting.</li>
+        <li>The expected result and the actual result.</li>
+      </ul>
+      <h2>Account and data requests</h2>
+      <p>
+        You can disconnect Google inside the app. For stored account deletion or privacy questions, email support with
+        "Data request" in the subject.
+      </p>
+      <h2>Security</h2>
+      <p>
+        Never send Google passwords, OAuth tokens, or unredacted private calendar screenshots. Brain Dump support will
+        not ask for your Google password.
+      </p>
+    </PublicDocument>
+  );
+}
+
 function PublicDocument({
   title,
   subtitle,
@@ -630,7 +663,7 @@ function PublicNav() {
         <a href="/app">App</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
-        <a href={supportRequestMailto('Public navigation')}>Support</a>
+        <a href="/support">Support</a>
       </nav>
     </header>
   );
@@ -655,7 +688,7 @@ function PreviewRow({
 }
 
 function normalizedPath(path: string): string {
-  if (path === '/privacy' || path === '/terms' || path === '/app') return path;
+  if (path === '/privacy' || path === '/terms' || path === '/support' || path === '/app') return path;
   return '/';
 }
 
