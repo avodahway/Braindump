@@ -19,10 +19,12 @@
 - Configure Google OAuth testing app.
 - Add first test users.
 - Run end-to-end Google OAuth smoke test.
+- Prepare first-user beta packet.
 
 ## Phase 2: First Five Users
 
 - Invite 5 known users.
+- Send first-user beta packet invite.
 - Watch every first-run session if possible.
 - Record where onboarding confuses them.
 - Track parser mistakes.

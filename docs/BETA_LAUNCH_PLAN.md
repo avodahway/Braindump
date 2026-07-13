@@ -97,6 +97,7 @@ Good beta threshold:
 - Record an OAuth demo video for Google verification.
 - Run internal smoke tests.
 - Invite first 5 users.
+- Use `docs/FIRST_USER_BETA_PACKET.md` for invite copy, tester instructions, live-session notes, and follow-up questions.
 - Review execution logs daily during beta.
 - Keep a beta issue log.
 - Make the retry/support path visible when Google Tasks or Calendar rejects a write.
