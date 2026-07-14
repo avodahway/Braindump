@@ -60,6 +60,7 @@ Go-to-market planning lives in:
 - `docs/RELEASE_GATE.md`
 - `docs/GOOGLE_OAUTH_VERIFICATION.md`
 - `docs/GO_TO_MARKET_CHECKLIST.md`
+- `docs/HOSTING_DECISION.md`
 - `docs/FIRST_USER_BETA_PACKET.md`
 - `docs/BETA_LAUNCH_WORKSHEET.md`
 - `docs/PRIVACY_POLICY_DRAFT.md`

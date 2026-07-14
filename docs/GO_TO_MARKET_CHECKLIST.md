@@ -5,6 +5,7 @@
 - Decide support email.
 - Set `VITE_SUPPORT_EMAIL` for the public frontend build.
 - Decide product domain.
+- Review `docs/HOSTING_DECISION.md`.
 - Publish basic home page.
 - Publish privacy policy draft page.
 - Publish terms draft page.
