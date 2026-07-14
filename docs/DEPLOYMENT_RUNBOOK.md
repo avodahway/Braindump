@@ -32,6 +32,11 @@ Optional backend:
 
 See `.env.example`.
 
+Use `.env.production.example` as the production handoff template. Fill it in through the frontend and backend hosting
+provider secret settings, not by committing real credentials.
+
+Use `docs/LAUNCH_URLS.md` as the canonical list of public pages, API routes, and missing production values.
+
 ## Frontend Routes
 
 - `/`
@@ -117,6 +122,15 @@ After deploy:
 26. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
 27. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
 28. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users.
+
+You can automate the public page, health, and readiness checks with:
+
+```sh
+BRAIN_DUMP_FRONTEND_ORIGIN=https://braindump.app \
+BRAIN_DUMP_PUBLIC_API_ORIGIN=https://api.braindump.app \
+BRAIN_DUMP_ADMIN_TOKEN=replace-with-admin-token \
+pnpm verify:deployment
+```
 
 ## Backup And Restore
 

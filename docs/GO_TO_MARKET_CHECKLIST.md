@@ -13,9 +13,12 @@
 - Pick frontend host.
 - Pick backend host.
 - Pick durable encrypted storage.
+- Fill launch URL inventory from `docs/LAUNCH_URLS.md`.
+- Fill production env template from `.env.production.example` in host secret settings.
 - Deploy staging frontend.
 - Deploy staging backend.
 - Confirm `GET /api/health` responds on staging.
+- Run `pnpm verify:deployment` against staging.
 - Configure Google OAuth testing app.
 - Add first test users.
 - Run end-to-end Google OAuth smoke test.

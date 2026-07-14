@@ -19,6 +19,8 @@ Use this as the launch-day control sheet. Fill in the placeholders when deployme
 
 ## Environment Checklist
 
+Start from `.env.production.example`. Fill real values only in hosting provider secret settings or a local ignored env file.
+
 Frontend:
 
 - `VITE_SUPPORT_EMAIL=[SUPPORT_EMAIL]`
@@ -92,6 +94,15 @@ Check deployed backend:
 ```sh
 curl -i "[PUBLIC_API_ORIGIN]/api/health"
 curl -i -H "X-Brain-Dump-Admin-Token: [ADMIN_TOKEN]" "[PUBLIC_API_ORIGIN]/api/admin/readiness"
+```
+
+Run the deployment verifier:
+
+```sh
+BRAIN_DUMP_FRONTEND_ORIGIN=[BETA_APP_URL] \
+BRAIN_DUMP_PUBLIC_API_ORIGIN=[PUBLIC_API_ORIGIN] \
+BRAIN_DUMP_ADMIN_TOKEN=[ADMIN_TOKEN] \
+pnpm verify:deployment
 ```
 
 Manual app smoke test:

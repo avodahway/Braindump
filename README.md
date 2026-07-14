@@ -24,6 +24,12 @@ pnpm test
 pnpm build
 ```
 
+After a real frontend and backend are deployed, verify public pages and API readiness with:
+
+```sh
+pnpm verify:deployment
+```
+
 ## Backend Direction
 
 Brain Dump is moving toward a public multi-user model:
@@ -50,6 +56,7 @@ Go-to-market planning lives in:
 
 - `docs/BETA_LAUNCH_PLAN.md`
 - `docs/DEPLOYMENT_RUNBOOK.md`
+- `docs/LAUNCH_URLS.md`
 - `docs/GOOGLE_OAUTH_VERIFICATION.md`
 - `docs/GO_TO_MARKET_CHECKLIST.md`
 - `docs/FIRST_USER_BETA_PACKET.md`
