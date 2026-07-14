@@ -13,7 +13,7 @@ pnpm dev
 
 The app starts in mock preview mode. It parses and groups results locally without touching any Google account.
 
-Public launch pages are available at `/`, `/privacy`, `/terms`, and `/support`. The product tool is available at `/app`.
+Public launch pages are available at `/`, `/privacy`, `/terms`, `/support`, and `/data-deletion`. The product tool is available at `/app`.
 
 Set `VITE_SUPPORT_EMAIL` at build time to show the live beta support address in public pages and feedback links.
 

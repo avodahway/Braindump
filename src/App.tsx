@@ -42,6 +42,7 @@ export function App() {
   if (route === '/privacy') return <PrivacyPage />;
   if (route === '/terms') return <TermsPage />;
   if (route === '/support') return <SupportPage />;
+  if (route === '/data-deletion') return <DataDeletionPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
 }
@@ -552,6 +553,9 @@ function PrivacyPage() {
         Users can disconnect Google, stop using the app, request deletion of stored account records, and delete tasks or
         calendar events directly in their Google account.
       </p>
+      <p>
+        Data deletion instructions are available at <a href="/data-deletion">/data-deletion</a>.
+      </p>
       <h2>Contact</h2>
       <p>
         Support email: <a href={supportRequestMailto('Privacy policy')}>{supportEmail}</a>.
@@ -622,10 +626,44 @@ function SupportPage() {
         You can disconnect Google inside the app. For stored account deletion or privacy questions, email support with
         "Data request" in the subject.
       </p>
+      <p>
+        Full deletion instructions are available at <a href="/data-deletion">/data-deletion</a>.
+      </p>
       <h2>Security</h2>
       <p>
         Never send Google passwords, OAuth tokens, or unredacted private calendar screenshots. Brain Dump support will
         not ask for your Google password.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function DataDeletionPage() {
+  return (
+    <PublicDocument
+      title="Data Deletion"
+      subtitle="How beta users can disconnect Google and request deletion of stored Brain Dump records."
+    >
+      <h2>Disconnect Google</h2>
+      <p>
+        Open Brain Dump, go to the setup panel, and choose Disconnect. Disconnecting removes the stored OAuth tokens and
+        workspace connection records Brain Dump uses for future writes.
+      </p>
+      <h2>Request stored record deletion</h2>
+      <p>
+        Email <a href={supportRequestMailto('Data deletion request')}>{supportEmail}</a> with "Data deletion request" in
+        the subject and include the Google account email you used with Brain Dump.
+      </p>
+      <h2>What can be deleted</h2>
+      <ul>
+        <li>Stored session records associated with your account.</li>
+        <li>Stored OAuth tokens and workspace connection records.</li>
+        <li>Execution logs, idempotency records, and beta analytics associated with your account where technically available.</li>
+      </ul>
+      <h2>What Brain Dump cannot delete</h2>
+      <p>
+        Disconnecting or deleting Brain Dump records does not remove tasks or calendar events already created in your
+        Google account. You can delete those directly in Google Tasks or Google Calendar.
       </p>
     </PublicDocument>
   );
@@ -663,6 +701,7 @@ function PublicNav() {
         <a href="/app">App</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
+        <a href="/data-deletion">Data deletion</a>
         <a href="/support">Support</a>
       </nav>
     </header>
@@ -688,7 +727,7 @@ function PreviewRow({
 }
 
 function normalizedPath(path: string): string {
-  if (path === '/privacy' || path === '/terms' || path === '/support' || path === '/app') return path;
+  if (path === '/privacy' || path === '/terms' || path === '/support' || path === '/data-deletion' || path === '/app') return path;
   return '/';
 }
 

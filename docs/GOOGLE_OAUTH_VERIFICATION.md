@@ -61,6 +61,7 @@ Publish these before public OAuth verification:
 - Privacy policy explaining Google data access, use, storage, sharing, retention, and disconnect.
 - Terms of service.
 - Support/contact page at `/support` with visible support email.
+- Data deletion instructions at `/data-deletion`.
 
 ## Demo Video Script
 
@@ -102,7 +103,7 @@ Before verification:
 - Scope justifications written.
 - Test account available.
 - App screenshots available.
-- Data deletion/disconnect behavior documented.
+- Data deletion/disconnect behavior documented at `/data-deletion`.
 
 ## Notes
 

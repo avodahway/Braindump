@@ -53,6 +53,18 @@ describe('App routes', () => {
     );
   });
 
+  it('renders the data deletion page with disconnect guidance', () => {
+    renderAt('/data-deletion');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Data Deletion' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Disconnect Google' })).toBeInTheDocument();
+    expect(screen.getByText(/does not remove tasks or calendar events already created/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /support@braindump.app/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('mailto:')
+    );
+  });
+
   it('renders the product tool at the app route', () => {
     renderAt('/app');
 

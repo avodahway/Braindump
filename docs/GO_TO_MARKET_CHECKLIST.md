@@ -8,7 +8,7 @@
 - Publish basic home page.
 - Publish privacy policy draft page.
 - Publish terms draft page.
-- Confirm `/`, `/privacy`, `/terms`, `/support`, and `/app` routes work on the deployed frontend.
+- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, and `/app` routes work on the deployed frontend.
 - Confirm `/app` explains setup progress, demo mode, Google connection, destinations, and disconnect.
 - Pick frontend host.
 - Pick backend host.
