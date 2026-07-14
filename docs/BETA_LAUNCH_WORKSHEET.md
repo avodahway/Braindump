@@ -83,6 +83,7 @@ Check deployed frontend:
 [BETA_APP_URL]/support
 [BETA_APP_URL]/data-deletion
 [BETA_APP_URL]/feedback
+[BETA_APP_URL]/beta
 [BETA_APP_URL]/app
 ```
 

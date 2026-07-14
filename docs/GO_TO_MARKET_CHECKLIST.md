@@ -8,7 +8,7 @@
 - Publish basic home page.
 - Publish privacy policy draft page.
 - Publish terms draft page.
-- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, and `/app` routes work on the deployed frontend.
+- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, and `/app` routes work on the deployed frontend.
 - Confirm `/app` explains setup progress, demo mode, Google connection, destinations, and disconnect.
 - Pick frontend host.
 - Pick backend host.
@@ -90,3 +90,4 @@ Test these value propositions:
 - Support email.
 - Founder beta invitation email.
 - 3-question post-run feedback form at `/feedback`.
+- Beta access request page at `/beta`.

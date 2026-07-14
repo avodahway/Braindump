@@ -78,6 +78,18 @@ describe('App routes', () => {
     );
   });
 
+  it('renders the beta access page with public-user expectations', () => {
+    renderAt('/beta');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Join The Beta' })).toBeInTheDocument();
+    expect(screen.getByText(/Google connection is per user/i)).toBeInTheDocument();
+    expect(screen.getByText(/Email sending is not part of the beta/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /support@braindump.app/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('Brain%20Dump%20beta%20access%20request')
+    );
+  });
+
   it('renders the product tool at the app route', () => {
     renderAt('/app');
 

@@ -23,7 +23,7 @@ import { loadSettings, processBrainDump, saveSettings, type BackendSettings } fr
 import { connectPublicWorkspace, disconnectPublicWorkspace, refreshPublicWorkspace } from './api/publicConnection';
 import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
-import { betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
+import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
 
 const groups = [
@@ -44,6 +44,7 @@ export function App() {
   if (route === '/support') return <SupportPage />;
   if (route === '/data-deletion') return <DataDeletionPage />;
   if (route === '/feedback') return <FeedbackPage />;
+  if (route === '/beta') return <BetaPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
 }
@@ -454,6 +455,9 @@ function HomePage() {
               Open app
               <ArrowRight size={19} />
             </a>
+            <a className="secondaryButton linkButton" href="/beta">
+              Join beta
+            </a>
             <a className="secondaryButton linkButton" href="/privacy">
               Privacy
             </a>
@@ -517,6 +521,10 @@ function HomePage() {
           <a href="/feedback">
             <UserCheck size={20} />
             Feedback form
+          </a>
+          <a href="/beta">
+            <ArrowRight size={20} />
+            Join beta
           </a>
         </div>
       </section>
@@ -700,6 +708,34 @@ function FeedbackPage() {
   );
 }
 
+function BetaPage() {
+  return (
+    <PublicDocument
+      title="Join The Beta"
+      subtitle="A small first-user beta for people who want messy notes turned into reviewed Google tasks and calendar events."
+    >
+      <h2>Who it is for</h2>
+      <p>
+        Brain Dump beta is for people who already use Google Tasks or Google Calendar and want a faster way to capture
+        scattered thoughts before sorting them.
+      </p>
+      <h2>What beta users can expect</h2>
+      <ul>
+        <li>Preview mode works before connecting Google.</li>
+        <li>Google connection is per user; Brain Dump does not use the founder's workspace.</li>
+        <li>Tasks and clear calendar events are reviewed before creation.</li>
+        <li>Ambiguous items stay in Needs Review instead of being created automatically.</li>
+        <li>Email sending is not part of the beta.</li>
+      </ul>
+      <h2>Request access</h2>
+      <p>
+        Email <a href={betaAccessMailto()}>{supportEmail}</a> with your name, the task/calendar tools you use now, and
+        whether you are comfortable connecting Google Tasks and Google Calendar during beta.
+      </p>
+    </PublicDocument>
+  );
+}
+
 function PublicDocument({
   title,
   subtitle,
@@ -732,6 +768,7 @@ function PublicNav() {
         <a href="/app">App</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
+        <a href="/beta">Beta</a>
         <a href="/data-deletion">Data deletion</a>
         <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
@@ -765,6 +802,7 @@ function normalizedPath(path: string): string {
     path === '/support' ||
     path === '/data-deletion' ||
     path === '/feedback' ||
+    path === '/beta' ||
     path === '/app'
   ) return path;
   return '/';

@@ -48,6 +48,23 @@ export function betaFeedbackMailto(): string {
   });
 }
 
+export function betaAccessMailto(): string {
+  return supportMailto({
+    subject: 'Brain Dump beta access request',
+    body: [
+      'Name:',
+      '',
+      'Email:',
+      '',
+      'What do you currently use for tasks and calendar?',
+      '',
+      'What would make Brain Dump useful enough for you to keep using?',
+      '',
+      'Are you comfortable connecting Google Tasks and Google Calendar during beta?'
+    ].join('\n')
+  });
+}
+
 export function supportRequestMailto(context: string): string {
   return supportMailto({
     subject: `Brain Dump beta support: ${context}`,
