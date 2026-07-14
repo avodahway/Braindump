@@ -7,6 +7,7 @@ Use this before promoting a build to beta testers.
 - GitHub Actions `CI` workflow passes on `main`.
 - Local `pnpm test` passes.
 - Local `pnpm build` passes.
+- Local `pnpm build:backend` passes.
 - `pnpm verify:deployment` passes against the deployed frontend and backend.
 - `/api/admin/readiness` returns `ready: true` with the admin token.
 
@@ -19,6 +20,7 @@ It verifies:
 - Dependencies install from the committed lockfile.
 - Parser, routing, backend contract, OAuth/session, analytics, and readiness tests pass.
 - The production PWA build completes.
+- The deployable Node backend build completes.
 
 ## What CI Does Not Cover
 

@@ -37,3 +37,6 @@ jobs:
 
       - name: Build production app
         run: pnpm build
+
+      - name: Build backend server
+        run: pnpm build:backend

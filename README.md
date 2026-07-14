@@ -22,6 +22,7 @@ Set `VITE_SUPPORT_EMAIL` at build time to show the live beta support address in 
 ```sh
 pnpm test
 pnpm build
+pnpm build:backend
 ```
 
 After a real frontend and backend are deployed, verify public pages and API readiness with:
@@ -67,6 +68,9 @@ Go-to-market planning lives in:
 - `docs/TERMS_OF_SERVICE_DRAFT.md`
 
 The backend scaffold lives in `src/server/publicBackend.ts`. It implements the public API contract without real Google writes yet, including OAuth URL creation and request idempotency.
+
+The deployable Node backend entry point builds with `pnpm build:backend` and starts with `pnpm start:backend`. Hosts
+should set `PORT` plus the backend environment variables from `.env.production.example`.
 
 Provider execution is split behind `src/server/actionExecutor.ts`. `src/server/googleExecutor.ts` defines the Google-ready adapter interface for Tasks, Calendar, projects, and waiting records.
 

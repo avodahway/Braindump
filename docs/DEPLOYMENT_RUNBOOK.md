@@ -77,6 +77,24 @@ The frontend host must serve `index.html` for those routes.
 }
 ```
 
+## Backend Build
+
+The public backend can run as a Node HTTP service.
+
+Build command:
+
+```sh
+pnpm build:backend
+```
+
+Start command:
+
+```sh
+pnpm start:backend
+```
+
+The server listens on `PORT`, defaulting to `3000` for local backend smoke tests.
+
 ## Google Cloud Setup
 
 1. Create or choose a Google Cloud project.
