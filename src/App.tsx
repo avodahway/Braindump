@@ -23,7 +23,7 @@ import { loadSettings, processBrainDump, saveSettings, type BackendSettings } fr
 import { connectPublicWorkspace, disconnectPublicWorkspace, refreshPublicWorkspace } from './api/publicConnection';
 import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
-import { feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
+import { betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
 
 const groups = [
@@ -43,6 +43,7 @@ export function App() {
   if (route === '/terms') return <TermsPage />;
   if (route === '/support') return <SupportPage />;
   if (route === '/data-deletion') return <DataDeletionPage />;
+  if (route === '/feedback') return <FeedbackPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
 }
@@ -513,6 +514,10 @@ function HomePage() {
             <MessageCircle size={20} />
             Beta support
           </a>
+          <a href="/feedback">
+            <UserCheck size={20} />
+            Feedback form
+          </a>
         </div>
       </section>
     </main>
@@ -669,6 +674,32 @@ function DataDeletionPage() {
   );
 }
 
+function FeedbackPage() {
+  return (
+    <PublicDocument
+      title="Beta Feedback"
+      subtitle="Three quick questions for first-run testers after they try Brain Dump."
+    >
+      <h2>What to send</h2>
+      <ol>
+        <li>What looked right?</li>
+        <li>What looked wrong or confusing?</li>
+        <li>What did you expect Brain Dump to do instead?</li>
+      </ol>
+      <h2>Helpful context</h2>
+      <p>
+        Include your Google account email and the approximate time of your test if you connected Google. Do not send
+        passwords, OAuth tokens, or private screenshots unless you are comfortable sharing them.
+      </p>
+      <h2>Send feedback</h2>
+      <p>
+        Email <a href={betaFeedbackMailto()}>{supportEmail}</a> with your answers. The app also adds a feedback link
+        after each completed run with the request ID and action summary already filled in.
+      </p>
+    </PublicDocument>
+  );
+}
+
 function PublicDocument({
   title,
   subtitle,
@@ -702,6 +733,7 @@ function PublicNav() {
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
         <a href="/data-deletion">Data deletion</a>
+        <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
       </nav>
     </header>
@@ -727,7 +759,14 @@ function PreviewRow({
 }
 
 function normalizedPath(path: string): string {
-  if (path === '/privacy' || path === '/terms' || path === '/support' || path === '/data-deletion' || path === '/app') return path;
+  if (
+    path === '/privacy' ||
+    path === '/terms' ||
+    path === '/support' ||
+    path === '/data-deletion' ||
+    path === '/feedback' ||
+    path === '/app'
+  ) return path;
   return '/';
 }
 

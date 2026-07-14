@@ -31,6 +31,23 @@ export function feedbackMailto(result: BrainDumpResponse): string {
   });
 }
 
+export function betaFeedbackMailto(): string {
+  return supportMailto({
+    subject: 'Brain Dump beta feedback',
+    body: [
+      'What looked right?',
+      '',
+      'What looked wrong or confusing?',
+      '',
+      'What did you expect Brain Dump to do instead?',
+      '',
+      'Optional: Google account email used with Brain Dump',
+      '',
+      'Optional: approximate time of your test'
+    ].join('\n')
+  });
+}
+
 export function supportRequestMailto(context: string): string {
   return supportMailto({
     subject: `Brain Dump beta support: ${context}`,

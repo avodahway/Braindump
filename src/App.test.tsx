@@ -65,6 +65,19 @@ describe('App routes', () => {
     );
   });
 
+  it('renders the beta feedback page with the three post-run questions', () => {
+    renderAt('/feedback');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Beta Feedback' })).toBeInTheDocument();
+    expect(screen.getByText('What looked right?')).toBeInTheDocument();
+    expect(screen.getByText('What looked wrong or confusing?')).toBeInTheDocument();
+    expect(screen.getByText('What did you expect Brain Dump to do instead?')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /support@braindump.app/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('Brain%20Dump%20beta%20feedback')
+    );
+  });
+
   it('renders the product tool at the app route', () => {
     renderAt('/app');
 
