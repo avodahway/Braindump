@@ -57,6 +57,7 @@ Go-to-market planning lives in:
 - `docs/BETA_LAUNCH_PLAN.md`
 - `docs/DEPLOYMENT_RUNBOOK.md`
 - `docs/LAUNCH_URLS.md`
+- `docs/RELEASE_GATE.md`
 - `docs/GOOGLE_OAUTH_VERIFICATION.md`
 - `docs/GO_TO_MARKET_CHECKLIST.md`
 - `docs/FIRST_USER_BETA_PACKET.md`

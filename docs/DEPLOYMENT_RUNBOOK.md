@@ -37,6 +37,8 @@ provider secret settings, not by committing real credentials.
 
 Use `docs/LAUNCH_URLS.md` as the canonical list of public pages, API routes, and missing production values.
 
+Use `docs/RELEASE_GATE.md` before promoting a build from staging to beta testers.
+
 ## Frontend Routes
 
 - `/`

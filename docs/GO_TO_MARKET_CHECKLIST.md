@@ -17,8 +17,10 @@
 - Fill production env template from `.env.production.example` in host secret settings.
 - Deploy staging frontend.
 - Deploy staging backend.
+- Confirm GitHub Actions CI passes on `main`.
 - Confirm `GET /api/health` responds on staging.
 - Run `pnpm verify:deployment` against staging.
+- Review `docs/RELEASE_GATE.md` before inviting testers.
 - Configure Google OAuth testing app.
 - Add first test users.
 - Run end-to-end Google OAuth smoke test.
