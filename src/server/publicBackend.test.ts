@@ -119,6 +119,44 @@ describe('public backend scaffold', () => {
     expect(result.actions.every((action: { status: string }) => action.status === 'created')).toBe(true);
   });
 
+  it('returns a clean error for malformed brain dump JSON', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      workspace: connectedWorkspace()
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        body: '{'
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Invalid JSON body.' });
+  });
+
+  it('validates required brain dump request fields', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      workspace: connectedWorkspace()
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        body: JSON.stringify({
+          requestId: 'req-invalid',
+          text: '',
+          timezone: 'America/Chicago'
+        })
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Brain dump text is required.' });
+  });
+
   it('returns the same response for duplicate request ids', async () => {
     const backend = createPublicBackend({ googleOAuth, workspace: connectedWorkspace() });
     const request = {
@@ -208,6 +246,34 @@ describe('public backend scaffold', () => {
     expect(createdTitles).toEqual(['Pay employees tomorrow']);
     expect(result.summary.workTasks).toBe(1);
     expect(result.summary.calendar).toBe(0);
+  });
+
+  it('validates approved action payloads before execution', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      workspace: connectedWorkspace()
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        body: JSON.stringify({
+          requestId: 'req-bad-action',
+          text: 'Pay employees tomorrow.',
+          timezone: 'America/Chicago',
+          approvedActions: [
+            {
+              type: 'unknown_action',
+              title: 'Pay employees tomorrow',
+              sourceText: 'Pay employees tomorrow.'
+            }
+          ]
+        })
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Approved action type is invalid.' });
   });
 
   it('blocks processing after disconnect', async () => {
@@ -586,6 +652,20 @@ describe('public backend scaffold', () => {
         createdAt: '2026-07-12T12:00:00.000Z'
       }
     ]);
+  });
+
+  it('returns a clean error for malformed analytics JSON', async () => {
+    const backend = createPublicBackend({ googleOAuth });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/events', {
+        method: 'POST',
+        body: '{'
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Invalid JSON body.' });
   });
 
   it('protects beta analytics metrics with an admin token', async () => {

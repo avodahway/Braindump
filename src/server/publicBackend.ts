@@ -1,5 +1,5 @@
 import { parseBrainDump } from '../lib/parser';
-import type { BrainDumpRequest, BrainDumpResponse, ParsedAction, UserWorkspace } from '../lib/types';
+import type { ActionType, BrainDumpRequest, BrainDumpResponse, ParsedAction, UserWorkspace } from '../lib/types';
 import { publicBackendRoutes } from '../api/publicContract';
 import { createDemoActionExecutor, type ActionExecutor } from './actionExecutor';
 import {
@@ -158,7 +158,10 @@ export function createPublicBackend(options: PublicBackendOptions) {
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.events) {
-        const event = sanitizeAnalyticsEvent(await request.json());
+        const body = await readJsonBody(request);
+        if (!body.ok) return sendJson({ error: body.error }, 400);
+
+        const event = sanitizeAnalyticsEvent(body.value);
         if (!event) return sendJson({ error: 'Invalid analytics event.' }, 400);
         const session = await readRequestSession(request, sessionStore);
         await analyticsStore.append({
@@ -210,7 +213,13 @@ export function createPublicBackend(options: PublicBackendOptions) {
           return sendJson({ error: 'Google workspace is not connected.' }, 409);
         }
 
-        const body = (await request.json()) as BrainDumpRequest;
+        const parsedJson = await readJsonBody(request);
+        if (!parsedJson.ok) return sendJson({ error: parsedJson.error }, 400);
+
+        const parsedRequest = parseBrainDumpRequest(parsedJson.value);
+        if (!parsedRequest.ok) return sendJson({ error: parsedRequest.error }, 400);
+
+        const body = parsedRequest.value;
         const savedResponse = await responseStore.readResponse(body.requestId);
         if (savedResponse) {
           return sendJson(savedResponse);
@@ -232,6 +241,99 @@ export function createPublicBackend(options: PublicBackendOptions) {
       return sendJson({ error: 'Not found' }, 404);
     }
   };
+}
+
+type JsonReadResult = { ok: true; value: unknown } | { ok: false; error: string };
+
+async function readJsonBody(request: Request): Promise<JsonReadResult> {
+  try {
+    return { ok: true, value: await request.json() };
+  } catch {
+    return { ok: false, error: 'Invalid JSON body.' };
+  }
+}
+
+type BrainDumpRequestResult = { ok: true; value: BrainDumpRequest } | { ok: false; error: string };
+
+const validActionTypes = new Set<ActionType>(['calendar', 'work_task', 'personal_task', 'project', 'waiting', 'needs_review', 'error']);
+const validActionStatuses = new Set<NonNullable<ParsedAction['status']>>(['planned', 'created', 'needs_review', 'error']);
+
+function parseBrainDumpRequest(value: unknown): BrainDumpRequestResult {
+  if (!isRecord(value)) return { ok: false, error: 'Brain dump request must be an object.' };
+
+  if (!isNonEmptyString(value.requestId)) return { ok: false, error: 'Brain dump requestId is required.' };
+  if (!isNonEmptyString(value.text)) return { ok: false, error: 'Brain dump text is required.' };
+  if (!isNonEmptyString(value.timezone)) return { ok: false, error: 'Brain dump timezone is required.' };
+
+  const request: BrainDumpRequest = {
+    requestId: value.requestId,
+    text: value.text,
+    timezone: value.timezone
+  };
+
+  if (value.approvedActions !== undefined) {
+    if (!Array.isArray(value.approvedActions)) return { ok: false, error: 'Approved actions must be an array.' };
+    const actions = value.approvedActions.map(parseApprovedAction);
+    const invalidAction = actions.find((action): action is { ok: false; error: string } => !action.ok);
+    if (invalidAction) return { ok: false, error: invalidAction.error };
+    request.approvedActions = actions.filter(isValidParsedActionResult).map((action) => action.value);
+  }
+
+  return { ok: true, value: request };
+}
+
+function parseApprovedAction(value: unknown): { ok: true; value: ParsedAction } | { ok: false; error: string } {
+  if (!isRecord(value)) return { ok: false, error: 'Approved actions must contain action objects.' };
+  if (!isNonEmptyString(value.type) || !validActionTypes.has(value.type as ActionType)) {
+    return { ok: false, error: 'Approved action type is invalid.' };
+  }
+  if (!isNonEmptyString(value.title)) return { ok: false, error: 'Approved action title is required.' };
+  if (!isNonEmptyString(value.sourceText)) return { ok: false, error: 'Approved action sourceText is required.' };
+  if (value.status !== undefined && (!isNonEmptyString(value.status) || !isValidActionStatus(value.status))) {
+    return { ok: false, error: 'Approved action status is invalid.' };
+  }
+
+  return {
+    ok: true,
+    value: {
+      type: value.type as ActionType,
+      title: value.title,
+      status: isValidActionStatus(value.status) ? value.status : undefined,
+      notes: optionalString(value.notes),
+      dueDate: optionalString(value.dueDate),
+      calendarDate: optionalString(value.calendarDate),
+      startTime: optionalString(value.startTime),
+      durationMinutes: optionalNumber(value.durationMinutes),
+      hours: optionalNumber(value.hours),
+      sourceText: value.sourceText
+    }
+  };
+}
+
+function isValidParsedActionResult(
+  value: { ok: true; value: ParsedAction } | { ok: false; error: string }
+): value is { ok: true; value: ParsedAction } {
+  return value.ok;
+}
+
+function isValidActionStatus(value: unknown): value is NonNullable<ParsedAction['status']> {
+  return isNonEmptyString(value) && validActionStatuses.has(value as NonNullable<ParsedAction['status']>);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function optionalNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 async function deleteUserRecords(
