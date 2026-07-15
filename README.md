@@ -47,6 +47,7 @@ When a Public API URL is configured in Settings, public mode posts to:
 - `POST /api/auth/google/start`
 - `GET /api/auth/google/callback`
 - `POST /api/auth/google/disconnect`
+- `POST /api/account/delete`
 - `POST /api/brain-dump`
 
 With a Public API URL configured, the Connect button starts the backend OAuth flow and redirects the browser to the returned Google authorization URL. Without a Public API URL, public mode keeps using a local demo workspace.

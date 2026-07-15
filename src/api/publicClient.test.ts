@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  deletePublicAccountData,
   normalizeApiBaseUrl,
   processPublicBrainDump,
   publicApiUrl,
@@ -78,6 +79,19 @@ describe('public API client', () => {
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'review_created', requestId: 'req-1', actionCount: 2 })
+    });
+  });
+
+  it('deletes public account data through the public backend', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true, deleted: ['google_tokens', 'workspace'] }))
+    );
+
+    await deletePublicAccountData('https://api.example.com', fetcher);
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/account/delete', {
+      method: 'POST',
+      credentials: 'include'
     });
   });
 });

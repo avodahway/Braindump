@@ -36,6 +36,7 @@ The frontend host must serve the same app entry point for every route above.
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/auth/google/start` | Starts Google OAuth | Returns a Google authorization URL |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/auth/google/callback` | OAuth redirect target | Listed in Google OAuth client |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/auth/google/disconnect` | User disconnect | Removes stored session and token records |
+| `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/account/delete` | Stored account deletion | Deletes signed-in user's Brain Dump records |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/brain-dump` | Reviewed action execution | Requires connected user session |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/events` | Privacy-safe beta analytics | Stores event metadata only |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/metrics` | Protected beta metrics | Requires `X-Brain-Dump-Admin-Token` |

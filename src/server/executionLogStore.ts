@@ -19,6 +19,7 @@ export type ExecutionLogRecord = {
 export type ExecutionLogStore = {
   append(record: ExecutionLogRecord): Promise<void>;
   readByRequest(requestId: string): Promise<ExecutionLogRecord[]>;
+  deleteByUser(userId: string): Promise<void>;
   clear(): Promise<void>;
 };
 
@@ -40,6 +41,12 @@ export function createMemoryExecutionLogStore(): ExecutionLogStore & {
     async readByRequest(requestId) {
       return records.filter((record) => record.requestId === requestId);
     },
+    async deleteByUser(userId) {
+      const normalizedUserId = normalizedId(userId);
+      for (let index = records.length - 1; index >= 0; index -= 1) {
+        if (records[index].userId?.toLowerCase() === normalizedUserId) records.splice(index, 1);
+      }
+    },
     async clear() {
       records.length = 0;
     }
@@ -59,9 +66,23 @@ export function createDurableExecutionLogStore(
       const records = await readRecords(store, codec, logKey);
       records.push(record);
       await store.set(logKey, await codec.encode(JSON.stringify(records)));
+      if (record.userId) {
+        const indexKey = userIndexKey(prefix, record.userId);
+        const requestIds = await readStringArray(store, codec, indexKey);
+        if (!requestIds.includes(normalizedId(record.requestId))) {
+          requestIds.push(normalizedId(record.requestId));
+          await store.set(indexKey, await codec.encode(JSON.stringify(requestIds)));
+        }
+      }
     },
     async readByRequest(requestId) {
       return readRecords(store, codec, key(prefix, requestId));
+    },
+    async deleteByUser(userId) {
+      const indexKey = userIndexKey(prefix, userId);
+      const requestIds = await readStringArray(store, codec, indexKey);
+      await Promise.all(requestIds.map((requestId) => store.delete(key(prefix, requestId))));
+      await store.delete(indexKey);
     },
     async clear() {
       return undefined;
@@ -86,7 +107,27 @@ async function readRecords(
 }
 
 function key(prefix: string, requestId: string): string {
-  return `${prefix}:execution-log:${requestId.toLowerCase()}`;
+  return `${prefix}:execution-log:${normalizedId(requestId)}`;
+}
+
+function userIndexKey(prefix: string, userId: string): string {
+  return `${prefix}:execution-log-index:${normalizedId(userId)}`;
+}
+
+function normalizedId(value: string): string {
+  return value.toLowerCase();
+}
+
+async function readStringArray(store: KeyValueStore, codec: SecretCodec, keyName: string): Promise<string[]> {
+  const raw = await store.get(keyName);
+  if (!raw) return [];
+
+  try {
+    const value = JSON.parse(await codec.decode(raw));
+    return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
 }
 
 function isExecutionLogRecord(value: unknown): value is ExecutionLogRecord {

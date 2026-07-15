@@ -70,6 +70,7 @@ The frontend host must serve `index.html` for those routes.
 - `POST /api/auth/google/start`
 - `GET /api/auth/google/callback`
 - `POST /api/auth/google/disconnect`
+- `POST /api/account/delete`
 - `POST /api/brain-dump`
 - `POST /api/events`
 - `GET /api/admin/metrics`

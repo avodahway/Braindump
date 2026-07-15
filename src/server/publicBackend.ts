@@ -98,8 +98,6 @@ export function createPublicBackend(options: PublicBackendOptions) {
             workspaceProvisioner: options.workspaceProvisioner
           });
           const session = await sessionStore.createSession(workspace.email?.toLowerCase() ?? '');
-          await responseStore.clear();
-          await executionLogStore.clear();
           if (options.frontendAppUrl) {
             return redirect(callbackReturnUrl(options.frontendAppUrl, { connected: 'google' }), {
               'Set-Cookie': sessionCookie(session.id)
@@ -116,16 +114,36 @@ export function createPublicBackend(options: PublicBackendOptions) {
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.googleDisconnect) {
-        const sessionId = readSessionIdFromCookie(request.headers.get('Cookie'));
-        if (sessionId) {
-          const session = await sessionStore.readSession(sessionId);
-          if (session) await oauthStore.deleteConnection(session.userId);
-          await sessionStore.deleteSession(sessionId);
+        const session = await readRequestSession(request, sessionStore);
+        if (session) {
+          await oauthStore.deleteConnection(session.userId);
+          await sessionStore.deleteSession(session.id);
         }
         fallbackWorkspace = undefined;
-        await responseStore.clear();
-        await executionLogStore.clear();
         return json({ ok: true }, 200, { 'Set-Cookie': clearSessionCookie() });
+      }
+
+      if (request.method === 'POST' && url.pathname === publicBackendRoutes.accountDelete) {
+        const session = await readRequestSession(request, sessionStore);
+        if (!session) return json({ error: 'Not signed in.' }, 401);
+
+        await deleteUserRecords(session.userId, {
+          oauthStore,
+          sessionStore,
+          responseStore,
+          executionLogStore,
+          analyticsStore,
+          sessionId: session.id
+        });
+        fallbackWorkspace = undefined;
+        return json(
+          {
+            ok: true,
+            deleted: ['google_tokens', 'workspace', 'session', 'idempotency_responses', 'execution_logs', 'analytics_events']
+          },
+          200,
+          { 'Set-Cookie': clearSessionCookie() }
+        );
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.events) {
@@ -196,13 +214,40 @@ export function createPublicBackend(options: PublicBackendOptions) {
           executionLogStore,
           now
         );
-        await responseStore.saveResponse(body.requestId, response);
+        await responseStore.saveResponse(body.requestId, response, requestWorkspace?.userId);
         return json(response);
       }
 
       return json({ error: 'Not found' }, 404);
     }
   };
+}
+
+async function deleteUserRecords(
+  userId: string,
+  {
+    oauthStore,
+    sessionStore,
+    responseStore,
+    executionLogStore,
+    analyticsStore,
+    sessionId
+  }: {
+    oauthStore: OAuthSessionStore;
+    sessionStore: SessionStore;
+    responseStore: ResponseStore;
+    executionLogStore: ExecutionLogStore;
+    analyticsStore: AnalyticsStore;
+    sessionId: string;
+  }
+): Promise<void> {
+  await Promise.all([
+    oauthStore.deleteConnection(userId),
+    sessionStore.deleteSession(sessionId),
+    responseStore.deleteByUser(userId),
+    executionLogStore.deleteByUser(userId),
+    analyticsStore.deleteByUser(userId)
+  ]);
 }
 
 export function buildGoogleAuthorizationUrl(config: GoogleOAuthConfig): string {

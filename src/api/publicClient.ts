@@ -42,6 +42,18 @@ export async function disconnectPublicGoogle(baseUrl: string, fetcher: JsonFetch
   );
 }
 
+export async function deletePublicAccountData(
+  baseUrl: string,
+  fetcher: JsonFetcher = fetch
+): Promise<{ ok: true; deleted: string[] }> {
+  return readJson<{ ok: true; deleted: string[] }>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.accountDelete), {
+      method: 'POST',
+      credentials: 'include'
+    })
+  );
+}
+
 export async function processPublicBrainDump(
   baseUrl: string,
   request: BrainDumpRequest,

@@ -46,6 +46,30 @@ describe('execution log store', () => {
     expect([...kv.values.values()][0]).toMatch(/^encoded:/);
     expect(await store.readByRequest('req-1')).toHaveLength(1);
   });
+
+  it('deletes only one user logs from memory', async () => {
+    const store = createMemoryExecutionLogStore();
+
+    await store.append(logRecord('req-1'));
+    await store.append({ ...logRecord('req-2'), userId: 'other@example.com' });
+    await store.deleteByUser('USER@example.com');
+
+    expect(await store.readByRequest('req-1')).toEqual([]);
+    expect(await store.readByRequest('req-2')).toHaveLength(1);
+  });
+
+  it('deletes durable logs from a user index', async () => {
+    const kv = createMemoryKeyValueStore();
+    const store = createDurableExecutionLogStore(kv, { keyPrefix: 'test' });
+
+    await store.append(logRecord('req-1'));
+    await store.append({ ...logRecord('req-2'), userId: 'other@example.com' });
+    await store.deleteByUser('user@example.com');
+
+    expect(await store.readByRequest('req-1')).toEqual([]);
+    expect(await store.readByRequest('req-2')).toHaveLength(1);
+    expect(kv.values.has('test:execution-log-index:user@example.com')).toBe(false);
+  });
 });
 
 function logRecord(requestId: string): ExecutionLogRecord {

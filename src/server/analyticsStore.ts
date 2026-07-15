@@ -10,6 +10,7 @@ export type AnalyticsRecord = AnalyticsEvent & {
 export type AnalyticsStore = {
   append(record: AnalyticsRecord): Promise<void>;
   readAll(): Promise<AnalyticsRecord[]>;
+  deleteByUser(userId: string): Promise<void>;
   clear(): Promise<void>;
 };
 
@@ -38,6 +39,12 @@ export function createMemoryAnalyticsStore(): AnalyticsStore & { records: Analyt
     async readAll() {
       return [...records];
     },
+    async deleteByUser(userId) {
+      const normalizedUserId = normalizedId(userId);
+      for (let index = records.length - 1; index >= 0; index -= 1) {
+        if (records[index].userId?.toLowerCase() === normalizedUserId) records.splice(index, 1);
+      }
+    },
     async clear() {
       records.length = 0;
     }
@@ -60,6 +67,16 @@ export function createDurableAnalyticsStore(
     },
     async readAll() {
       return readRecords(store, codec, storeKey);
+    },
+    async deleteByUser(userId) {
+      const normalizedUserId = normalizedId(userId);
+      const records = await readRecords(store, codec, storeKey);
+      const remainingRecords = records.filter((record) => record.userId?.toLowerCase() !== normalizedUserId);
+      if (remainingRecords.length) {
+        await store.set(storeKey, await codec.encode(JSON.stringify(remainingRecords)));
+      } else {
+        await store.delete(storeKey);
+      }
     },
     async clear() {
       await store.delete(storeKey);
@@ -149,4 +166,8 @@ function isSummary(value: unknown): value is AnalyticsEvent['summary'] {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
+}
+
+function normalizedId(value: string): string {
+  return value.toLowerCase();
 }

@@ -51,6 +51,7 @@ Initial routes are documented in `src/api/publicContract.ts`:
 - `POST /api/auth/google/start`
 - `GET /api/auth/google/callback`
 - `POST /api/auth/google/disconnect`
+- `POST /api/account/delete`
 - `POST /api/brain-dump`
 
 The current PWA includes a safe demo connection in public mode. It creates local-only destinations so the onboarding and processing flow can be tested without Google OAuth credentials. When a Public API URL is configured, `src/api/publicClient.ts` sends real requests to the public backend contract instead of using the demo process path.
@@ -86,6 +87,10 @@ Calendar execution carries the request timezone through the executor context and
 `src/server/idempotencyStore.ts` persists processed brain-dump responses by request id. With durable storage configured, retries and backend restarts return the first response instead of writing duplicate tasks or calendar events.
 
 `src/server/executionLogStore.ts` records every attempted action with request id, user id, status, provider id, and error message when one occurs. Production storage can retain this as the audit trail for support and debugging.
+
+`POST /api/account/delete` deletes the signed-in user's stored Brain Dump records, including OAuth tokens, workspace
+records, session records, idempotency responses, execution logs, and analytics events. It does not delete Google Tasks or
+Google Calendar events already created in the user's Google account.
 
 ## Safety Rules
 

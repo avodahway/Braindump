@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ParsedAction } from '../lib/types';
+import type { BrainDumpResponse, ParsedAction } from '../lib/types';
 import { createMemoryOAuthStore, type TokenExchangeClient } from './oauthSession';
 import { buildGoogleAuthorizationUrl, createPublicBackend } from './publicBackend';
 import { createMemorySessionStore, sessionCookieName } from './sessionStore';
@@ -400,6 +400,103 @@ describe('public backend scaffold', () => {
     expect(response.headers.get('Set-Cookie')).toContain('Max-Age=0');
   });
 
+  it('requires a signed-in session before deleting account data', async () => {
+    const backend = createPublicBackend({ googleOAuth });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/account/delete', {
+        method: 'POST'
+      })
+    );
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'Not signed in.' });
+  });
+
+  it('deletes signed-in user account records without deleting other users', async () => {
+    const sessionStore = createMemorySessionStore(() => 1234);
+    const oauthStore = createMemoryOAuthStore();
+    const responseStore = createMemoryResponseStore();
+    const executionLogStore = createMemoryExecutionLogStore();
+    const analyticsStore = createMemoryAnalyticsStore();
+    await oauthStore.saveTokens('user@example.com', {
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: 2000,
+      scope: googleOAuth.scopes.join(' ')
+    });
+    await oauthStore.saveWorkspace('user@example.com', connectedWorkspace());
+    await oauthStore.saveTokens('other@example.com', {
+      accessToken: 'other-access-token',
+      refreshToken: 'other-refresh-token',
+      expiresAt: 2000,
+      scope: googleOAuth.scopes.join(' ')
+    });
+    await oauthStore.saveWorkspace('other@example.com', connectedWorkspace());
+    const session = await sessionStore.createSession('user@example.com');
+    await responseStore.saveResponse('req-user', responseFixture('req-user'), 'user@example.com');
+    await responseStore.saveResponse('req-other', responseFixture('req-other'), 'other@example.com');
+    await executionLogStore.append({
+      requestId: 'req-user',
+      userId: 'user@example.com',
+      actionType: 'personal_task',
+      title: 'Buy coffee',
+      status: 'created',
+      message: 'Created',
+      createdAt: '2026-07-12T12:00:00.000Z'
+    });
+    await executionLogStore.append({
+      requestId: 'req-other',
+      userId: 'other@example.com',
+      actionType: 'personal_task',
+      title: 'Buy tea',
+      status: 'created',
+      message: 'Created',
+      createdAt: '2026-07-12T12:01:00.000Z'
+    });
+    await analyticsStore.append({
+      name: 'create_completed',
+      requestId: 'req-user',
+      userId: 'user@example.com',
+      createdAt: '2026-07-12T12:00:00.000Z'
+    });
+    await analyticsStore.append({
+      name: 'create_completed',
+      requestId: 'req-other',
+      userId: 'other@example.com',
+      createdAt: '2026-07-12T12:01:00.000Z'
+    });
+    const backend = createPublicBackend({
+      googleOAuth,
+      oauthStore,
+      sessionStore,
+      responseStore,
+      executionLogStore,
+      analyticsStore
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/account/delete', {
+        method: 'POST',
+        headers: { Cookie: `${sessionCookieName}=${session.id}` }
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.deleted).toContain('google_tokens');
+    expect(response.headers.get('Set-Cookie')).toContain('Max-Age=0');
+    expect(await sessionStore.readSession(session.id)).toBeUndefined();
+    expect(await oauthStore.readTokens('user@example.com')).toBeUndefined();
+    expect(await oauthStore.readWorkspace('user@example.com')).toBeUndefined();
+    expect(await responseStore.readResponse('req-user')).toBeUndefined();
+    expect(await responseStore.readResponse('req-other')).toMatchObject({ requestId: 'req-other' });
+    expect(await executionLogStore.readByRequest('req-user')).toEqual([]);
+    expect(await executionLogStore.readByRequest('req-other')).toHaveLength(1);
+    expect(await analyticsStore.readAll()).toMatchObject([{ requestId: 'req-other' }]);
+    expect(await oauthStore.readTokens('other@example.com')).toMatchObject({ refreshToken: 'other-refresh-token' });
+  });
+
   it('stores privacy-safe analytics events without brain dump text', async () => {
     const analyticsStore = createMemoryAnalyticsStore();
     const sessionStore = createMemorySessionStore(() => 1234);
@@ -542,6 +639,30 @@ function connectedWorkspace() {
       { id: 'projects', name: 'Brain Dump Projects', provider: 'brain_dump_workspace' as const, kind: 'projects' as const, isDefault: true },
       { id: 'waiting', name: 'Brain Dump Waiting On', provider: 'brain_dump_workspace' as const, kind: 'waiting' as const, isDefault: true }
     ]
+  };
+}
+
+function responseFixture(requestId: string): BrainDumpResponse {
+  return {
+    ok: true,
+    requestId,
+    summary: {
+      calendar: 0,
+      workTasks: 0,
+      personalTasks: 1,
+      projects: 0,
+      waiting: 0,
+      needsReview: 0
+    },
+    actions: [
+      {
+        type: 'personal_task',
+        title: 'Buy coffee',
+        status: 'created',
+        sourceText: 'Buy coffee'
+      }
+    ],
+    errors: []
   };
 }
 

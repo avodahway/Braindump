@@ -667,6 +667,10 @@ function DataDeletionPage() {
         Email <a href={supportRequestMailto('Data deletion request')}>{supportEmail}</a> with "Data deletion request" in
         the subject and include the Google account email you used with Brain Dump.
       </p>
+      <p>
+        The public backend also supports signed-in account deletion at <code>/api/account/delete</code>. This clears the
+        stored Brain Dump records associated with the current session.
+      </p>
       <h2>What can be deleted</h2>
       <ul>
         <li>Stored session records associated with your account.</li>
