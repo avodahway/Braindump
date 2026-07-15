@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { publicBackendRoutes } from '../api/publicContract';
-import { defaultGoogleScopes, loadBrainDumpBackendConfig, parseScopes, requiredEnv } from './runtimeConfig';
+import { defaultGoogleScopes, loadBrainDumpBackendConfig, optionalPositiveInteger, parseScopes, requiredEnv } from './runtimeConfig';
 
 describe('runtime config', () => {
   it('loads backend config from environment values', () => {
@@ -11,6 +11,9 @@ describe('runtime config', () => {
       BRAIN_DUMP_FRONTEND_ORIGIN: 'https://braindump.example.com/',
       BRAIN_DUMP_ADMIN_TOKEN: 'admin-secret',
       BRAIN_DUMP_STORAGE_PREFIX: 'prod',
+      BRAIN_DUMP_MAX_JSON_BODY_BYTES: '32768',
+      BRAIN_DUMP_RATE_LIMIT_WINDOW_MS: '120000',
+      BRAIN_DUMP_RATE_LIMIT_MAX_REQUESTS: '30',
       GOOGLE_OAUTH_SCOPES: 'openid,email https://www.googleapis.com/auth/tasks'
     });
 
@@ -23,6 +26,13 @@ describe('runtime config', () => {
     expect(config.frontendAppUrl).toBe('https://braindump.example.com/app');
     expect(config.adminToken).toBe('admin-secret');
     expect(config.storageKeyPrefix).toBe('prod');
+    expect(config.requestLimits).toEqual({
+      maxJsonBodyBytes: 32768,
+      rateLimit: {
+        windowMs: 120000,
+        maxRequests: 30
+      }
+    });
   });
 
   it('uses the default public scopes when none are supplied', () => {
@@ -32,6 +42,13 @@ describe('runtime config', () => {
 
   it('reports missing required environment values clearly', () => {
     expect(() => requiredEnv({}, 'GOOGLE_CLIENT_ID')).toThrow('Missing required environment variable: GOOGLE_CLIENT_ID');
+  });
+
+  it('parses optional positive integer environment values', () => {
+    expect(optionalPositiveInteger(undefined, 'LIMIT')).toBeUndefined();
+    expect(optionalPositiveInteger(' 42 ', 'LIMIT')).toBe(42);
+    expect(() => optionalPositiveInteger('0', 'LIMIT')).toThrow('Invalid LIMIT value: 0');
+    expect(() => optionalPositiveInteger('1.5', 'LIMIT')).toThrow('Invalid LIMIT value: 1.5');
   });
 
   it('preserves a backend path prefix in the public API origin', () => {

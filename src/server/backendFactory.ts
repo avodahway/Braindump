@@ -1,4 +1,4 @@
-import type { GoogleOAuthConfig } from './publicBackend';
+import type { GoogleOAuthConfig, PublicRequestLimits } from './publicBackend';
 import { createPublicBackend } from './publicBackend';
 import type { ActionExecutor } from './actionExecutor';
 import {
@@ -48,6 +48,7 @@ export type BrainDumpBackendConfig = {
   executionLogStore?: ExecutionLogStore;
   analyticsStore?: AnalyticsStore;
   adminToken?: string;
+  requestLimits?: PublicRequestLimits;
   executor?: ActionExecutor;
 };
 
@@ -131,6 +132,7 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
     storageKeyPrefix: config.storageKeyPrefix,
     storageMode: config.storage ? 'durable' : 'memory',
     storageEncrypted: Boolean(config.storageCodec),
+    requestLimits: config.requestLimits,
     now: config.nowDate,
     executor
   });

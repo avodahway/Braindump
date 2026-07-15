@@ -1,7 +1,7 @@
 import { createServer, type Server } from 'node:http';
 import { createBrainDumpRequestHandler } from './runtimeHandler';
 import { handleNodeRequest } from './nodeHttpAdapter';
-import type { RuntimeEnv } from './runtimeConfig';
+import { optionalPositiveInteger, type RuntimeEnv } from './runtimeConfig';
 
 export type NodeServerOptions = {
   env?: RuntimeEnv;
@@ -9,9 +9,10 @@ export type NodeServerOptions = {
 
 export function createBrainDumpNodeServer({ env = process.env }: NodeServerOptions = {}): Server {
   const handle = createBrainDumpRequestHandler(env);
+  const maxRequestBodyBytes = optionalPositiveInteger(env.BRAIN_DUMP_MAX_JSON_BODY_BYTES, 'BRAIN_DUMP_MAX_JSON_BODY_BYTES');
 
   return createServer((request, response) => {
-    void handleNodeRequest(request, response, handle);
+    void handleNodeRequest(request, response, handle, { maxRequestBodyBytes });
   });
 }
 

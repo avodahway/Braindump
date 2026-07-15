@@ -40,11 +40,22 @@ export function loadBrainDumpBackendConfig(
     frontendAppUrl: frontendAppUrl(env.BRAIN_DUMP_FRONTEND_ORIGIN),
     adminToken: env.BRAIN_DUMP_ADMIN_TOKEN?.trim() || undefined,
     storageKeyPrefix: env.BRAIN_DUMP_STORAGE_PREFIX || 'brain-dump',
+    requestLimits: requestLimits(env),
     fetcher: options.fetcher,
     storage: options.storage ?? supabaseStorage(env, options.fetcher),
     storageCodec: options.storageCodec ?? storageCodec(env),
     nowMs: options.nowMs,
     nowDate: options.nowDate
+  };
+}
+
+function requestLimits(env: RuntimeEnv): BrainDumpBackendConfig['requestLimits'] {
+  return {
+    maxJsonBodyBytes: optionalPositiveInteger(env.BRAIN_DUMP_MAX_JSON_BODY_BYTES, 'BRAIN_DUMP_MAX_JSON_BODY_BYTES'),
+    rateLimit: {
+      windowMs: optionalPositiveInteger(env.BRAIN_DUMP_RATE_LIMIT_WINDOW_MS, 'BRAIN_DUMP_RATE_LIMIT_WINDOW_MS'),
+      maxRequests: optionalPositiveInteger(env.BRAIN_DUMP_RATE_LIMIT_MAX_REQUESTS, 'BRAIN_DUMP_RATE_LIMIT_MAX_REQUESTS')
+    }
   };
 }
 
@@ -68,6 +79,17 @@ export function parseScopes(value: string | undefined): string[] {
     .filter(Boolean);
 
   return scopes && scopes.length > 0 ? scopes : [...defaultGoogleScopes];
+}
+
+export function optionalPositiveInteger(value: string | undefined, name: string): number | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+
+  const parsed = Number(trimmed);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`Invalid ${name} value: ${trimmed}`);
+  }
+  return parsed;
 }
 
 function normalizeOrigin(value: string): string {

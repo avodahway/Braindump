@@ -5,6 +5,10 @@ export type RequestHandler = (request: Request) => Promise<Response>;
 
 const defaultMaxRequestBodyBytes = 64 * 1024;
 
+export type NodeHttpAdapterOptions = {
+  maxRequestBodyBytes?: number;
+};
+
 class HttpRequestError extends Error {
   constructor(
     public readonly status: number,
@@ -17,10 +21,11 @@ class HttpRequestError extends Error {
 export async function handleNodeRequest(
   request: IncomingMessage,
   response: ServerResponse,
-  handler: RequestHandler
+  handler: RequestHandler,
+  options: NodeHttpAdapterOptions = {}
 ): Promise<void> {
   try {
-    const webRequest = await toWebRequest(request);
+    const webRequest = await toWebRequest(request, options);
     const webResponse = await handler(webRequest);
     await writeNodeResponse(response, webResponse);
   } catch (error) {
@@ -34,11 +39,14 @@ export async function handleNodeRequest(
   }
 }
 
-export async function toWebRequest(request: IncomingMessage): Promise<Request> {
+export async function toWebRequest(request: IncomingMessage, options: NodeHttpAdapterOptions = {}): Promise<Request> {
   const method = request.method ?? 'GET';
   const url = requestUrl(request);
   const headers = requestHeaders(request);
-  const body = method === 'GET' || method === 'HEAD' ? undefined : await requestBody(request, defaultMaxRequestBodyBytes);
+  const body =
+    method === 'GET' || method === 'HEAD'
+      ? undefined
+      : await requestBody(request, options.maxRequestBodyBytes ?? defaultMaxRequestBodyBytes);
 
   return new Request(url, { method, headers, body });
 }
