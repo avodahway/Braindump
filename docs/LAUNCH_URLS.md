@@ -65,5 +65,6 @@ The admin token can be omitted if you only want to verify public pages, health, 
 - Supabase URL.
 - Supabase service role key.
 - Supabase `brain_dump_kv` table.
+- Long random storage encryption secret.
 - Long random admin token.
 - First OAuth test-user email addresses.

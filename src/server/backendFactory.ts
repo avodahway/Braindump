@@ -130,6 +130,7 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
     adminToken: config.adminToken,
     storageKeyPrefix: config.storageKeyPrefix,
     storageMode: config.storage ? 'durable' : 'memory',
+    storageEncrypted: Boolean(config.storageCodec),
     now: config.nowDate,
     executor
   });

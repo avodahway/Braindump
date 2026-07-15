@@ -44,6 +44,7 @@ export type PublicBackendOptions = {
   adminToken?: string;
   storageKeyPrefix?: string;
   storageMode?: 'memory' | 'durable';
+  storageEncrypted?: boolean;
   now?: () => Date;
 };
 
@@ -167,7 +168,8 @@ export function createPublicBackend(options: PublicBackendOptions) {
             googleScopes: options.googleOAuth.scopes,
             frontendAppUrl: options.frontendAppUrl,
             adminTokenConfigured: Boolean(options.adminToken),
-            storageMode: options.storageMode ?? 'memory'
+            storageMode: options.storageMode ?? 'memory',
+            storageEncrypted: Boolean(options.storageEncrypted)
           })
         );
       }

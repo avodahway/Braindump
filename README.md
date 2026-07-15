@@ -89,6 +89,7 @@ The Google OAuth token client lives in `src/server/googleOAuthClient.ts`. It exp
 
 `src/server/supabaseKeyValueStore.ts` provides the first production storage adapter. Set `SUPABASE_URL` and
 `SUPABASE_SERVICE_ROLE_KEY` on the backend host to use the Supabase table documented in `docs/SUPABASE_STORAGE.md`.
+Set `BRAIN_DUMP_STORAGE_SECRET` so durable values are encrypted before being written.
 
 `src/server/runtimeConfig.ts` and `src/server/runtimeHandler.ts` provide the deployment entry point. A backend host should provide `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BRAIN_DUMP_PUBLIC_API_ORIGIN`, and `BRAIN_DUMP_FRONTEND_ORIGIN`; the handler builds the Google callback URL and sends completed OAuth users back to `/app`.
 

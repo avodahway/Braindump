@@ -1,5 +1,6 @@
 import { publicBackendRoutes } from '../api/publicContract';
 import type { BrainDumpBackendConfig } from './backendFactory';
+import { createAesGcmSecretCodec } from './storageCrypto';
 import { createSupabaseKeyValueStore } from './supabaseKeyValueStore';
 
 export type RuntimeEnv = Record<string, string | undefined>;
@@ -41,10 +42,15 @@ export function loadBrainDumpBackendConfig(
     storageKeyPrefix: env.BRAIN_DUMP_STORAGE_PREFIX || 'brain-dump',
     fetcher: options.fetcher,
     storage: options.storage ?? supabaseStorage(env, options.fetcher),
-    storageCodec: options.storageCodec,
+    storageCodec: options.storageCodec ?? storageCodec(env),
     nowMs: options.nowMs,
     nowDate: options.nowDate
   };
+}
+
+function storageCodec(env: RuntimeEnv): BrainDumpBackendConfig['storageCodec'] | undefined {
+  const secret = env.BRAIN_DUMP_STORAGE_SECRET?.trim();
+  return secret ? createAesGcmSecretCodec(secret) : undefined;
 }
 
 export function requiredEnv(env: RuntimeEnv, name: string): string {

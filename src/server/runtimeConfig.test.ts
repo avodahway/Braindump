@@ -53,12 +53,14 @@ describe('runtime config', () => {
         BRAIN_DUMP_PUBLIC_API_ORIGIN: 'https://api.example.com',
         SUPABASE_URL: 'https://project.supabase.co',
         SUPABASE_SERVICE_ROLE_KEY: 'service-key',
-        SUPABASE_KV_TABLE: 'brain_dump_kv'
+        SUPABASE_KV_TABLE: 'brain_dump_kv',
+        BRAIN_DUMP_STORAGE_SECRET: '0123456789abcdef0123456789abcdef'
       },
       { fetcher }
     );
 
     await expect(config.storage?.get('key')).resolves.toBe('stored');
+    await expect(config.storageCodec?.decode(await config.storageCodec.encode('secret-value'))).resolves.toBe('secret-value');
   });
 
   it('requires both Supabase env values when one is provided', () => {

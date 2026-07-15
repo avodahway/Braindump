@@ -43,9 +43,13 @@ frontend.
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=replace-with-service-role-key
 SUPABASE_KV_TABLE=brain_dump_kv
+BRAIN_DUMP_STORAGE_SECRET=replace-with-random-32-plus-character-storage-secret
 ```
 
 `SUPABASE_KV_TABLE` is optional when the table is named `brain_dump_kv`.
+
+`BRAIN_DUMP_STORAGE_SECRET` is required before inviting beta users. The backend derives an AES-GCM key from this secret
+and encrypts durable store values before writing them to Supabase.
 
 ## Stored Record Categories
 
@@ -67,3 +71,5 @@ Before inviting beta users:
 - Confirm point-in-time recovery or scheduled backups are available.
 - Test restore in staging with non-production OAuth credentials.
 - Keep the service role key in backend host secrets and a password manager.
+- Keep `BRAIN_DUMP_STORAGE_SECRET` in backend host secrets and a password manager.
+- Do not rotate `BRAIN_DUMP_STORAGE_SECRET` until a migration plan can re-encrypt existing records.

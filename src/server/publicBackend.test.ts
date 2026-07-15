@@ -513,6 +513,7 @@ describe('public backend scaffold', () => {
       frontendAppUrl: 'https://app.example.com/app',
       adminToken: 'admin-secret',
       storageMode: 'durable',
+      storageEncrypted: true,
       now: () => new Date('2026-07-12T12:00:00.000Z')
     });
 

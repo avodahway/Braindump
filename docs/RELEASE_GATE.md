@@ -9,7 +9,7 @@ Use this before promoting a build to beta testers.
 - Local `pnpm build` passes.
 - Local `pnpm build:backend` passes.
 - `pnpm verify:deployment` passes against the deployed frontend and backend.
-- `/api/admin/readiness` returns `ready: true` with the admin token.
+- `/api/admin/readiness` returns `ready: true` with the admin token, durable storage, and storage encryption configured.
 
 ## What CI Covers
 
