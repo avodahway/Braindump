@@ -544,7 +544,8 @@ input:focus {
   box-shadow: 0 12px 25px rgba(22, 59, 47, 0.24);
 }
 
-.processButton:disabled {
+.processButton:disabled,
+.dangerButton:disabled {
   cursor: wait;
   opacity: 0.68;
 }
@@ -786,6 +787,42 @@ legend {
 .radioOption input {
   width: 18px;
   min-height: 18px;
+}
+
+.dangerZone {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 13px;
+  border: 1px solid #e7b7ab;
+  border-radius: 8px;
+  background: #fff7f4;
+}
+
+.dangerZone h3 {
+  margin: 0;
+  color: #893225;
+  font-size: 15px;
+}
+
+.dangerZone p {
+  margin: 0;
+  color: rgba(80, 42, 35, 0.78);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dangerZone label {
+  margin-top: 0;
+}
+
+.dangerButton {
+  min-height: 44px;
+  border-radius: 999px;
+  color: #fff;
+  background: #893225;
+  font-weight: 850;
+  cursor: pointer;
 }
 
 input {

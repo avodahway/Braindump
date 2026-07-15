@@ -151,9 +151,10 @@ After deploy:
 23. Confirm `/api/workspace` returns not connected afterward.
 24. Confirm `/feedback` opens a three-question beta feedback email.
 25. Confirm `/beta` opens a beta access request email.
-26. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
-27. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
-28. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
+26. In Settings, type `DELETE`, click Delete account data, and confirm the session returns to not connected.
+27. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
+28. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
+29. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
 
 You can automate the public page, health, and readiness checks with:
 

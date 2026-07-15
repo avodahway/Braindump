@@ -20,7 +20,12 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { trackEvent } from './api/analytics';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
-import { connectPublicWorkspace, disconnectPublicWorkspace, refreshPublicWorkspace } from './api/publicConnection';
+import {
+  connectPublicWorkspace,
+  deletePublicAccountRecords,
+  disconnectPublicWorkspace,
+  refreshPublicWorkspace
+} from './api/publicConnection';
 import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
 import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
@@ -71,6 +76,8 @@ function ProductApp() {
   const [settings, setSettings] = useState<BackendSettings>(() => loadSettings());
   const [workspace, setWorkspace] = useState<UserWorkspace>(() => loadWorkspace());
   const [connectionNotice, setConnectionNotice] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeletingAccountData, setDeletingAccountData] = useState(false);
 
   useEffect(() => {
     if (settings.backendMode !== 'public' || !settings.publicApiBaseUrl) return;
@@ -216,6 +223,25 @@ function ProductApp() {
       trackEvent({ name: 'disconnect_completed', mode: settings.backendMode });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not disconnect Google.');
+    }
+  }
+
+  async function handleDeleteAccountData() {
+    if (deleteConfirmation !== 'DELETE') return;
+
+    setDeletingAccountData(true);
+    setError('');
+    try {
+      setWorkspace(await deletePublicAccountRecords(settings));
+      setPreview(null);
+      setResult(null);
+      setConnectionNotice('Stored Brain Dump account records were deleted for this browser session.');
+      setShowSettings(false);
+      setDeleteConfirmation('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete stored account records.');
+    } finally {
+      setDeletingAccountData(false);
     }
   }
 
@@ -406,6 +432,31 @@ function ProductApp() {
                 placeholder="Optional during development"
               />
             </label>
+            {settings.backendMode === 'public' && (
+              <section className="dangerZone" aria-label="Account data deletion">
+                <h3>Account data</h3>
+                <p>
+                  Delete stored Brain Dump records for the signed-in Google account. This does not delete Google Tasks or
+                  Calendar events already created.
+                </p>
+                <label>
+                  Type DELETE to confirm
+                  <input
+                    value={deleteConfirmation}
+                    onChange={(event) => setDeleteConfirmation(event.target.value)}
+                    placeholder="DELETE"
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="dangerButton"
+                  disabled={deleteConfirmation !== 'DELETE' || isDeletingAccountData}
+                  onClick={handleDeleteAccountData}
+                >
+                  {isDeletingAccountData ? 'Deleting' : 'Delete account data'}
+                </button>
+              </section>
+            )}
             <div className="modalActions">
               <button type="button" className="secondaryButton" onClick={() => setShowSettings(false)}>
                 Cancel

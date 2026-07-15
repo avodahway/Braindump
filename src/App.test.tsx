@@ -117,6 +117,38 @@ describe('App routes', () => {
     expect(screen.getByLabelText('Google destinations')).toBeInTheDocument();
   });
 
+  it('requires confirmation before deleting public account data from settings', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === 'https://api.example.com/api/workspace') {
+        return new Response(JSON.stringify({ status: 'connected', email: 'user@example.com', destinations: [] }));
+      }
+      if (url === 'https://api.example.com/api/account/delete') {
+        return new Response(JSON.stringify({ ok: true, deleted: ['google_tokens', 'workspace'] }));
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/app');
+
+    fireEvent.click(screen.getByRole('button', { name: /Settings/i }));
+    expect(screen.getByRole('button', { name: /Delete account data/i })).toBeDisabled();
+
+    fireEvent.change(screen.getByPlaceholderText('DELETE'), { target: { value: 'DELETE' } });
+    fireEvent.click(screen.getByRole('button', { name: /Delete account data/i }));
+
+    expect(await screen.findByText('Stored Brain Dump account records were deleted for this browser session.')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/account/delete', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    expect(screen.getByText('Ready to start Google sign-in.')).toBeInTheDocument();
+  });
+
   it('shows a friendly message after Google callback success', () => {
     renderAt('/app?connected=google');
 

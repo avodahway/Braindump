@@ -89,8 +89,9 @@ Calendar execution carries the request timezone through the executor context and
 `src/server/executionLogStore.ts` records every attempted action with request id, user id, status, provider id, and error message when one occurs. Production storage can retain this as the audit trail for support and debugging.
 
 `POST /api/account/delete` deletes the signed-in user's stored Brain Dump records, including OAuth tokens, workspace
-records, session records, idempotency responses, execution logs, and analytics events. It does not delete Google Tasks or
-Google Calendar events already created in the user's Google account.
+records, session records, idempotency responses, execution logs, and analytics events. The app exposes this from Settings
+with a `DELETE` confirmation. It does not delete Google Tasks or Google Calendar events already created in the user's
+Google account.
 
 ## Safety Rules
 
