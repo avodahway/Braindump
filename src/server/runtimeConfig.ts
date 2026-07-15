@@ -1,5 +1,6 @@
 import { publicBackendRoutes } from '../api/publicContract';
 import type { BrainDumpBackendConfig } from './backendFactory';
+import { createSupabaseKeyValueStore } from './supabaseKeyValueStore';
 
 export type RuntimeEnv = Record<string, string | undefined>;
 
@@ -39,7 +40,7 @@ export function loadBrainDumpBackendConfig(
     adminToken: env.BRAIN_DUMP_ADMIN_TOKEN?.trim() || undefined,
     storageKeyPrefix: env.BRAIN_DUMP_STORAGE_PREFIX || 'brain-dump',
     fetcher: options.fetcher,
-    storage: options.storage,
+    storage: options.storage ?? supabaseStorage(env, options.fetcher),
     storageCodec: options.storageCodec,
     nowMs: options.nowMs,
     nowDate: options.nowDate
@@ -72,4 +73,22 @@ function normalizeOrigin(value: string): string {
 function frontendAppUrl(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
   return trimmed ? `${normalizeOrigin(trimmed)}/app` : undefined;
+}
+
+function supabaseStorage(
+  env: RuntimeEnv,
+  fetcher: BrainDumpBackendConfig['fetcher']
+): BrainDumpBackendConfig['storage'] | undefined {
+  const supabaseUrl = env.SUPABASE_URL?.trim();
+  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!supabaseUrl && !serviceRoleKey) return undefined;
+  if (!supabaseUrl) throw new Error('Missing required environment variable: SUPABASE_URL');
+  if (!serviceRoleKey) throw new Error('Missing required environment variable: SUPABASE_SERVICE_ROLE_KEY');
+
+  return createSupabaseKeyValueStore({
+    supabaseUrl,
+    serviceRoleKey,
+    tableName: env.SUPABASE_KV_TABLE?.trim() || undefined,
+    fetcher
+  });
 }

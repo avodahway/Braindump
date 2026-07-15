@@ -43,4 +43,32 @@ describe('runtime config', () => {
 
     expect(config.googleOAuth.redirectUri).toBe(`https://example.com/brain-dump-api${publicBackendRoutes.googleCallback}`);
   });
+
+  it('configures Supabase storage when Supabase env values are present', async () => {
+    const fetcher = async () => new Response(JSON.stringify([{ value: 'stored' }]));
+    const config = loadBrainDumpBackendConfig(
+      {
+        GOOGLE_CLIENT_ID: 'client-id',
+        GOOGLE_CLIENT_SECRET: 'client-secret',
+        BRAIN_DUMP_PUBLIC_API_ORIGIN: 'https://api.example.com',
+        SUPABASE_URL: 'https://project.supabase.co',
+        SUPABASE_SERVICE_ROLE_KEY: 'service-key',
+        SUPABASE_KV_TABLE: 'brain_dump_kv'
+      },
+      { fetcher }
+    );
+
+    await expect(config.storage?.get('key')).resolves.toBe('stored');
+  });
+
+  it('requires both Supabase env values when one is provided', () => {
+    expect(() =>
+      loadBrainDumpBackendConfig({
+        GOOGLE_CLIENT_ID: 'client-id',
+        GOOGLE_CLIENT_SECRET: 'client-secret',
+        BRAIN_DUMP_PUBLIC_API_ORIGIN: 'https://api.example.com',
+        SUPABASE_URL: 'https://project.supabase.co'
+      })
+    ).toThrow('Missing required environment variable: SUPABASE_SERVICE_ROLE_KEY');
+  });
 });

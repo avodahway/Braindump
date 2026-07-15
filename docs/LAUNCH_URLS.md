@@ -10,6 +10,7 @@ Use this inventory when moving from local development to a real beta deployment.
 | Public API origin | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]` | Google OAuth and real writes |
 | Support email | `[VITE_SUPPORT_EMAIL]` | Public support, feedback, and beta access |
 | Google OAuth redirect URI | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/auth/google/callback` | OAuth client setup |
+| Supabase project URL | `[SUPABASE_URL]` | Durable backend storage |
 
 ## Frontend URLs
 
@@ -61,6 +62,8 @@ The admin token can be omitted if you only want to verify public pages, health, 
 - Support email.
 - Google OAuth client ID.
 - Google OAuth client secret.
-- Durable encrypted storage provider and resource name.
+- Supabase URL.
+- Supabase service role key.
+- Supabase `brain_dump_kv` table.
 - Long random admin token.
 - First OAuth test-user email addresses.

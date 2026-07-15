@@ -29,6 +29,12 @@ Optional backend:
 - `GOOGLE_OAUTH_SCOPES`
 - `BRAIN_DUMP_STORAGE_PREFIX`
 - `BRAIN_DUMP_ADMIN_TOKEN`
+- `SUPABASE_KV_TABLE`
+
+Supabase backend storage:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
 See `.env.example`.
 
@@ -40,6 +46,8 @@ Use `docs/LAUNCH_URLS.md` as the canonical list of public pages, API routes, and
 Use `docs/RELEASE_GATE.md` before promoting a build from staging to beta testers.
 
 Use `docs/HOSTING_DECISION.md` to choose the frontend, backend, and storage providers before setting production secrets.
+
+Use `docs/SUPABASE_STORAGE.md` to create the durable storage table before inviting beta users.
 
 ## Frontend Routes
 

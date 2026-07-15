@@ -13,6 +13,8 @@ Use this as the launch-day control sheet. Fill in the placeholders when deployme
 | Backend host | `[BACKEND_HOST]` |
 | Frontend host | `[FRONTEND_HOST]` |
 | Storage provider | `[DURABLE_STORAGE_PROVIDER]` |
+| Supabase URL | `[SUPABASE_URL]` |
+| Supabase KV table | `[SUPABASE_KV_TABLE]` |
 | Google Cloud project | `[GOOGLE_CLOUD_PROJECT]` |
 | OAuth client name | `[GOOGLE_OAUTH_CLIENT_NAME]` |
 | Admin token storage location | `[PASSWORD_MANAGER_ITEM]` |
@@ -31,6 +33,9 @@ Backend:
 - `GOOGLE_CLIENT_SECRET=[GOOGLE_CLIENT_SECRET]`
 - `BRAIN_DUMP_PUBLIC_API_ORIGIN=[PUBLIC_API_ORIGIN]`
 - `BRAIN_DUMP_FRONTEND_ORIGIN=[FRONTEND_ORIGIN]`
+- `SUPABASE_URL=[SUPABASE_URL]`
+- `SUPABASE_SERVICE_ROLE_KEY=[SUPABASE_SERVICE_ROLE_KEY]`
+- `SUPABASE_KV_TABLE=brain_dump_kv`
 - `BRAIN_DUMP_STORAGE_PREFIX=brain-dump-prod`
 - `BRAIN_DUMP_ADMIN_TOKEN=[LONG_RANDOM_ADMIN_TOKEN]`
 

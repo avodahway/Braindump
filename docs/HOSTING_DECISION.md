@@ -21,6 +21,9 @@ This stack keeps the app understandable:
 - Supabase stores encrypted app records.
 - Google remains the user's task/calendar provider.
 
+The backend includes a Supabase REST key-value adapter. Use the schema in `docs/SUPABASE_STORAGE.md` and set
+`SUPABASE_URL` plus `SUPABASE_SERVICE_ROLE_KEY` only on the backend host.
+
 ## Why Not Use Apps Script For Public Beta
 
 The Apps Script bridge remains useful for private Cleveland Stewardship OS compatibility, but it is not the right public
