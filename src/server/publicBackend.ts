@@ -61,9 +61,20 @@ export function createPublicBackend(options: PublicBackendOptions) {
   return {
     async handle(request: Request): Promise<Response> {
       const url = new URL(request.url);
+      const sendJson = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
+        withCors(json(value, status, headers), request, options.frontendAppUrl);
+      const sendRedirect = (location: string, headers: Record<string, string> = {}) =>
+        withCors(redirect(location, headers), request, options.frontendAppUrl);
+
+      if (request.method === 'OPTIONS') {
+        return corsPreflight(request, options.frontendAppUrl);
+      }
+
+      const originError = requireAllowedOrigin(request, options.frontendAppUrl);
+      if (originError) return originError;
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.health) {
-        return json({
+        return sendJson({
           ok: true,
           service: 'brain-dump-public-backend',
           time: now().toISOString()
@@ -71,22 +82,22 @@ export function createPublicBackend(options: PublicBackendOptions) {
       }
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.workspace) {
-        return json((await readRequestWorkspace(request, sessionStore, oauthStore))?.workspace ?? fallbackWorkspace ?? disconnectedWorkspace());
+        return sendJson((await readRequestWorkspace(request, sessionStore, oauthStore))?.workspace ?? fallbackWorkspace ?? disconnectedWorkspace());
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.googleConnect) {
-        return json(await startOAuthSession(options.googleOAuth, oauthStore));
+        return sendJson(await startOAuthSession(options.googleOAuth, oauthStore));
       }
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.googleCallback) {
         if (!options.tokenClient) {
-          return json({ error: 'OAuth token client is not configured.' }, 501);
+          return sendJson({ error: 'OAuth token client is not configured.' }, 501);
         }
 
         const code = url.searchParams.get('code');
         const state = url.searchParams.get('state');
         if (!code || !state) {
-          return json({ error: 'Missing OAuth code or state.' }, 400);
+          return sendJson({ error: 'Missing OAuth code or state.' }, 400);
         }
 
         try {
@@ -99,17 +110,17 @@ export function createPublicBackend(options: PublicBackendOptions) {
           });
           const session = await sessionStore.createSession(workspace.email?.toLowerCase() ?? '');
           if (options.frontendAppUrl) {
-            return redirect(callbackReturnUrl(options.frontendAppUrl, { connected: 'google' }), {
+            return sendRedirect(callbackReturnUrl(options.frontendAppUrl, { connected: 'google' }), {
               'Set-Cookie': sessionCookie(session.id)
             });
           }
-          return json(workspace, 200, { 'Set-Cookie': sessionCookie(session.id) });
+          return sendJson(workspace, 200, { 'Set-Cookie': sessionCookie(session.id) });
         } catch (error) {
           const message = error instanceof Error ? error.message : 'OAuth callback failed.';
           if (options.frontendAppUrl) {
-            return redirect(callbackReturnUrl(options.frontendAppUrl, { connection: 'error', reason: message }));
+            return sendRedirect(callbackReturnUrl(options.frontendAppUrl, { connection: 'error', reason: message }));
           }
-          return json({ error: message }, 400);
+          return sendJson({ error: message }, 400);
         }
       }
 
@@ -120,12 +131,12 @@ export function createPublicBackend(options: PublicBackendOptions) {
           await sessionStore.deleteSession(session.id);
         }
         fallbackWorkspace = undefined;
-        return json({ ok: true }, 200, { 'Set-Cookie': clearSessionCookie() });
+        return sendJson({ ok: true }, 200, { 'Set-Cookie': clearSessionCookie() });
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.accountDelete) {
         const session = await readRequestSession(request, sessionStore);
-        if (!session) return json({ error: 'Not signed in.' }, 401);
+        if (!session) return sendJson({ error: 'Not signed in.' }, 401);
 
         await deleteUserRecords(session.userId, {
           oauthStore,
@@ -136,7 +147,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
           sessionId: session.id
         });
         fallbackWorkspace = undefined;
-        return json(
+        return sendJson(
           {
             ok: true,
             deleted: ['google_tokens', 'workspace', 'session', 'idempotency_responses', 'execution_logs', 'analytics_events']
@@ -148,26 +159,26 @@ export function createPublicBackend(options: PublicBackendOptions) {
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.events) {
         const event = sanitizeAnalyticsEvent(await request.json());
-        if (!event) return json({ error: 'Invalid analytics event.' }, 400);
+        if (!event) return sendJson({ error: 'Invalid analytics event.' }, 400);
         const session = await readRequestSession(request, sessionStore);
         await analyticsStore.append({
           ...event,
           userId: session?.userId,
           createdAt: now().toISOString()
         });
-        return json({ ok: true });
+        return sendJson({ ok: true });
       }
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminMetrics) {
         const adminError = requireAdmin(request, options.adminToken, 'Admin metrics are not configured.');
-        if (adminError) return adminError;
-        return json(summarizeAnalytics(await analyticsStore.readAll()));
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        return sendJson(summarizeAnalytics(await analyticsStore.readAll()));
       }
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminBackupPlan) {
         const adminError = requireAdmin(request, options.adminToken, 'Admin backup plan is not configured.');
-        if (adminError) return adminError;
-        return json(
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        return sendJson(
           buildBackupPlan({
             storagePrefix: options.storageKeyPrefix,
             generatedAt: now().toISOString()
@@ -177,8 +188,8 @@ export function createPublicBackend(options: PublicBackendOptions) {
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminReadiness) {
         const adminError = requireAdmin(request, options.adminToken, 'Admin readiness is not configured.');
-        if (adminError) return adminError;
-        return json(
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        return sendJson(
           buildReadinessReport({
             generatedAt: now().toISOString(),
             googleClientId: options.googleOAuth.clientId,
@@ -196,13 +207,13 @@ export function createPublicBackend(options: PublicBackendOptions) {
         const requestWorkspace = await readRequestWorkspace(request, sessionStore, oauthStore);
         const workspace = requestWorkspace?.workspace ?? fallbackWorkspace ?? disconnectedWorkspace();
         if (workspace.status !== 'connected') {
-          return json({ error: 'Google workspace is not connected.' }, 409);
+          return sendJson({ error: 'Google workspace is not connected.' }, 409);
         }
 
         const body = (await request.json()) as BrainDumpRequest;
         const savedResponse = await responseStore.readResponse(body.requestId);
         if (savedResponse) {
-          return json(savedResponse);
+          return sendJson(savedResponse);
         }
 
         const response = await executeParsedResponse(
@@ -215,10 +226,10 @@ export function createPublicBackend(options: PublicBackendOptions) {
           now
         );
         await responseStore.saveResponse(body.requestId, response, requestWorkspace?.userId);
-        return json(response);
+        return sendJson(response);
       }
 
-      return json({ error: 'Not found' }, 404);
+      return sendJson({ error: 'Not found' }, 404);
     }
   };
 }
@@ -248,6 +259,59 @@ async function deleteUserRecords(
     executionLogStore.deleteByUser(userId),
     analyticsStore.deleteByUser(userId)
   ]);
+}
+
+function corsPreflight(request: Request, frontendAppUrl?: string): Response {
+  const originError = requireAllowedOrigin(request, frontendAppUrl);
+  if (originError) return originError;
+
+  return withCors(
+    new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Access-Control-Allow-Headers': requestedCorsHeaders(request) || 'Content-Type, X-Brain-Dump-Admin-Token',
+        'Access-Control-Max-Age': '600',
+        Vary: 'Origin'
+      }
+    }),
+    request,
+    frontendAppUrl
+  );
+}
+
+function requireAllowedOrigin(request: Request, frontendAppUrl?: string): Response | undefined {
+  if (request.method === 'GET' || request.method === 'HEAD') return undefined;
+  const origin = request.headers.get('Origin');
+  if (!origin || !frontendAppUrl) return undefined;
+
+  const allowedOrigin = new URL(frontendAppUrl).origin;
+  if (origin === allowedOrigin) return undefined;
+
+  return withCors(json({ error: 'Request origin is not allowed.' }, 403), request, frontendAppUrl);
+}
+
+function withCors(response: Response, request: Request, frontendAppUrl?: string): Response {
+  const origin = request.headers.get('Origin');
+  if (!origin || !frontendAppUrl) return response;
+
+  const allowedOrigin = new URL(frontendAppUrl).origin;
+  if (origin !== allowedOrigin) return response;
+
+  const headers = new Headers(response.headers);
+  headers.set('Access-Control-Allow-Origin', allowedOrigin);
+  headers.set('Access-Control-Allow-Credentials', 'true');
+  headers.append('Vary', 'Origin');
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
+function requestedCorsHeaders(request: Request): string | undefined {
+  return request.headers.get('Access-Control-Request-Headers') ?? undefined;
 }
 
 export function buildGoogleAuthorizationUrl(config: GoogleOAuthConfig): string {

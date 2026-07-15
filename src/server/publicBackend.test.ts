@@ -29,6 +29,61 @@ describe('public backend scaffold', () => {
     });
   });
 
+  it('answers credentialed CORS preflight from the configured frontend origin', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      frontendAppUrl: 'https://app.example.com/app'
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'OPTIONS',
+        headers: {
+          Origin: 'https://app.example.com',
+          'Access-Control-Request-Headers': 'content-type'
+        }
+      })
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://app.example.com');
+    expect(response.headers.get('Access-Control-Allow-Credentials')).toBe('true');
+    expect(response.headers.get('Access-Control-Allow-Headers')).toBe('content-type');
+  });
+
+  it('adds credentialed CORS headers for allowed frontend requests', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      frontendAppUrl: 'https://app.example.com/app'
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/workspace', {
+        headers: { Origin: 'https://app.example.com' }
+      })
+    );
+
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://app.example.com');
+    expect(response.headers.get('Access-Control-Allow-Credentials')).toBe('true');
+  });
+
+  it('blocks credentialed state-changing requests from other origins', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      frontendAppUrl: 'https://app.example.com/app'
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/auth/google/start', {
+        method: 'POST',
+        headers: { Origin: 'https://evil.example.com' }
+      })
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'Request origin is not allowed.' });
+  });
+
   it('builds a Google OAuth authorization URL', () => {
     const url = new URL(buildGoogleAuthorizationUrl(googleOAuth));
 

@@ -105,6 +105,9 @@ pnpm start:backend
 
 The server listens on `PORT`, defaulting to `3000` for local backend smoke tests.
 
+`BRAIN_DUMP_FRONTEND_ORIGIN` is also the allowed browser origin for credentialed API requests. The backend answers
+preflight requests for that origin and rejects state-changing browser requests from other origins.
+
 ## Google Cloud Setup
 
 1. Create or choose a Google Cloud project.
