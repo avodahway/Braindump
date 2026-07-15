@@ -45,8 +45,33 @@ export type PublicBackendOptions = {
   storageKeyPrefix?: string;
   storageMode?: 'memory' | 'durable';
   storageEncrypted?: boolean;
+  requestLimits?: PublicRequestLimits;
   now?: () => Date;
 };
+
+export type PublicRequestLimits = {
+  maxJsonBodyBytes?: number;
+  rateLimit?: PublicRateLimitOptions | false;
+};
+
+export type PublicRateLimitOptions = {
+  windowMs?: number;
+  maxRequests?: number;
+};
+
+const defaultMaxJsonBodyBytes = 64 * 1024;
+const defaultRateLimit = {
+  windowMs: 60 * 1000,
+  maxRequests: 60
+};
+
+const rateLimitedPaths = new Set<string>([
+  publicBackendRoutes.brainDump,
+  publicBackendRoutes.events,
+  publicBackendRoutes.googleConnect,
+  publicBackendRoutes.googleDisconnect,
+  publicBackendRoutes.accountDelete
+]);
 
 export function createPublicBackend(options: PublicBackendOptions) {
   let fallbackWorkspace = options.workspace;
@@ -57,6 +82,8 @@ export function createPublicBackend(options: PublicBackendOptions) {
   const executionLogStore = options.executionLogStore ?? createMemoryExecutionLogStore();
   const analyticsStore = options.analyticsStore ?? createMemoryAnalyticsStore();
   const now = options.now ?? (() => new Date());
+  const maxJsonBodyBytes = options.requestLimits?.maxJsonBodyBytes ?? defaultMaxJsonBodyBytes;
+  const rateLimiter = createRateLimiter(options.requestLimits?.rateLimit, now);
 
   return {
     async handle(request: Request): Promise<Response> {
@@ -72,6 +99,15 @@ export function createPublicBackend(options: PublicBackendOptions) {
 
       const originError = requireAllowedOrigin(request, options.frontendAppUrl);
       if (originError) return originError;
+
+      const rateLimitResult = rateLimiter?.check(request, url.pathname);
+      if (rateLimitResult && !rateLimitResult.ok) {
+        return sendJson(
+          { error: 'Too many requests. Please try again shortly.' },
+          429,
+          rateLimitHeaders(rateLimitResult)
+        );
+      }
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.health) {
         return sendJson({
@@ -158,8 +194,8 @@ export function createPublicBackend(options: PublicBackendOptions) {
       }
 
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.events) {
-        const body = await readJsonBody(request);
-        if (!body.ok) return sendJson({ error: body.error }, 400);
+        const body = await readJsonBody(request, maxJsonBodyBytes);
+        if (!body.ok) return sendJson({ error: body.error }, body.status);
 
         const event = sanitizeAnalyticsEvent(body.value);
         if (!event) return sendJson({ error: 'Invalid analytics event.' }, 400);
@@ -213,8 +249,8 @@ export function createPublicBackend(options: PublicBackendOptions) {
           return sendJson({ error: 'Google workspace is not connected.' }, 409);
         }
 
-        const parsedJson = await readJsonBody(request);
-        if (!parsedJson.ok) return sendJson({ error: parsedJson.error }, 400);
+        const parsedJson = await readJsonBody(request, maxJsonBodyBytes);
+        if (!parsedJson.ok) return sendJson({ error: parsedJson.error }, parsedJson.status);
 
         const parsedRequest = parseBrainDumpRequest(parsedJson.value);
         if (!parsedRequest.ok) return sendJson({ error: parsedRequest.error }, 400);
@@ -243,14 +279,92 @@ export function createPublicBackend(options: PublicBackendOptions) {
   };
 }
 
-type JsonReadResult = { ok: true; value: unknown } | { ok: false; error: string };
+type JsonReadResult = { ok: true; value: unknown } | { ok: false; error: string; status: number };
 
-async function readJsonBody(request: Request): Promise<JsonReadResult> {
-  try {
-    return { ok: true, value: await request.json() };
-  } catch {
-    return { ok: false, error: 'Invalid JSON body.' };
+async function readJsonBody(request: Request, maxBodyBytes: number): Promise<JsonReadResult> {
+  if (contentLengthExceedsLimit(request, maxBodyBytes)) {
+    return { ok: false, error: 'Request body is too large.', status: 413 };
   }
+
+  try {
+    const body = await request.text();
+    if (new TextEncoder().encode(body).byteLength > maxBodyBytes) {
+      return { ok: false, error: 'Request body is too large.', status: 413 };
+    }
+    return { ok: true, value: JSON.parse(body) };
+  } catch {
+    return { ok: false, error: 'Invalid JSON body.', status: 400 };
+  }
+}
+
+function contentLengthExceedsLimit(request: Request, maxBodyBytes: number): boolean {
+  const contentLength = request.headers.get('Content-Length');
+  if (!contentLength) return false;
+
+  const bytes = Number(contentLength);
+  return Number.isFinite(bytes) && bytes > maxBodyBytes;
+}
+
+type RateLimitCheck =
+  | { ok: true }
+  | {
+      ok: false;
+      limit: number;
+      remaining: number;
+      resetAt: number;
+      retryAfterSeconds: number;
+    };
+
+function createRateLimiter(rateLimit: PublicRateLimitOptions | false | undefined, now: () => Date) {
+  if (rateLimit === false) return undefined;
+
+  const windowMs = rateLimit?.windowMs ?? defaultRateLimit.windowMs;
+  const maxRequests = rateLimit?.maxRequests ?? defaultRateLimit.maxRequests;
+  const buckets = new Map<string, { resetAt: number; count: number }>();
+
+  return {
+    check(request: Request, pathname: string): RateLimitCheck {
+      if (request.method !== 'POST' || !rateLimitedPaths.has(pathname)) return { ok: true };
+
+      const key = `${clientIdentity(request)}:${pathname}`;
+      const timestamp = now().getTime();
+      const current = buckets.get(key);
+      const bucket = !current || timestamp >= current.resetAt ? { resetAt: timestamp + windowMs, count: 0 } : current;
+
+      if (bucket.count >= maxRequests) {
+        buckets.set(key, bucket);
+        return {
+          ok: false,
+          limit: maxRequests,
+          remaining: 0,
+          resetAt: bucket.resetAt,
+          retryAfterSeconds: Math.max(1, Math.ceil((bucket.resetAt - timestamp) / 1000))
+        };
+      }
+
+      bucket.count += 1;
+      buckets.set(key, bucket);
+      return { ok: true };
+    }
+  };
+}
+
+function clientIdentity(request: Request): string {
+  const sessionId = readSessionIdFromCookie(request.headers.get('Cookie'));
+  if (sessionId) return `session:${sessionId}`;
+
+  const forwardedFor = request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim();
+  const ip = forwardedFor || request.headers.get('CF-Connecting-IP') || request.headers.get('X-Real-IP');
+  return `ip:${ip || 'anonymous'}`;
+}
+
+function rateLimitHeaders(result: Extract<RateLimitCheck, { ok: false }>): Record<string, string> {
+  return {
+    'Retry-After': String(result.retryAfterSeconds),
+    'X-RateLimit-Limit': String(result.limit),
+    'X-RateLimit-Remaining': String(result.remaining),
+    'X-RateLimit-Reset': String(Math.ceil(result.resetAt / 1000))
+  };
 }
 
 type BrainDumpRequestResult = { ok: true; value: BrainDumpRequest } | { ok: false; error: string };

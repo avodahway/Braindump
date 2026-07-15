@@ -157,6 +157,30 @@ describe('public backend scaffold', () => {
     expect(await response.json()).toEqual({ error: 'Brain dump text is required.' });
   });
 
+  it('rejects brain dump JSON bodies over the configured size limit', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      workspace: connectedWorkspace(),
+      requestLimits: {
+        maxJsonBodyBytes: 32
+      }
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        body: JSON.stringify({
+          requestId: 'req-large',
+          text: 'This is deliberately too long for the tiny test limit.',
+          timezone: 'America/Chicago'
+        })
+      })
+    );
+
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ error: 'Request body is too large.' });
+  });
+
   it('returns the same response for duplicate request ids', async () => {
     const backend = createPublicBackend({ googleOAuth, workspace: connectedWorkspace() });
     const request = {
@@ -666,6 +690,68 @@ describe('public backend scaffold', () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'Invalid JSON body.' });
+  });
+
+  it('rate limits repeated public POST requests from the same client', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      requestLimits: {
+        rateLimit: {
+          windowMs: 60_000,
+          maxRequests: 1
+        }
+      }
+    });
+
+    const first = await backend.handle(
+      new Request('https://api.example.com/api/events', {
+        method: 'POST',
+        headers: { 'X-Forwarded-For': '203.0.113.10' },
+        body: JSON.stringify({ name: 'app_opened' })
+      })
+    );
+    const second = await backend.handle(
+      new Request('https://api.example.com/api/events', {
+        method: 'POST',
+        headers: { 'X-Forwarded-For': '203.0.113.10' },
+        body: JSON.stringify({ name: 'app_opened' })
+      })
+    );
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(429);
+    expect(second.headers.get('Retry-After')).toBe('60');
+    expect(await second.json()).toEqual({ error: 'Too many requests. Please try again shortly.' });
+  });
+
+  it('tracks rate limits separately for different client addresses', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      requestLimits: {
+        rateLimit: {
+          windowMs: 60_000,
+          maxRequests: 1
+        }
+      }
+    });
+
+    const first = await backend.handle(
+      new Request('https://api.example.com/api/events', {
+        method: 'POST',
+        headers: { 'X-Forwarded-For': '203.0.113.10' },
+        body: JSON.stringify({ name: 'app_opened' })
+      })
+    );
+    const second = await backend.handle(
+      new Request('https://api.example.com/api/events', {
+        method: 'POST',
+        headers: { 'X-Forwarded-For': '203.0.113.11' },
+        body: JSON.stringify({ name: 'app_opened' })
+      })
+    );
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
   });
 
   it('protects beta analytics metrics with an admin token', async () => {
