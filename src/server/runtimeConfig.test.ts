@@ -10,6 +10,7 @@ describe('runtime config', () => {
       BRAIN_DUMP_PUBLIC_API_ORIGIN: 'https://api.example.com/',
       BRAIN_DUMP_FRONTEND_ORIGIN: 'https://braindump.example.com/',
       BRAIN_DUMP_ADMIN_TOKEN: 'admin-secret',
+      BRAIN_DUMP_BETA_ACCESS_CODE: 'founder-beta',
       BRAIN_DUMP_STORAGE_PREFIX: 'prod',
       BRAIN_DUMP_MAX_JSON_BODY_BYTES: '32768',
       BRAIN_DUMP_RATE_LIMIT_WINDOW_MS: '120000',
@@ -25,6 +26,7 @@ describe('runtime config', () => {
     });
     expect(config.frontendAppUrl).toBe('https://braindump.example.com/app');
     expect(config.adminToken).toBe('admin-secret');
+    expect(config.betaAccessCode).toBe('founder-beta');
     expect(config.storageKeyPrefix).toBe('prod');
     expect(config.requestLimits).toEqual({
       maxJsonBodyBytes: 32768,

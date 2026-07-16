@@ -39,6 +39,7 @@ export function loadBrainDumpBackendConfig(
     },
     frontendAppUrl: frontendAppUrl(env.BRAIN_DUMP_FRONTEND_ORIGIN),
     adminToken: env.BRAIN_DUMP_ADMIN_TOKEN?.trim() || undefined,
+    betaAccessCode: env.BRAIN_DUMP_BETA_ACCESS_CODE?.trim() || undefined,
     storageKeyPrefix: env.BRAIN_DUMP_STORAGE_PREFIX || 'brain-dump',
     requestLimits: requestLimits(env),
     fetcher: options.fetcher,

@@ -16,7 +16,7 @@ import {
   Sparkles,
   UserCheck
 } from 'lucide-react';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { trackEvent } from './api/analytics';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
@@ -24,12 +24,15 @@ import {
   connectPublicWorkspace,
   deletePublicAccountRecords,
   disconnectPublicWorkspace,
+  redeemPublicBetaAccess,
+  refreshPublicBetaAccess,
   refreshPublicWorkspace
 } from './api/publicConnection';
 import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
 import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
+import type { BetaAccessStatus } from './api/publicContract';
 
 const groups = [
   { key: 'calendar', label: 'Calendar', icon: CalendarDays },
@@ -78,17 +81,25 @@ function ProductApp() {
   const [connectionNotice, setConnectionNotice] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeletingAccountData, setDeletingAccountData] = useState(false);
+  const [betaAccess, setBetaAccess] = useState<BetaAccessStatus>({ required: false, granted: true });
+  const [betaAccessCode, setBetaAccessCode] = useState('');
+  const [isRedeemingBetaAccess, setRedeemingBetaAccess] = useState(false);
+  const refreshGeneration = useRef(0);
 
   useEffect(() => {
     if (settings.backendMode !== 'public' || !settings.publicApiBaseUrl) return;
+    const generation = ++refreshGeneration.current;
 
     trackEvent({ name: 'app_opened', mode: settings.backendMode });
 
-    refreshPublicWorkspace(settings)
-      .then((refreshedWorkspace) => {
+    Promise.all([refreshPublicBetaAccess(settings), refreshPublicWorkspace(settings)])
+      .then(([refreshedAccess, refreshedWorkspace]) => {
+        if (generation !== refreshGeneration.current) return;
+        if (refreshedAccess) setBetaAccess(refreshedAccess);
         if (refreshedWorkspace) setWorkspace(refreshedWorkspace);
       })
       .catch(() => {
+        if (generation !== refreshGeneration.current) return;
         setWorkspace({ status: 'not_connected', destinations: [] });
       });
   }, [settings]);
@@ -207,6 +218,10 @@ function ProductApp() {
 
   async function handleConnectPublic() {
     setError('');
+    if (settings.backendMode === 'public' && settings.publicApiBaseUrl && betaAccess.required && !betaAccess.granted) {
+      setError('Enter your beta access code before connecting Google.');
+      return;
+    }
     trackEvent({ name: 'connect_started', mode: settings.backendMode });
     try {
       const connectedWorkspace = await connectPublicWorkspace(settings);
@@ -216,9 +231,32 @@ function ProductApp() {
     }
   }
 
+  async function handleRedeemBetaAccess(event: FormEvent) {
+    event.preventDefault();
+    const code = betaAccessCode.trim();
+    if (!code) {
+      setError('Enter your beta access code.');
+      return;
+    }
+
+    setRedeemingBetaAccess(true);
+    setError('');
+    try {
+      const access = await redeemPublicBetaAccess(settings, code);
+      if (access) setBetaAccess(access);
+      setBetaAccessCode('');
+      setConnectionNotice('Beta access confirmed. You can connect Google when ready.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not confirm beta access.');
+    } finally {
+      setRedeemingBetaAccess(false);
+    }
+  }
+
   async function handleDisconnectPublic() {
     setError('');
     try {
+      refreshGeneration.current += 1;
       setWorkspace(await disconnectPublicWorkspace(settings));
       trackEvent({ name: 'disconnect_completed', mode: settings.backendMode });
     } catch (err) {
@@ -232,6 +270,7 @@ function ProductApp() {
     setDeletingAccountData(true);
     setError('');
     try {
+      refreshGeneration.current += 1;
       setWorkspace(await deletePublicAccountRecords(settings));
       setPreview(null);
       setResult(null);
@@ -263,11 +302,20 @@ function ProductApp() {
         <SetupPanel
           mode={settings.backendMode}
           hasPublicApi={Boolean(settings.publicApiBaseUrl)}
+          betaAccess={betaAccess}
           workspace={workspace}
           onConnect={handleConnectPublic}
           onDisconnect={handleDisconnectPublic}
           onOpenSettings={() => setShowSettings(true)}
         />
+        {settings.backendMode === 'public' && settings.publicApiBaseUrl && betaAccess.required && !betaAccess.granted && (
+          <BetaAccessPanel
+            code={betaAccessCode}
+            isSubmitting={isRedeemingBetaAccess}
+            onCodeChange={setBetaAccessCode}
+            onSubmit={handleRedeemBetaAccess}
+          />
+        )}
         {connectionNotice && <div className="successCard">{connectionNotice}</div>}
         <textarea
           value={text}
@@ -945,6 +993,7 @@ function ResultRecoveryPanel({ result }: { result: BrainDumpResponse }) {
 function SetupPanel({
   mode,
   hasPublicApi,
+  betaAccess,
   workspace,
   onConnect,
   onDisconnect,
@@ -952,14 +1001,16 @@ function SetupPanel({
 }: {
   mode: BackendSettings['backendMode'];
   hasPublicApi: boolean;
+  betaAccess: BetaAccessStatus;
   workspace: UserWorkspace;
   onConnect: () => void;
   onDisconnect: () => void;
   onOpenSettings: () => void;
 }) {
   const isConnected = workspace.status === 'connected';
-  const statusLabel = setupStatusLabel(mode, hasPublicApi, workspace);
-  const steps = setupSteps(mode, hasPublicApi, workspace);
+  const statusLabel = setupStatusLabel(mode, hasPublicApi, workspace, betaAccess);
+  const steps = setupSteps(mode, hasPublicApi, workspace, betaAccess);
+  const needsBetaAccess = mode === 'public' && hasPublicApi && betaAccess.required && !betaAccess.granted;
 
   if (mode === 'mock') {
     return (
@@ -981,9 +1032,19 @@ function SetupPanel({
   if (mode === 'public') {
     return (
       <OnboardingPanel
-        title={isConnected ? (hasPublicApi ? 'Google workspace connected' : 'Demo Google workspace connected') : 'Connect Google'}
+        title={
+          needsBetaAccess
+            ? 'Beta access required'
+            : isConnected
+              ? hasPublicApi
+                ? 'Google workspace connected'
+                : 'Demo Google workspace connected'
+              : 'Connect Google'
+        }
         description={
-          isConnected
+          needsBetaAccess
+            ? 'Enter your beta access code before connecting a Google account.'
+            : isConnected
             ? workspace.email ?? 'Ready to create reviewed actions.'
             : hasPublicApi
               ? 'Each user connects their own Google account before Brain Dump creates anything.'
@@ -993,7 +1054,7 @@ function SetupPanel({
         steps={steps}
         destinations={isConnected ? workspace.destinations.map((destination) => destination.name) : []}
         action={
-          isConnected ? (
+          needsBetaAccess ? undefined : isConnected ? (
             <button type="button" onClick={onDisconnect}>
               <Cloud size={16} />
               Disconnect
@@ -1025,6 +1086,40 @@ function SetupPanel({
   );
 }
 
+function BetaAccessPanel({
+  code,
+  isSubmitting,
+  onCodeChange,
+  onSubmit
+}: {
+  code: string;
+  isSubmitting: boolean;
+  onCodeChange: (code: string) => void;
+  onSubmit: (event: FormEvent) => void;
+}) {
+  return (
+    <form className="betaAccessPanel" onSubmit={onSubmit}>
+      <div>
+        <strong>Private beta access</strong>
+        <span>Enter the access code from your invitation before connecting Google.</span>
+      </div>
+      <label>
+        Access code
+        <input
+          value={code}
+          onChange={(event) => onCodeChange(event.target.value)}
+          placeholder="Beta access code"
+          autoComplete="one-time-code"
+        />
+      </label>
+      <button className="processButton smallButton" type="submit" disabled={isSubmitting}>
+        <Lock size={16} />
+        {isSubmitting ? 'Checking' : 'Unlock'}
+      </button>
+    </form>
+  );
+}
+
 function OnboardingPanel({
   title,
   description,
@@ -1038,7 +1133,7 @@ function OnboardingPanel({
   statusLabel: string;
   steps: Array<{ label: string; complete: boolean }>;
   destinations?: string[];
-  action: ReactNode;
+  action?: ReactNode;
 }) {
   return (
     <div className="setupPanel">
@@ -1073,16 +1168,27 @@ function OnboardingPanel({
   );
 }
 
-function setupStatusLabel(mode: BackendSettings['backendMode'], hasPublicApi: boolean, workspace: UserWorkspace): string {
+function setupStatusLabel(
+  mode: BackendSettings['backendMode'],
+  hasPublicApi: boolean,
+  workspace: UserWorkspace,
+  betaAccess: BetaAccessStatus
+): string {
   if (mode === 'mock') return 'Safe preview only. No Google account is connected.';
   if (mode === 'private_apps_script') return 'Private CSOS bridge is for founder testing, not public beta users.';
+  if (hasPublicApi && betaAccess.required && !betaAccess.granted) return 'Beta access code needed before Google sign-in.';
   if (workspace.status === 'connected') {
     return hasPublicApi ? 'Ready for reviewed actions in this user account.' : 'Demo-ready. Add the public API URL before inviting users.';
   }
   return hasPublicApi ? 'Ready to start Google sign-in.' : 'Public backend URL needed before real Google sign-in.';
 }
 
-function setupSteps(mode: BackendSettings['backendMode'], hasPublicApi: boolean, workspace: UserWorkspace) {
+function setupSteps(
+  mode: BackendSettings['backendMode'],
+  hasPublicApi: boolean,
+  workspace: UserWorkspace,
+  betaAccess: BetaAccessStatus
+) {
   if (mode === 'mock') {
     return [
       { label: 'Preview parser', complete: true },
@@ -1102,6 +1208,10 @@ function setupSteps(mode: BackendSettings['backendMode'], hasPublicApi: boolean,
   const connected = workspace.status === 'connected';
   return [
     { label: hasPublicApi ? 'Public backend configured' : 'Public backend configured', complete: hasPublicApi },
+    {
+      label: betaAccess.required ? 'Beta access confirmed' : 'Beta gate open',
+      complete: !hasPublicApi || !betaAccess.required || betaAccess.granted
+    },
     { label: connected ? 'Google account connected' : 'Connect Google account', complete: connected },
     { label: connected ? 'Workspace destinations ready' : 'Workspace destinations created after sign-in', complete: connected }
   ];

@@ -45,6 +45,7 @@ export type PublicBackendOptions = {
   storageKeyPrefix?: string;
   storageMode?: 'memory' | 'durable';
   storageEncrypted?: boolean;
+  betaAccessCode?: string;
   requestLimits?: PublicRequestLimits;
   now?: () => Date;
 };
@@ -66,12 +67,16 @@ const defaultRateLimit = {
 };
 
 const rateLimitedPaths = new Set<string>([
+  publicBackendRoutes.betaAccess,
   publicBackendRoutes.brainDump,
   publicBackendRoutes.events,
   publicBackendRoutes.googleConnect,
   publicBackendRoutes.googleDisconnect,
   publicBackendRoutes.accountDelete
 ]);
+
+const betaProtectedPaths = new Set<string>([publicBackendRoutes.brainDump, publicBackendRoutes.googleConnect]);
+const betaAccessCookieName = 'bd_beta_access';
 
 export function createPublicBackend(options: PublicBackendOptions) {
   let fallbackWorkspace = options.workspace;
@@ -84,6 +89,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
   const now = options.now ?? (() => new Date());
   const maxJsonBodyBytes = options.requestLimits?.maxJsonBodyBytes ?? defaultMaxJsonBodyBytes;
   const rateLimiter = createRateLimiter(options.requestLimits?.rateLimit, now);
+  const betaAccessCode = options.betaAccessCode?.trim();
 
   return {
     async handle(request: Request): Promise<Response> {
@@ -116,6 +122,30 @@ export function createPublicBackend(options: PublicBackendOptions) {
           time: now().toISOString()
         });
       }
+
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.betaStatus) {
+        return sendJson(await betaAccessStatus(request, betaAccessCode));
+      }
+
+      if (request.method === 'POST' && url.pathname === publicBackendRoutes.betaAccess) {
+        if (!betaAccessCode) return sendJson({ ok: true, access: { required: false, granted: true } });
+
+        const body = await readJsonBody(request, maxJsonBodyBytes);
+        if (!body.ok) return sendJson({ error: body.error }, body.status);
+
+        const code = parseBetaAccessCode(body.value);
+        if (!code) return sendJson({ error: 'Beta access code is required.' }, 400);
+        if (!timingSafeEqualText(code, betaAccessCode)) return sendJson({ error: 'Beta access code is invalid.' }, 403);
+
+        return sendJson(
+          { ok: true, access: { required: true, granted: true } },
+          200,
+          { 'Set-Cookie': betaAccessCookie(await betaAccessCookieValue(betaAccessCode)) }
+        );
+      }
+
+      const betaError = await requireBetaAccess(request, url.pathname, betaAccessCode);
+      if (betaError) return sendJson({ error: betaError }, 403);
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.workspace) {
         return sendJson((await readRequestWorkspace(request, sessionStore, oauthStore))?.workspace ?? fallbackWorkspace ?? disconnectedWorkspace());
@@ -277,6 +307,61 @@ export function createPublicBackend(options: PublicBackendOptions) {
       return sendJson({ error: 'Not found' }, 404);
     }
   };
+}
+
+async function betaAccessStatus(request: Request, betaAccessCode: string | undefined) {
+  if (!betaAccessCode) return { required: false, granted: true };
+  return {
+    required: true,
+    granted: await hasBetaAccess(request, betaAccessCode)
+  };
+}
+
+async function requireBetaAccess(request: Request, pathname: string, betaAccessCode: string | undefined): Promise<string | undefined> {
+  if (!betaAccessCode || request.method !== 'POST' || !betaProtectedPaths.has(pathname)) return undefined;
+  return (await hasBetaAccess(request, betaAccessCode)) ? undefined : 'Beta access code is required.';
+}
+
+async function hasBetaAccess(request: Request, betaAccessCode: string): Promise<boolean> {
+  const cookieValue = readCookie(request.headers.get('Cookie'), betaAccessCookieName);
+  if (!cookieValue) return false;
+  return timingSafeEqualText(cookieValue, await betaAccessCookieValue(betaAccessCode));
+}
+
+function parseBetaAccessCode(value: unknown): string | undefined {
+  return isRecord(value) && isNonEmptyString(value.code) ? value.code.trim() : undefined;
+}
+
+async function betaAccessCookieValue(betaAccessCode: string): Promise<string> {
+  const bytes = new TextEncoder().encode(`brain-dump-beta-access:${betaAccessCode}`);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function betaAccessCookie(value: string): string {
+  return `${betaAccessCookieName}=${value}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=2592000`;
+}
+
+function readCookie(cookieHeader: string | null, name: string): string | undefined {
+  if (!cookieHeader) return undefined;
+  return cookieHeader
+    .split(';')
+    .map((part) => part.trim())
+    .map((part) => part.split('='))
+    .find(([cookieName]) => cookieName === name)?.[1];
+}
+
+function timingSafeEqualText(left: string, right: string): boolean {
+  const leftBytes = new TextEncoder().encode(left);
+  const rightBytes = new TextEncoder().encode(right);
+  const length = Math.max(leftBytes.length, rightBytes.length);
+  let difference = leftBytes.length ^ rightBytes.length;
+
+  for (let index = 0; index < length; index += 1) {
+    difference |= (leftBytes[index] ?? 0) ^ (rightBytes[index] ?? 0);
+  }
+
+  return difference === 0;
 }
 
 type JsonReadResult = { ok: true; value: unknown } | { ok: false; error: string; status: number };

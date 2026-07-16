@@ -149,6 +149,42 @@ describe('App routes', () => {
     expect(screen.getByText('Ready to start Google sign-in.')).toBeInTheDocument();
   });
 
+  it('prompts for beta access before public Google connection', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === 'https://api.example.com/api/beta/status') {
+        return new Response(JSON.stringify({ required: true, granted: false }));
+      }
+      if (url === 'https://api.example.com/api/workspace') {
+        return new Response(JSON.stringify({ status: 'not_connected', destinations: [] }));
+      }
+      if (url === 'https://api.example.com/api/beta/access') {
+        return new Response(JSON.stringify({ ok: true, access: { required: true, granted: true } }));
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/app');
+
+    expect(await screen.findByText('Beta access required')).toBeInTheDocument();
+    expect(screen.getByText('Beta access code needed before Google sign-in.')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('Beta access code'), { target: { value: 'founder-beta' } });
+    fireEvent.click(screen.getByRole('button', { name: /Unlock/i }));
+
+    expect(await screen.findByText('Beta access confirmed. You can connect Google when ready.')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Beta access code')).not.toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/beta/access', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'founder-beta' })
+    });
+  });
+
   it('shows a friendly message after Google callback success', () => {
     renderAt('/app?connected=google');
 

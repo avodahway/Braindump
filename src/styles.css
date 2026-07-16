@@ -492,6 +492,46 @@ a {
   white-space: nowrap;
 }
 
+.betaAccessPanel {
+  display: grid;
+  grid-template-columns: 1fr minmax(150px, 220px) auto;
+  align-items: end;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 13px;
+  border: 1px solid rgba(126, 98, 36, 0.24);
+  border-radius: 8px;
+  background: #fff8e7;
+  color: var(--green);
+}
+
+.betaAccessPanel div,
+.betaAccessPanel label {
+  display: grid;
+  gap: 5px;
+}
+
+.betaAccessPanel strong {
+  font-size: 14px;
+}
+
+.betaAccessPanel span,
+.betaAccessPanel label {
+  color: rgba(24, 50, 40, 0.72);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.betaAccessPanel input {
+  min-height: 40px;
+  border: 1px solid rgba(39, 89, 70, 0.2);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+
 textarea {
   width: 100%;
   min-height: 310px;
@@ -939,6 +979,10 @@ input:disabled {
   }
 
   .setupSteps {
+    grid-template-columns: 1fr;
+  }
+
+  .betaAccessPanel {
     grid-template-columns: 1fr;
   }
 

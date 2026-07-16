@@ -93,6 +93,113 @@ describe('public backend scaffold', () => {
     expect(url.searchParams.get('scope')).toContain('https://www.googleapis.com/auth/tasks');
   });
 
+  it('reports beta access as open when no access code is configured', async () => {
+    const backend = createPublicBackend({ googleOAuth });
+
+    const response = await backend.handle(new Request('https://api.example.com/api/beta/status'));
+
+    expect(await response.json()).toEqual({ required: false, granted: true });
+  });
+
+  it('requires and grants beta access with the configured access code', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      betaAccessCode: 'founder-beta'
+    });
+
+    const before = await backend.handle(new Request('https://api.example.com/api/beta/status'));
+    const invalid = await backend.handle(
+      new Request('https://api.example.com/api/beta/access', {
+        method: 'POST',
+        body: JSON.stringify({ code: 'wrong-code' })
+      })
+    );
+    const valid = await backend.handle(
+      new Request('https://api.example.com/api/beta/access', {
+        method: 'POST',
+        body: JSON.stringify({ code: 'founder-beta' })
+      })
+    );
+    const betaCookie = valid.headers.get('Set-Cookie') ?? '';
+    const after = await backend.handle(
+      new Request('https://api.example.com/api/beta/status', {
+        headers: { Cookie: betaCookie }
+      })
+    );
+
+    expect(await before.json()).toEqual({ required: true, granted: false });
+    expect(invalid.status).toBe(403);
+    expect(await invalid.json()).toEqual({ error: 'Beta access code is invalid.' });
+    expect(valid.status).toBe(200);
+    expect(betaCookie).toContain('bd_beta_access=');
+    expect(await after.json()).toEqual({ required: true, granted: true });
+  });
+
+  it('blocks Google connect until beta access is granted', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      betaAccessCode: 'founder-beta'
+    });
+
+    const blocked = await backend.handle(new Request('https://api.example.com/api/auth/google/start', { method: 'POST' }));
+    const access = await backend.handle(
+      new Request('https://api.example.com/api/beta/access', {
+        method: 'POST',
+        body: JSON.stringify({ code: 'founder-beta' })
+      })
+    );
+    const allowed = await backend.handle(
+      new Request('https://api.example.com/api/auth/google/start', {
+        method: 'POST',
+        headers: { Cookie: access.headers.get('Set-Cookie') ?? '' }
+      })
+    );
+
+    expect(blocked.status).toBe(403);
+    expect(await blocked.json()).toEqual({ error: 'Beta access code is required.' });
+    expect(allowed.status).toBe(200);
+    expect((await allowed.json()).authorizationUrl).toContain('accounts.google.com');
+  });
+
+  it('blocks public brain dump execution until beta access is granted', async () => {
+    const backend = createPublicBackend({
+      googleOAuth,
+      workspace: connectedWorkspace(),
+      betaAccessCode: 'founder-beta'
+    });
+
+    const requestBody = {
+      requestId: 'req-beta',
+      text: 'Buy coffee',
+      timezone: 'America/Chicago'
+    };
+    const blocked = await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      })
+    );
+    const access = await backend.handle(
+      new Request('https://api.example.com/api/beta/access', {
+        method: 'POST',
+        body: JSON.stringify({ code: 'founder-beta' })
+      })
+    );
+    const allowed = await backend.handle(
+      new Request('https://api.example.com/api/brain-dump', {
+        method: 'POST',
+        headers: { Cookie: access.headers.get('Set-Cookie') ?? '' },
+        body: JSON.stringify(requestBody)
+      })
+    );
+    const result = await allowed.json();
+
+    expect(blocked.status).toBe(403);
+    expect(await blocked.json()).toEqual({ error: 'Beta access code is required.' });
+    expect(allowed.status).toBe(200);
+    expect(result.summary.personalTasks).toBe(1);
+  });
+
   it('returns workspace and processes brain dumps through the public route', async () => {
     const backend = createPublicBackend({
       googleOAuth,

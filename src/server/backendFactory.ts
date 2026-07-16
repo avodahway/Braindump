@@ -48,6 +48,7 @@ export type BrainDumpBackendConfig = {
   executionLogStore?: ExecutionLogStore;
   analyticsStore?: AnalyticsStore;
   adminToken?: string;
+  betaAccessCode?: string;
   requestLimits?: PublicRequestLimits;
   executor?: ActionExecutor;
 };
@@ -129,6 +130,7 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
     executionLogStore,
     analyticsStore,
     adminToken: config.adminToken,
+    betaAccessCode: config.betaAccessCode,
     storageKeyPrefix: config.storageKeyPrefix,
     storageMode: config.storage ? 'durable' : 'memory',
     storageEncrypted: Boolean(config.storageCodec),

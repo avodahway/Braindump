@@ -1,5 +1,5 @@
 import type { AnalyticsEvent, BrainDumpRequest, BrainDumpResponse, UserWorkspace } from '../lib/types';
-import { publicBackendRoutes } from './publicContract';
+import { publicBackendRoutes, type BetaAccessStatus } from './publicContract';
 
 type JsonFetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -17,6 +17,31 @@ export async function getPublicWorkspace(baseUrl: string, fetcher: JsonFetcher =
   return readJson<UserWorkspace>(
     await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.workspace), {
       credentials: 'include'
+    })
+  );
+}
+
+export async function getPublicBetaAccessStatus(baseUrl: string, fetcher: JsonFetcher = fetch): Promise<BetaAccessStatus> {
+  return readJson<BetaAccessStatus>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.betaStatus), {
+      credentials: 'include'
+    })
+  );
+}
+
+export async function redeemPublicBetaAccessCode(
+  baseUrl: string,
+  code: string,
+  fetcher: JsonFetcher = fetch
+): Promise<{ ok: true; access: BetaAccessStatus }> {
+  return readJson<{ ok: true; access: BetaAccessStatus }>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.betaAccess), {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ code })
     })
   );
 }

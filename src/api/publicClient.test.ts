@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   deletePublicAccountData,
+  getPublicBetaAccessStatus,
   normalizeApiBaseUrl,
   processPublicBrainDump,
   publicApiUrl,
+  redeemPublicBetaAccessCode,
   startPublicGoogleConnection,
   trackPublicEvent
 } from './publicClient';
@@ -23,6 +25,32 @@ describe('public API client', () => {
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/auth/google/start', {
       method: 'POST',
       credentials: 'include'
+    });
+  });
+
+  it('reads and redeems public beta access through the public backend', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ required: true, granted: false })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, access: { required: true, granted: true } })));
+
+    await expect(getPublicBetaAccessStatus('https://api.example.com', fetcher)).resolves.toEqual({
+      required: true,
+      granted: false
+    });
+    await expect(redeemPublicBetaAccessCode('https://api.example.com', 'founder-beta', fetcher)).resolves.toEqual({
+      ok: true,
+      access: { required: true, granted: true }
+    });
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/beta/status', {
+      credentials: 'include'
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/beta/access', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'founder-beta' })
     });
   });
 

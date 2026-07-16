@@ -2,14 +2,23 @@ import type { BrainDumpRequest, BrainDumpResponse, UserWorkspace } from '../lib/
 
 export type PublicBackendContract = {
   getWorkspace(): Promise<UserWorkspace>;
+  getBetaAccessStatus(): Promise<BetaAccessStatus>;
+  redeemBetaAccessCode(code: string): Promise<{ ok: true; access: BetaAccessStatus }>;
   startGoogleConnection(): Promise<{ authorizationUrl: string }>;
   disconnectGoogle(): Promise<{ ok: true }>;
   deleteAccountData(): Promise<{ ok: true; deleted: string[] }>;
   processBrainDump(request: BrainDumpRequest): Promise<BrainDumpResponse>;
 };
 
+export type BetaAccessStatus = {
+  required: boolean;
+  granted: boolean;
+};
+
 export const publicBackendRoutes = {
   health: '/api/health',
+  betaStatus: '/api/beta/status',
+  betaAccess: '/api/beta/access',
   workspace: '/api/workspace',
   googleConnect: '/api/auth/google/start',
   googleCallback: '/api/auth/google/callback',

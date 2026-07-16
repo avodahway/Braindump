@@ -29,6 +29,7 @@ Optional backend:
 - `GOOGLE_OAUTH_SCOPES`
 - `BRAIN_DUMP_STORAGE_PREFIX`
 - `BRAIN_DUMP_ADMIN_TOKEN`
+- `BRAIN_DUMP_BETA_ACCESS_CODE`
 - `BRAIN_DUMP_MAX_JSON_BODY_BYTES`
 - `BRAIN_DUMP_RATE_LIMIT_WINDOW_MS`
 - `BRAIN_DUMP_RATE_LIMIT_MAX_REQUESTS`
@@ -110,6 +111,9 @@ The server listens on `PORT`, defaulting to `3000` for local backend smoke tests
 
 `BRAIN_DUMP_FRONTEND_ORIGIN` is also the allowed browser origin for credentialed API requests. The backend answers
 preflight requests for that origin and rejects state-changing browser requests from other origins.
+
+Set `BRAIN_DUMP_BETA_ACCESS_CODE` to require an invitation code before public users can start Google OAuth or create
+reviewed actions. Leave it unset only when the app is ready for open access.
 
 The public API defaults to a 64 KB JSON body limit and 60 POST requests per client per minute. Override those with
 `BRAIN_DUMP_MAX_JSON_BODY_BYTES`, `BRAIN_DUMP_RATE_LIMIT_WINDOW_MS`, and `BRAIN_DUMP_RATE_LIMIT_MAX_REQUESTS` if the beta
