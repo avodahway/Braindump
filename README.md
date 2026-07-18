@@ -32,7 +32,8 @@ pnpm build
 pnpm build:backend
 ```
 
-After a real frontend and backend are deployed, verify public pages and API readiness with:
+After a real frontend and backend are deployed, verify public pages, `/operator`, backend health, protected operator feeds,
+and CSV exports with:
 
 ```sh
 pnpm verify:deployment

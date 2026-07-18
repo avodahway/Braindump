@@ -185,7 +185,7 @@ After deploy:
 35. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback?format=csv` downloads the feedback CSV from `/operator`.
 36. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
 
-You can automate the public page, health, and readiness checks with:
+You can automate the public page, `/operator`, health, protected operator endpoint, and CSV export checks with:
 
 ```sh
 BRAIN_DUMP_FRONTEND_ORIGIN=https://braindump.app \

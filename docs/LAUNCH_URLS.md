@@ -61,7 +61,8 @@ BRAIN_DUMP_ADMIN_TOKEN=replace-with-admin-token \
 pnpm verify:deployment
 ```
 
-The admin token can be omitted if you only want to verify public pages, health, and anonymous admin rejection.
+The admin token can be omitted if you only want to verify public pages, health, and anonymous admin rejection. Include it
+to verify readiness, metrics, backup, execution errors, beta requests, feedback, and CSV exports.
 
 ## Missing Values To Collect
 
