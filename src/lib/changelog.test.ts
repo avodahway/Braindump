@@ -13,5 +13,8 @@ describe('changelog', () => {
     expect(changelog).toContain('accessibility smoke checks');
     expect(changelog).toContain('pricing and demo pages');
     expect(changelog).toContain('production env validation');
+    expect(changelog).toContain('public Trust Center');
+    expect(changelog).toContain('analytics privacy audit');
+    expect(changelog).toContain('beta cohort readiness report');
   });
 });

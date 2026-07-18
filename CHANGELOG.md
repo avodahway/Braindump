@@ -4,6 +4,7 @@ All notable Brain Dump launch milestones are tracked here.
 
 ## Unreleased
 
+- Added a launch timeline page, public Trust Center, first-run onboarding checklist, protected support SLA report, protected beta cohort readiness report, analytics privacy audit, and launch incident response runbook.
 - Prepared launch operations for private beta expansion with public security, install, and roadmap pages.
 - Added protected launch-summary reporting and an operator Markdown launch-notes export.
 - Hardened operator CSV exports against spreadsheet formula injection.

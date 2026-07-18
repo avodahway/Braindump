@@ -16,6 +16,7 @@ describe('public search index files', () => {
     expect(sitemap).toContain('<loc>https://braindump.app/demo</loc>');
     expect(sitemap).toContain('<loc>https://braindump.app/oauth-demo-checklist</loc>');
     expect(sitemap).toContain('<loc>https://braindump.app/timeline</loc>');
+    expect(sitemap).toContain('<loc>https://braindump.app/trust</loc>');
     expect(sitemap).not.toContain('/operator');
   });
 });

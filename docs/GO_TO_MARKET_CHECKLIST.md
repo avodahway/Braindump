@@ -9,12 +9,12 @@
 - Publish basic home page.
 - Publish privacy policy draft page.
 - Publish terms draft page.
-- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/faq`, `/security`, `/install`, `/roadmap`, `/press`, `/examples`, `/pricing`, `/demo`, `/oauth-demo-checklist`, `/timeline`, `/operator`, and `/app` routes work on the deployed frontend.
+- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/faq`, `/security`, `/trust`, `/install`, `/roadmap`, `/press`, `/examples`, `/pricing`, `/demo`, `/oauth-demo-checklist`, `/timeline`, `/operator`, and `/app` routes work on the deployed frontend.
 - Confirm `/robots.txt`, `/sitemap.xml`, and public metadata checks pass in deployment verification.
 - Confirm Vercel security headers are present from `vercel.json`.
 - Confirm `/app` explains setup progress, demo mode, Google connection, destinations, and disconnect.
 - Confirm `/app` first-run samples load and review successfully.
-- Confirm `/operator` loads readiness, launch summary, metrics, backup status, and checklist with the admin token.
+- Confirm `/operator` loads readiness, launch summary, metrics, backup status, support SLA, beta cohort readiness, and checklist with the admin token.
 - Pick frontend host.
 - Pick backend host.
 - Pick durable encrypted storage.
@@ -22,6 +22,7 @@
 - Fill launch URL inventory from `docs/LAUNCH_URLS.md`.
 - Fill production env template from `.env.production.example` in host secret settings.
 - Run `pnpm validate:env` in a shell with production env values available.
+- Run `pnpm audit:analytics` before inviting real users.
 - Deploy staging frontend.
 - Deploy staging backend.
 - Confirm GitHub Actions CI passes on `main`.
@@ -44,6 +45,7 @@
 - Use `docs/OPERATOR_TRIAGE.md` to classify support, feedback, and execution-error reports.
 - Use `docs/BETA_COHORT_PLAN.md` to select testers, track cohort fit, and decide when to expand.
 - Review `docs/LAUNCH_RISK_REGISTER.md` before each invite batch.
+- Review `docs/LAUNCH_INCIDENT_RESPONSE.md` before each invite batch.
 - Complete `docs/LAUNCH_DECISION_RECORD.md` before expanding beyond the current beta batch.
 - Watch every first-run session if possible.
 - Use `docs/BETA_USER_INTERVIEW_GUIDE.md` for watched runs and follow-up calls.
@@ -58,6 +60,7 @@
 
 - Fix top onboarding issues.
 - Add feedback/support link inside app.
+- Confirm the first-run onboarding checklist makes capture, review, connect, create, and help/support clear.
 - Add clear output review UI if not already present.
 - Confirm review-before-create is understandable to beta users.
 - Confirm users understand they can remove wrong preview actions before creating.
@@ -81,6 +84,8 @@
 - Test encrypted storage snapshot restore in staging.
 - Confirm `/api/admin/readiness` returns `ready: true`.
 - Confirm `/api/admin/launch-summary` returns protected launch posture and queue counts.
+- Confirm `/api/admin/support-sla` returns zero overdue support requests before expansion.
+- Confirm `/api/admin/beta-cohort-readiness` recommends a nonzero next cohort size before inviting the next batch.
 - Announce public beta to a narrow audience.
 
 ## Pricing Hypotheses
@@ -111,6 +116,7 @@ Test these value propositions:
 - Terms of service.
 - Public FAQ at `/faq`.
 - Public security page at `/security`.
+- Public Trust Center at `/trust`.
 - Public install help at `/install`.
 - Public roadmap page at `/roadmap`.
 - Public press page at `/press`.
@@ -136,6 +142,7 @@ Test these value propositions:
 - Operator privacy and triage guides.
 - Beta cohort plan.
 - Launch risk register.
+- Launch incident response runbook.
 - Production env validator.
 - Production security headers.
 - Deployment smoke-test worksheet.

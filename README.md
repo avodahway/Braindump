@@ -13,7 +13,7 @@ pnpm dev
 
 The app starts in mock preview mode. It parses and groups results locally without touching any Google account.
 
-Public launch pages are available at `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/faq`, `/security`, `/install`, `/roadmap`, `/press`, `/examples`, `/pricing`, `/demo`, `/oauth-demo-checklist`, and `/timeline`. The product tool is available at `/app`.
+Public launch pages are available at `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/faq`, `/security`, `/trust`, `/install`, `/roadmap`, `/press`, `/examples`, `/pricing`, `/demo`, `/oauth-demo-checklist`, and `/timeline`. The product tool is available at `/app`.
 
 Set `VITE_SUPPORT_EMAIL` at build time to show the live beta support address in public pages and feedback links.
 Set `VITE_PUBLIC_API_BASE_URL` at build time so public pages can submit beta access requests to the backend.
@@ -30,6 +30,7 @@ Production deployment scaffolding is included for Vercel, Render, and Supabase:
 pnpm test
 pnpm build
 pnpm build:backend
+pnpm audit:analytics
 ```
 
 With production environment values available, run `pnpm validate:env` before inviting real users.
@@ -138,6 +139,10 @@ Set `BRAIN_DUMP_STORAGE_SECRET` so durable values are encrypted before being wri
 `GET /api/admin/backup-plan` returns a protected beta backup and restore checklist. Secret-bearing records such as Google refresh tokens should be backed up only through encrypted provider snapshots, not local exports.
 
 `GET /api/admin/readiness` returns a protected launch-readiness report with boolean checks for OAuth config, frontend callback, admin protection, scopes, and durable storage.
+
+`GET /api/admin/support-sla` returns a protected support queue SLA report for `/operator`.
+
+`GET /api/admin/beta-cohort-readiness` returns a protected recommendation for whether the next beta cohort should be invited.
 
 `GET /api/admin/launch-summary` returns a protected launch posture summary with event counts, queue counts, and recent error counts for `/operator`.
 

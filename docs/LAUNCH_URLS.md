@@ -28,6 +28,7 @@ Use this inventory when moving from local development to a real beta deployment.
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/status` | Launch status | Current beta phase, known limits, and support path |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/faq` | Public FAQ | Google access, review-before-create, email limits, and disconnect answers |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/security` | Security | Password/token guidance, reviewed writes, exports, and concern reporting |
+| `[BRAIN_DUMP_FRONTEND_ORIGIN]/trust` | Trust Center | Google access, user controls, launch safeguards, and safety posture |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/install` | Install help | PWA install guidance for mobile and desktop |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/roadmap` | Roadmap | Beta scope, next improvements, later work, and out-of-scope features |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/press` | Press | Approved beta description, boundaries, assets, and contact |
@@ -58,6 +59,10 @@ The frontend host must serve the same app entry point for every route above.
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/metrics` | Protected beta metrics | Requires `X-Brain-Dump-Admin-Token` |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/backup-plan` | Protected backup checklist | Requires `X-Brain-Dump-Admin-Token` |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/readiness` | Protected launch readiness | Returns `ready: true` only after real config |
+| `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/self-test` | Protected runtime self-test | Returns runtime launch checks |
+| `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/duplicate-write-audit` | Protected duplicate-write audit | Returns no duplicate groups before expansion |
+| `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/support-sla` | Protected support SLA | Returns zero overdue requests before expansion |
+| `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/beta-cohort-readiness` | Protected cohort readiness | Recommends next cohort size |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/execution-errors` | Protected recent execution errors | Shows recent Google/provider write failures and supports `?format=csv` |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/beta-requests` | Protected beta request list | Shows first-user beta access requests and supports `?format=csv` |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/feedback` | Protected beta feedback list | Shows first-user feedback submissions and supports `?format=csv` |
