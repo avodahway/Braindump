@@ -232,7 +232,7 @@ describe('public backend scaffold', () => {
       email: 'jay@example.com',
       tools: 'Google Tasks, Calendar',
       googleComfort: 'comfortable',
-      notes: 'Wants "simple" follow-up',
+      notes: '=IMPORTXML("https://example.com","//title")',
       createdAt: '2026-07-17T12:00:00.000Z'
     });
 
@@ -245,7 +245,7 @@ describe('public backend scaffold', () => {
     expect(response.headers.get('Content-Type')).toContain('text/csv');
     expect(await response.text()).toBe(
       'createdAt,name,email,tools,googleComfort,notes,status,id\n' +
-        '2026-07-17T12:00:00.000Z,Jay Cleveland,jay@example.com,"Google Tasks, Calendar",comfortable,"Wants ""simple"" follow-up",new,beta-1'
+        '2026-07-17T12:00:00.000Z,Jay Cleveland,jay@example.com,"Google Tasks, Calendar",comfortable,"\'=IMPORTXML(""https://example.com"",""//title"")",new,beta-1'
     );
   });
 

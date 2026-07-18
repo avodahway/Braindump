@@ -1112,7 +1112,11 @@ function recordsToCsv(headers: string[], rows: Array<Record<string, string>>): s
 }
 
 function csvCell(value: string): string {
-  const normalized = value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const normalized = neutralizeSpreadsheetFormula(value.replace(/\r\n/g, '\n').replace(/\r/g, '\n'));
   if (!/[",\n]/.test(normalized)) return normalized;
   return `"${normalized.replace(/"/g, '""')}"`;
+}
+
+function neutralizeSpreadsheetFormula(value: string): string {
+  return /^[=+\-@]/.test(value.trimStart()) ? `'${value}` : value;
 }
