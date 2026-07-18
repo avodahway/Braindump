@@ -37,6 +37,8 @@ Use this worksheet after deploying staging or production. Automated deployment v
 | `/roadmap` | Beta scope, next work, later work, and out-of-scope features are present |  |  |
 | `/press` | Approved beta description, boundaries, assets, and contact are present |  |  |
 | `/examples` | Task, calendar, project, follow-up, and review examples are present |  |  |
+| `/pricing` | Beta pricing expectations and no-surprise-charge language are present |  |  |
+| `/demo` | Walkthrough script and safety points are present |  |  |
 | `/operator` | Requires production API URL and admin token |  |  |
 
 ## Search And Share
@@ -68,6 +70,7 @@ Use this worksheet after deploying staging or production. Automated deployment v
 - Confirm Launch Summary shows posture, recent errors, open beta, and open support.
 - Export launch notes Markdown.
 - Filter beta requests by status before exporting a waitlist batch.
+- Filter feedback and support requests by status before exporting review batches.
 - Export execution errors CSV.
 - Export beta requests CSV.
 - Export feedback CSV.

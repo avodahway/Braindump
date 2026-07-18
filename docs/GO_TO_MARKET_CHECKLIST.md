@@ -9,8 +9,9 @@
 - Publish basic home page.
 - Publish privacy policy draft page.
 - Publish terms draft page.
-- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/faq`, `/security`, `/install`, `/roadmap`, `/press`, `/examples`, `/operator`, and `/app` routes work on the deployed frontend.
+- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/faq`, `/security`, `/install`, `/roadmap`, `/press`, `/examples`, `/pricing`, `/demo`, `/operator`, and `/app` routes work on the deployed frontend.
 - Confirm `/robots.txt`, `/sitemap.xml`, and public metadata checks pass in deployment verification.
+- Confirm Vercel security headers are present from `vercel.json`.
 - Confirm `/app` explains setup progress, demo mode, Google connection, destinations, and disconnect.
 - Confirm `/app` first-run samples load and review successfully.
 - Confirm `/operator` loads readiness, launch summary, metrics, backup status, and checklist with the admin token.
@@ -20,6 +21,7 @@
 - Review `docs/PRODUCTION_DEPLOYMENT.md`, `vercel.json`, and `render.yaml`.
 - Fill launch URL inventory from `docs/LAUNCH_URLS.md`.
 - Fill production env template from `.env.production.example` in host secret settings.
+- Run `pnpm validate:env` in a shell with production env values available.
 - Deploy staging frontend.
 - Deploy staging backend.
 - Confirm GitHub Actions CI passes on `main`.
@@ -112,6 +114,8 @@ Test these value propositions:
 - Public roadmap page at `/roadmap`.
 - Public press page at `/press`.
 - Public examples page at `/examples`.
+- Public pricing page at `/pricing`.
+- Public demo page at `/demo`.
 - Support email.
 - Founder beta invitation email.
 - Launch announcement kit.
@@ -122,6 +126,7 @@ Test these value propositions:
 - Protected beta request list in `/operator`.
 - Protected beta request status filter in `/operator`.
 - Protected beta feedback list in `/operator`.
+- Protected feedback and support status filters in `/operator`.
 - CSV exports for execution errors, beta requests, feedback, and support requests.
 - Support and data-deletion request intake through `/support` and `/data-deletion`.
 - Operator lifecycle actions for beta requests, feedback, and support requests.
@@ -129,6 +134,8 @@ Test these value propositions:
 - Operator privacy and triage guides.
 - Beta cohort plan.
 - Launch risk register.
+- Production env validator.
+- Production security headers.
 - Deployment smoke-test worksheet.
 - OAuth verification assets worksheet.
 - Public launch status page at `/status`.

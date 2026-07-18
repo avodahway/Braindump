@@ -30,8 +30,9 @@ Production deployment scaffolding is included for Vercel, Render, and Supabase:
 pnpm test
 pnpm build
 pnpm build:backend
-pnpm validate:env
 ```
+
+With production environment values available, run `pnpm validate:env` before inviting real users.
 
 After a real frontend and backend are deployed, verify public pages, search/share metadata, `/operator`, backend health,
 protected operator feeds, and CSV exports with:

@@ -73,6 +73,8 @@ Use `docs/SUPABASE_STORAGE.md` to create the durable storage table before inviti
 - `/roadmap`
 - `/press`
 - `/examples`
+- `/pricing`
+- `/demo`
 - `/operator`
 
 The frontend host must serve `index.html` for those routes.
@@ -169,48 +171,53 @@ After deploy:
 12. Open `/roadmap`.
 13. Open `/press`.
 14. Open `/examples`.
-15. Open `/app`.
-16. Open `/operator` and confirm it asks for the public API URL and admin token.
-17. Confirm `/robots.txt` disallows `/operator`.
-18. Confirm `/sitemap.xml` includes public pages and excludes `/operator`.
-19. Check backend health: `GET /api/health`.
-20. In app settings, set Public API URL.
-21. Click Connect Google.
-22. Complete OAuth with a test user and confirm the app returns to `/app?connected=google`, then clears the query.
-23. Submit: `Pay employees tomorrow. Lunch with Jack Thursday at noon; put on calendar.`
-24. Confirm the review step appears before anything is created.
-25. Remove one preview action and confirm it disappears.
-26. Review again, then click Create.
-27. Confirm Google Tasks has the work task.
-28. Confirm Google Calendar has the event.
-29. Submit: `Spend 4 hours this week on the porch replacement project`.
-30. Confirm the calendar work block stays in Needs Review and is not created.
-31. Click Disconnect.
-32. Confirm stored OAuth tokens and workspace connection records are removed.
-33. Confirm `/api/workspace` returns not connected afterward.
-34. Submit a three-question beta feedback form from `/feedback`.
-35. Submit a beta access request from `/beta`.
-36. Submit a support request from `/support`.
-37. Submit a data deletion request from `/data-deletion`.
-38. In Settings, type `DELETE`, click Delete account data, and confirm the session returns to not connected.
-39. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `/operator` loads readiness, launch summary, metrics, beta requests, feedback, support requests, recent errors, backup plan, and checklist.
-40. If `BRAIN_DUMP_ADMIN_TOKEN` is set, export launch notes Markdown from `/operator`.
-41. If `BRAIN_DUMP_ADMIN_TOKEN` is set, filter beta requests by status before exporting a waitlist batch.
-42. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `/operator` can mark beta requests invited/archived, feedback reviewed/archived, and support requests in progress/resolved/archived.
-43. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
-44. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
-45. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/launch-summary` returns launch posture and queue counts only when `X-Brain-Dump-Admin-Token` is provided.
-46. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/execution-errors` returns recent provider write failures only when `X-Brain-Dump-Admin-Token` is provided.
-47. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/execution-errors?format=csv` downloads the execution error CSV from `/operator`.
-48. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests` returns beta requests only when `X-Brain-Dump-Admin-Token` is provided.
-49. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests?format=csv` downloads the beta request CSV from `/operator`.
-50. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests?status=new` filters beta requests.
-51. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback` returns feedback only when `X-Brain-Dump-Admin-Token` is provided.
-52. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback?format=csv` downloads the feedback CSV from `/operator`.
-53. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/support-requests` returns support requests only when `X-Brain-Dump-Admin-Token` is provided.
-54. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/support-requests?format=csv` downloads the support request CSV from `/operator`.
-55. Complete `docs/LAUNCH_DECISION_RECORD.md` for the release or tester batch.
-56. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
+15. Open `/pricing`.
+16. Open `/demo`.
+17. Open `/app`.
+18. Open `/operator` and confirm it asks for the public API URL and admin token.
+19. Confirm `/robots.txt` disallows `/operator`.
+20. Confirm `/sitemap.xml` includes public pages and excludes `/operator`.
+21. Check backend health: `GET /api/health`.
+22. In app settings, set Public API URL.
+23. Click Connect Google.
+24. Complete OAuth with a test user and confirm the app returns to `/app?connected=google`, then clears the query.
+25. Submit: `Pay employees tomorrow. Lunch with Jack Thursday at noon; put on calendar.`
+26. Confirm the review step appears before anything is created.
+27. Remove one preview action and confirm it disappears.
+28. Review again, then click Create.
+29. Confirm Google Tasks has the work task.
+30. Confirm Google Calendar has the event.
+31. Submit: `Spend 4 hours this week on the porch replacement project`.
+32. Confirm the calendar work block stays in Needs Review and is not created.
+33. Click Disconnect.
+34. Confirm stored OAuth tokens and workspace connection records are removed.
+35. Confirm `/api/workspace` returns not connected afterward.
+36. Submit a three-question beta feedback form from `/feedback`.
+37. Submit a beta access request from `/beta`.
+38. Submit a support request from `/support`.
+39. Submit a data deletion request from `/data-deletion`.
+40. In Settings, type `DELETE`, click Delete account data, and confirm the session returns to not connected.
+41. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `/operator` loads readiness, launch summary, metrics, beta requests, feedback, support requests, recent errors, backup plan, and checklist.
+42. If `BRAIN_DUMP_ADMIN_TOKEN` is set, export launch notes Markdown from `/operator`.
+43. If `BRAIN_DUMP_ADMIN_TOKEN` is set, filter beta requests by status before exporting a waitlist batch.
+44. If `BRAIN_DUMP_ADMIN_TOKEN` is set, filter feedback and support requests by status before exporting review batches.
+45. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `/operator` can mark beta requests invited/archived, feedback reviewed/archived, and support requests in progress/resolved/archived.
+46. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
+47. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
+48. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/launch-summary` returns launch posture and queue counts only when `X-Brain-Dump-Admin-Token` is provided.
+49. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/execution-errors` returns recent provider write failures only when `X-Brain-Dump-Admin-Token` is provided.
+50. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/execution-errors?format=csv` downloads the execution error CSV from `/operator`.
+51. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests` returns beta requests only when `X-Brain-Dump-Admin-Token` is provided.
+52. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests?format=csv` downloads the beta request CSV from `/operator`.
+53. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests?status=new` filters beta requests.
+54. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback` returns feedback only when `X-Brain-Dump-Admin-Token` is provided.
+55. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback?format=csv` downloads the feedback CSV from `/operator`.
+56. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback?status=reviewed` filters feedback.
+57. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/support-requests` returns support requests only when `X-Brain-Dump-Admin-Token` is provided.
+58. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/support-requests?format=csv` downloads the support request CSV from `/operator`.
+59. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/support-requests?status=in_progress` filters support requests.
+60. Complete `docs/LAUNCH_DECISION_RECORD.md` for the release or tester batch.
+61. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
 
 You can automate the public page, `/operator`, health, protected operator endpoint, and CSV export checks with:
 
