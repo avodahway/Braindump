@@ -125,6 +125,8 @@ Thank you for trying Brain Dump. I have three quick follow-up questions:
 
 No need for a polished answer. A few honest sentences are perfect.
 
+Please do not send passwords, OAuth tokens, or private screenshots unless you are comfortable sharing them.
+
 Thank you,
 
 [Your Name]

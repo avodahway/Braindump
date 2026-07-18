@@ -51,6 +51,7 @@ import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
 import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import { betaInvitationMailto } from './lib/betaInvite';
+import { betaFollowUpMailto } from './lib/betaFollowUp';
 import { sampleBrainDumps } from './lib/sampleBrainDumps';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
 import type {
@@ -1652,6 +1653,12 @@ function OperatorPage() {
                         href={betaInvitationMailto(request, `${window.location.origin}/app`)}
                       >
                         Draft invite
+                      </a>
+                      <a
+                        className="smallButton exportButton"
+                        href={betaFollowUpMailto(request, `${window.location.origin}/feedback`)}
+                      >
+                        Draft follow-up
                       </a>
                       <button
                         type="button"

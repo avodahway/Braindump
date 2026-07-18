@@ -332,6 +332,10 @@ describe('App routes', () => {
       'href',
       expect.stringContaining('Brain%20Dump%20beta%20access')
     );
+    expect(screen.getByRole('link', { name: /Draft follow-up/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('Brain%20Dump%20beta%20follow-up')
+    );
     expect(screen.getAllByText('new').length).toBeGreaterThanOrEqual(3);
     fireEvent.click(screen.getByRole('button', { name: /Mark invited/i }));
     expect(await screen.findByText('invited')).toBeInTheDocument();
