@@ -310,6 +310,10 @@ describe('App routes', () => {
     expect(screen.getByText('in progress')).toBeInTheDocument();
     expect(screen.getByText('Beta Requests')).toBeInTheDocument();
     expect(screen.getByText('jay@example.com')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Draft invite/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('Brain%20Dump%20beta%20access')
+    );
     expect(screen.getAllByText('new').length).toBeGreaterThanOrEqual(3);
     fireEvent.click(screen.getByRole('button', { name: /Mark invited/i }));
     expect(await screen.findByText('invited')).toBeInTheDocument();

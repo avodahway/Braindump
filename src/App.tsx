@@ -49,6 +49,7 @@ import {
 import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
 import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
+import { betaInvitationMailto } from './lib/betaInvite';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
 import type {
   BetaAccessStatus,
@@ -1601,6 +1602,12 @@ function OperatorPage() {
                     </dl>
                     {request.notes && <p>{request.notes}</p>}
                     <div className="operatorInlineActions">
+                      <a
+                        className="smallButton exportButton"
+                        href={betaInvitationMailto(request, `${window.location.origin}/app`)}
+                      >
+                        Draft invite
+                      </a>
                       <button
                         type="button"
                         className="smallButton exportButton"
