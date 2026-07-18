@@ -1550,6 +1550,15 @@ function OperatorPage() {
             </ul>
           </article>
 
+          <article className="operatorPanel">
+            <h2>Issue Triage</h2>
+            <ul>
+              <li>Critical: disconnect, deletion, duplicate-write, or account-safety failures.</li>
+              <li>High: connected-user task, calendar, OAuth, or review-flow failures.</li>
+              <li>Medium: onboarding, copy, support form, and beta friction.</li>
+            </ul>
+          </article>
+
           <article className="operatorPanel widePanel">
             <div className="operatorPanelHeader">
               <h2>Recent Execution Errors</h2>
