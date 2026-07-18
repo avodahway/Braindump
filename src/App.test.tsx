@@ -110,6 +110,15 @@ describe('App routes', () => {
     expect(screen.getByRole('link', { name: '/data-deletion' })).toHaveAttribute('href', '/data-deletion');
   });
 
+  it('renders the public security page', () => {
+    renderAt('/security');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Security' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Passwords and tokens' })).toBeInTheDocument();
+    expect(screen.getByText(/Brain Dump support will not ask for your Google password/i)).toBeInTheDocument();
+    expect(screen.getByText(/Protected operator CSV exports/i)).toBeInTheDocument();
+  });
+
   it('renders the product tool at the app route', () => {
     renderAt('/app');
 

@@ -91,6 +91,7 @@ export function App() {
   if (route === '/beta') return <BetaPage />;
   if (route === '/status') return <StatusPage />;
   if (route === '/faq') return <FaqPage />;
+  if (route === '/security') return <SecurityPage />;
   if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
@@ -677,6 +678,10 @@ function HomePage() {
           <a href="/faq">
             <MessageCircle size={20} />
             FAQ
+          </a>
+          <a href="/security">
+            <ShieldCheck size={20} />
+            Security
           </a>
           <a href="/feedback">
             <UserCheck size={20} />
@@ -1298,6 +1303,41 @@ function FaqPage() {
       <p>
         Remove wrong preview actions before creating. If something fails after creation, send feedback or open a support
         request from <a href="/support">/support</a>.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function SecurityPage() {
+  return (
+    <PublicDocument
+      title="Security"
+      subtitle="How Brain Dump handles account access, support requests, and beta operations."
+    >
+      <h2>Passwords and tokens</h2>
+      <p>
+        Brain Dump support will not ask for your Google password, OAuth tokens, recovery codes, or private browser
+        cookies. Do not send those through support, feedback, email, screenshots, or shared docs.
+      </p>
+      <h2>Google access</h2>
+      <p>
+        Brain Dump connects to Google only after you approve access. During beta, Google access is used for reviewed
+        Tasks and Calendar actions, not email sending.
+      </p>
+      <h2>Review before create</h2>
+      <p>
+        Preview and review happen before Google writes. Remove anything that looks wrong before clicking Create.
+        Ambiguous calendar items should stay in review.
+      </p>
+      <h2>Operator exports</h2>
+      <p>
+        Protected operator CSV exports are for short-lived beta support and launch review. They should stay inside the
+        operator workflow and not be posted in broad shared channels.
+      </p>
+      <h2>Report a concern</h2>
+      <p>
+        If you notice unexpected account access, duplicate writes, disconnect trouble, or a privacy concern, use{' '}
+        <a href="/support">support</a> or email <a href={supportRequestMailto('Security concern')}>{supportEmail}</a>.
       </p>
     </PublicDocument>
   );
@@ -2090,6 +2130,7 @@ function PublicNav() {
         <a href="/beta">Beta</a>
         <a href="/status">Status</a>
         <a href="/faq">FAQ</a>
+        <a href="/security">Security</a>
         <a href="/data-deletion">Data deletion</a>
         <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
@@ -2126,6 +2167,7 @@ function normalizedPath(path: string): string {
     path === '/beta' ||
     path === '/status' ||
     path === '/faq' ||
+    path === '/security' ||
     path === '/operator' ||
     path === '/app'
   ) return path;
