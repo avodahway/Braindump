@@ -1719,6 +1719,41 @@ describe('public backend scaffold', () => {
       duplicateGroups: [{ count: 2, requestIds: ['req-2', 'req-1'] }]
     });
   });
+
+  it('returns a protected support SLA report', async () => {
+    const supportRequestStore = createMemorySupportRequestStore();
+    await supportRequestStore.append({
+      id: 'support-old',
+      email: 'user@example.com',
+      issueType: 'google_connection',
+      summary: 'Connection failed',
+      details: 'OAuth callback showed an error.',
+      status: 'new',
+      createdAt: '2026-07-17T10:00:00.000Z'
+    });
+    const backend = createPublicBackend({
+      googleOAuth,
+      supportRequestStore,
+      adminToken: 'admin-secret',
+      now: () => new Date('2026-07-18T12:00:00.000Z')
+    });
+
+    const unauthorized = await backend.handle(new Request('https://api.example.com/api/admin/support-sla'));
+    const authorized = await backend.handle(
+      new Request('https://api.example.com/api/admin/support-sla', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-secret' }
+      })
+    );
+
+    expect(unauthorized.status).toBe(401);
+    await expect(authorized.json()).resolves.toMatchObject({
+      generatedAt: '2026-07-18T12:00:00.000Z',
+      ok: false,
+      openCount: 1,
+      overdueCount: 1,
+      overdueRequests: [{ id: 'support-old', ageHours: 26 }]
+    });
+  });
 });
 
 function connectedWorkspace() {

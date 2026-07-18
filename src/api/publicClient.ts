@@ -11,6 +11,7 @@ import {
   type FeedbackStatus,
   type LaunchSummary,
   type ProductionSelfTest,
+  type SupportSlaReport,
   type SupportRequestInput,
   type SupportRequestRecord,
   type SupportRequestStatus
@@ -226,6 +227,18 @@ export async function getPublicAdminDuplicateWriteAudit(
 ): Promise<DuplicateWriteAudit> {
   return readJson<DuplicateWriteAudit>(
     await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminDuplicateWriteAudit), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function getPublicAdminSupportSla(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<SupportSlaReport> {
+  return readJson<SupportSlaReport>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminSupportSla), {
       headers: adminHeaders(adminToken)
     })
   );

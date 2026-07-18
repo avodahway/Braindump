@@ -92,6 +92,24 @@ export type DuplicateWriteAudit = {
   }[];
 };
 
+export type SupportSlaReport = {
+  generatedAt: string;
+  ok: boolean;
+  thresholdHours: number;
+  openCount: number;
+  overdueCount: number;
+  oldestOpenHours?: number;
+  overdueRequests: Array<{
+    id: string;
+    email: string;
+    issueType: string;
+    summary: string;
+    status: SupportRequestStatus;
+    ageHours: number;
+    createdAt: string;
+  }>;
+};
+
 export type PublicBackendContract = {
   getWorkspace(): Promise<UserWorkspace>;
   getBetaAccessStatus(): Promise<BetaAccessStatus>;
@@ -127,6 +145,7 @@ export const publicBackendRoutes = {
   adminBackupPlan: '/api/admin/backup-plan',
   adminSelfTest: '/api/admin/self-test',
   adminDuplicateWriteAudit: '/api/admin/duplicate-write-audit',
+  adminSupportSla: '/api/admin/support-sla',
   adminReadiness: '/api/admin/readiness',
   adminLaunchSummary: '/api/admin/launch-summary',
   adminExecutionErrors: '/api/admin/execution-errors',

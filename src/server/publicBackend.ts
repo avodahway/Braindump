@@ -39,6 +39,7 @@ import { buildBackupPlan } from './backupPlan';
 import { buildReadinessReport } from './readinessReport';
 import { buildProductionSelfTest } from './productionSelfTest';
 import { buildDuplicateWriteAudit } from './duplicateWriteAudit';
+import { buildSupportSlaReport } from './supportSlaReport';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -366,6 +367,17 @@ export function createPublicBackend(options: PublicBackendOptions) {
           buildDuplicateWriteAudit({
             generatedAt: now().toISOString(),
             records: await executionLogStore.readRecent(parseAdminLimit(url.searchParams.get('limit'), 200, 200))
+          })
+        );
+      }
+
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminSupportSla) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin support SLA is not configured.');
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        return sendJson(
+          buildSupportSlaReport({
+            generatedAt: now().toISOString(),
+            requests: await supportRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit'), 100, 200))
           })
         );
       }
