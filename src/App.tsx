@@ -103,6 +103,7 @@ export function App() {
   if (route === '/pricing') return <PricingPage />;
   if (route === '/demo') return <DemoPage />;
   if (route === '/oauth-demo-checklist') return <OAuthDemoChecklistPage />;
+  if (route === '/timeline') return <TimelinePage />;
   if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
@@ -724,6 +725,10 @@ function HomePage() {
           <a href="/oauth-demo-checklist">
             <ShieldCheck size={20} />
             OAuth checklist
+          </a>
+          <a href="/timeline">
+            <CalendarDays size={20} />
+            Launch timeline
           </a>
           <a href="/feedback">
             <UserCheck size={20} />
@@ -1609,6 +1614,35 @@ function OAuthDemoChecklistPage() {
         <li>Brain Dump uses Google access only to create reviewed user-requested tasks and calendar events.</li>
         <li>Brain Dump does not sell Google user data, use it for ads, or send email during beta.</li>
         <li>Users can disconnect Google and request deletion of stored Brain Dump account records.</li>
+      </ul>
+    </PublicDocument>
+  );
+}
+
+function TimelinePage() {
+  return (
+    <PublicDocument
+      title="Launch Timeline"
+      subtitle="A realistic public beta path for Brain Dump."
+    >
+      <h2>Current stage</h2>
+      <p>
+        Brain Dump is in controlled beta preparation. The app supports local preview, public Google account setup,
+        protected operator readiness, support intake, feedback intake, and launch verification tools.
+      </p>
+      <h2>Next milestones</h2>
+      <ol>
+        <li>Deploy the production frontend, backend, and durable encrypted storage.</li>
+        <li>Run production environment validation, deployment verification, OAuth smoke testing, and restore rehearsal.</li>
+        <li>Invite the first five known testers with an invite code.</li>
+        <li>Resolve any OAuth, duplicate-write, disconnect, deletion, or support blockers.</li>
+        <li>Submit or complete Google OAuth verification before broader public beta.</li>
+      </ol>
+      <h2>Expected launch shape</h2>
+      <ul>
+        <li>Private production beta: first five known users.</li>
+        <li>Small invite-only beta: 10 to 25 users after support and duplicate-write gates are clear.</li>
+        <li>Public beta: narrow public announcement after OAuth verification path is ready for the intended audience.</li>
       </ul>
     </PublicDocument>
   );
@@ -2657,6 +2691,7 @@ function PublicNav() {
         <a href="/pricing">Pricing</a>
         <a href="/demo">Demo</a>
         <a href="/oauth-demo-checklist">OAuth checklist</a>
+        <a href="/timeline">Timeline</a>
         <a href="/data-deletion">Data deletion</a>
         <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
@@ -2701,6 +2736,7 @@ function normalizedPath(path: string): string {
     path === '/pricing' ||
     path === '/demo' ||
     path === '/oauth-demo-checklist' ||
+    path === '/timeline' ||
     path === '/operator' ||
     path === '/app'
   ) return path;

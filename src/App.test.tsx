@@ -180,6 +180,14 @@ describe('App routes', () => {
     expect(screen.getByText(/Show Disconnect Google and Delete account data/i)).toBeInTheDocument();
   });
 
+  it('renders the public launch timeline page', () => {
+    renderAt('/timeline');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Launch Timeline' })).toBeInTheDocument();
+    expect(screen.getByText(/controlled beta preparation/i)).toBeInTheDocument();
+    expect(screen.getByText(/first five known testers/i)).toBeInTheDocument();
+  });
+
   it('keeps public launch pages accessible by heading and labeled controls', () => {
     const publicRoutes = [
       '/',
@@ -198,7 +206,8 @@ describe('App routes', () => {
       '/examples',
       '/pricing',
       '/demo',
-      '/oauth-demo-checklist'
+      '/oauth-demo-checklist',
+      '/timeline'
     ];
 
     for (const route of publicRoutes) {
