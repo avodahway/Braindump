@@ -185,6 +185,8 @@ function ProductApp() {
     return map;
   }, [preview, result]);
 
+  const recoveryGuidance = useMemo(() => buildRecoveryGuidance(error, Boolean(preview)), [error, preview]);
+
   function handleReview() {
     const trimmed = text.trim();
     if (!trimmed) {
@@ -417,7 +419,7 @@ function ProductApp() {
                 canRetry={Boolean(preview)}
                 isProcessing={isProcessing}
                 onRetry={handleCreate}
-                context="Processing error"
+                guidance={recoveryGuidance}
               />
             </>
           )}
@@ -2629,22 +2631,23 @@ function RecoveryPanel({
   canRetry,
   isProcessing,
   onRetry,
-  context
+  guidance
 }: {
   canRetry: boolean;
   isProcessing: boolean;
   onRetry: () => void;
-  context: string;
+  guidance: RecoveryGuidance;
 }) {
   return (
-    <div className="feedbackPanel">
+    <div className="feedbackPanel recoveryPanel">
       <div>
-        <strong>{canRetry ? 'Nothing was created yet' : 'Need help?'}</strong>
-        <span>
-          {canRetry
-            ? 'Your reviewed actions are still here. Try again, or send support the error and what you expected.'
-            : 'Send what happened and what you expected. Include screenshots only if you are comfortable.'}
-        </span>
+        <strong>{guidance.title}</strong>
+        <span>{guidance.message}</span>
+        <ul>
+          {guidance.steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ul>
       </div>
       <div className="feedbackActions">
         {canRetry && (
@@ -2653,13 +2656,56 @@ function RecoveryPanel({
             {isProcessing ? 'Retrying' : 'Retry'}
           </button>
         )}
-        <a href={supportRequestMailto(context)}>
+        <a href={supportRequestMailto(guidance.context)}>
           <MessageCircle size={17} />
           Contact support
         </a>
       </div>
     </div>
   );
+}
+
+type RecoveryGuidance = {
+  title: string;
+  message: string;
+  context: string;
+  steps: string[];
+};
+
+function buildRecoveryGuidance(error: string, canRetry: boolean): RecoveryGuidance {
+  const normalized = error.toLowerCase();
+  if (normalized.includes('workspace') || normalized.includes('connected')) {
+    return {
+      title: canRetry ? 'Google connection needs attention' : 'Reconnect Google',
+      message: 'Your reviewed actions are still here. Reconnect Google or refresh the workspace before retrying.',
+      context: 'Google workspace connection',
+      steps: ['Open Settings and confirm Public API URL.', 'Reconnect Google if the workspace is not connected.', 'Retry after the connection status looks right.']
+    };
+  }
+  if (normalized.includes('beta access')) {
+    return {
+      title: 'Beta access is required',
+      message: 'Enter the beta access code, then connect Google and retry the reviewed actions.',
+      context: 'Beta access',
+      steps: ['Enter the beta access code.', 'Confirm the access success message.', 'Retry the reviewed actions.']
+    };
+  }
+  if (normalized.includes('rate limit') || normalized.includes('too many')) {
+    return {
+      title: 'Slow down and retry',
+      message: 'The backend is protecting the beta from too many requests at once.',
+      context: 'Rate limit',
+      steps: ['Wait one minute.', 'Retry once.', 'Contact support if the same request still fails.']
+    };
+  }
+  return {
+    title: canRetry ? 'Nothing was created yet' : 'Need help?',
+    message: canRetry
+      ? 'Your reviewed actions are still here. Try again, or send support the error and what you expected.'
+      : 'Send what happened and what you expected. Include screenshots only if you are comfortable.',
+    context: 'Processing error',
+    steps: canRetry ? ['Retry once.', 'Do not repeatedly click Create if Google reports an error.', 'Contact support with the error text if retry fails.'] : ['Contact support with the error text.']
+  };
 }
 
 function ResultRecoveryPanel({ result }: { result: BrainDumpResponse }) {

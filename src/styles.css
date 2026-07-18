@@ -1403,6 +1403,21 @@ input:focus {
   line-height: 1.4;
 }
 
+.recoveryPanel {
+  align-items: flex-start;
+}
+
+.recoveryPanel ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.recoveryPanel li {
+  color: rgba(24, 50, 40, 0.72);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .warningPanel {
   border-color: rgba(231, 217, 181, 0.74);
   background: #fff8e7;

@@ -965,7 +965,9 @@ describe('App routes', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create/i }));
 
     expect(await screen.findByText('Google workspace is not connected.')).toBeInTheDocument();
-    expect(screen.getByText('Your reviewed actions are still here. Try again, or send support the error and what you expected.')).toBeInTheDocument();
+    expect(screen.getByText('Google connection needs attention')).toBeInTheDocument();
+    expect(screen.getByText('Your reviewed actions are still here. Reconnect Google or refresh the workspace before retrying.')).toBeInTheDocument();
+    expect(screen.getByText('Reconnect Google if the workspace is not connected.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Retry/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Work Tasks' })).toBeInTheDocument();
   });
