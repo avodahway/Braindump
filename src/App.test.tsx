@@ -375,6 +375,9 @@ describe('App routes', () => {
     expect(screen.getByText('Feedback Queue')).toBeInTheDocument();
     expect(screen.getByText('Support Queue')).toBeInTheDocument();
     expect(screen.getByText('in progress')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Export Notes/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Export Notes/i }));
+    expect(URL.createObjectURL).toHaveBeenCalledWith(expect.objectContaining({ type: 'text/markdown' }));
     expect(screen.getByText('Beta Requests')).toBeInTheDocument();
     expect(screen.getByText('jay@example.com')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Draft invite/i })).toHaveAttribute(

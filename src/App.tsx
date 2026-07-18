@@ -1481,6 +1481,11 @@ function OperatorPage() {
     }
   }
 
+  function handleLaunchNotesExport() {
+    if (!snapshot) return;
+    downloadTextFile(buildLaunchNotes(snapshot), 'brain-dump-launch-notes.md', 'text/markdown');
+  }
+
   async function handleBetaRequestStatus(id: string, status: BetaRequestStatus) {
     const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
     const token = adminToken.trim();
@@ -1618,7 +1623,17 @@ function OperatorPage() {
           <OperatorMetric label="Latest Event" value={snapshot.metrics.latestEventAt ? shortDateTime(snapshot.metrics.latestEventAt) : 'None'} />
 
           <article className="operatorPanel widePanel">
-            <h2>Launch Summary</h2>
+            <div className="operatorPanelHeader">
+              <h2>Launch Summary</h2>
+              <button
+                type="button"
+                className="smallButton exportButton"
+                onClick={handleLaunchNotesExport}
+              >
+                <FileText size={16} />
+                Export Notes
+              </button>
+            </div>
             <div className="launchSummaryGrid">
               <div>
                 <span>Posture</span>
@@ -2060,6 +2075,57 @@ function ReadinessGroups({ checks }: { checks: ReadinessReport['checks'] }) {
       />
     </div>
   );
+}
+
+function buildLaunchNotes(snapshot: OperatorSnapshot): string {
+  const blockingChecks = snapshot.readiness.checks.filter((check) => !check.ready);
+  const readyChecks = snapshot.readiness.checks.filter((check) => check.ready);
+  const openSupport = snapshot.launchSummary.queueCounts.support.new + snapshot.launchSummary.queueCounts.support.in_progress;
+  const lines = [
+    '# Brain Dump Launch Notes',
+    '',
+    `Generated: ${new Date(snapshot.launchSummary.generatedAt).toISOString()}`,
+    `Posture: ${snapshot.launchSummary.ready ? 'Ready' : 'Blocked'}`,
+    '',
+    '## Metrics',
+    '',
+    `- Events: ${snapshot.launchSummary.totalEvents}`,
+    `- Users: ${snapshot.launchSummary.uniqueUsers}`,
+    `- Errors: ${snapshot.launchSummary.totalErrors}`,
+    `- Latest event: ${snapshot.launchSummary.latestEventAt ?? 'None'}`,
+    '',
+    '## Queues',
+    '',
+    `- New beta requests: ${snapshot.launchSummary.queueCounts.beta.new}`,
+    `- New feedback items: ${snapshot.launchSummary.queueCounts.feedback.new}`,
+    `- Open support requests: ${openSupport}`,
+    `- Recent execution errors: ${snapshot.launchSummary.queueCounts.recentExecutionErrors}`,
+    '',
+    '## Blocking Checks',
+    '',
+    ...(blockingChecks.length
+      ? blockingChecks.map((check) => `- ${check.label}: ${check.detail}`)
+      : ['- None']),
+    '',
+    '## Ready Checks',
+    '',
+    ...(readyChecks.length
+      ? readyChecks.map((check) => `- ${check.label}: ${check.detail}`)
+      : ['- None']),
+    '',
+    '## Recent Errors',
+    '',
+    ...(snapshot.recentErrors.length
+      ? snapshot.recentErrors.map((record) => `- ${record.title}: ${record.message}`)
+      : ['- None']),
+    '',
+    '## Operator Next Moves',
+    '',
+    '- Resolve blocking checks before expanding beta invitations.',
+    '- Review new beta, feedback, and support records.',
+    '- Keep exports inside the operator launch workflow.'
+  ];
+  return `${lines.join('\n')}\n`;
 }
 
 function ReadinessGroup({
