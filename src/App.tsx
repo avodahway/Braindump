@@ -339,6 +339,8 @@ function ProductApp() {
           hasPublicApi={Boolean(settings.publicApiBaseUrl)}
           betaAccess={betaAccess}
           workspace={workspace}
+          hasDraft={Boolean(text.trim())}
+          hasPreview={Boolean(preview)}
           onConnect={handleConnectPublic}
           onDisconnect={handleDisconnectPublic}
           onOpenSettings={() => setShowSettings(true)}
@@ -2130,6 +2132,8 @@ function SetupPanel({
   hasPublicApi,
   betaAccess,
   workspace,
+  hasDraft,
+  hasPreview,
   onConnect,
   onDisconnect,
   onOpenSettings
@@ -2138,13 +2142,15 @@ function SetupPanel({
   hasPublicApi: boolean;
   betaAccess: BetaAccessStatus;
   workspace: UserWorkspace;
+  hasDraft: boolean;
+  hasPreview: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
   onOpenSettings: () => void;
 }) {
   const isConnected = workspace.status === 'connected';
   const statusLabel = setupStatusLabel(mode, hasPublicApi, workspace, betaAccess);
-  const steps = setupSteps(mode, hasPublicApi, workspace, betaAccess);
+  const steps = setupSteps(mode, hasPublicApi, workspace, betaAccess, hasDraft, hasPreview);
   const needsBetaAccess = mode === 'public' && hasPublicApi && betaAccess.required && !betaAccess.granted;
 
   if (mode === 'mock') {
@@ -2322,12 +2328,14 @@ function setupSteps(
   mode: BackendSettings['backendMode'],
   hasPublicApi: boolean,
   workspace: UserWorkspace,
-  betaAccess: BetaAccessStatus
+  betaAccess: BetaAccessStatus,
+  hasDraft: boolean,
+  hasPreview: boolean
 ) {
   if (mode === 'mock') {
     return [
-      { label: 'Preview parser', complete: true },
-      { label: 'Review actions', complete: true },
+      { label: 'Capture messy thoughts', complete: hasDraft },
+      { label: 'Review before creating', complete: hasPreview },
       { label: 'Connect Google when ready', complete: false }
     ];
   }
@@ -2343,6 +2351,7 @@ function setupSteps(
   const connected = workspace.status === 'connected';
   return [
     { label: hasPublicApi ? 'Public backend configured' : 'Public backend configured', complete: hasPublicApi },
+    { label: 'Review before creating', complete: hasPreview },
     {
       label: betaAccess.required ? 'Beta access confirmed' : 'Beta gate open',
       complete: !hasPublicApi || !betaAccess.required || betaAccess.granted

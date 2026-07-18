@@ -108,6 +108,9 @@ describe('App routes', () => {
     expect(screen.getByRole('heading', { name: "What's on your mind?" })).toBeInTheDocument();
     expect(screen.getByText('Setup progress')).toBeInTheDocument();
     expect(screen.getByText('Safe preview only. No Google account is connected.')).toBeInTheDocument();
+    expect(screen.getByText('Capture messy thoughts')).toBeInTheDocument();
+    expect(screen.getAllByText('Review before creating').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Connect Google when ready')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Put everything here. Do not organize it.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Busy morning' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Review/i })).toBeInTheDocument();
@@ -697,7 +700,7 @@ describe('App routes', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Review/i }));
 
-    expect(screen.getByText('Review before creating')).toBeInTheDocument();
+    expect(screen.getAllByText('Review before creating').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('heading', { name: 'Work Tasks' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Calendar' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Create/i })).toBeInTheDocument();
