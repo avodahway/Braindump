@@ -40,6 +40,7 @@ import { buildReadinessReport } from './readinessReport';
 import { buildProductionSelfTest } from './productionSelfTest';
 import { buildDuplicateWriteAudit } from './duplicateWriteAudit';
 import { buildSupportSlaReport } from './supportSlaReport';
+import { buildBetaCohortReadiness } from './betaCohortReadiness';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -378,6 +379,52 @@ export function createPublicBackend(options: PublicBackendOptions) {
           buildSupportSlaReport({
             generatedAt: now().toISOString(),
             requests: await supportRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit'), 100, 200))
+          })
+        );
+      }
+
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminBetaCohortReadiness) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin beta cohort readiness is not configured.');
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        const generatedAt = now().toISOString();
+        const readiness = buildReadinessReport({
+          generatedAt,
+          googleClientId: options.googleOAuth.clientId,
+          googleRedirectUri: options.googleOAuth.redirectUri,
+          googleScopes: options.googleOAuth.scopes,
+          frontendAppUrl: options.frontendAppUrl,
+          adminTokenConfigured: Boolean(options.adminToken),
+          storageMode: options.storageMode ?? 'memory',
+          storageEncrypted: Boolean(options.storageEncrypted)
+        });
+        const selfTest = buildProductionSelfTest({
+          generatedAt,
+          readiness,
+          frontendAppUrl: options.frontendAppUrl,
+          storageMode: options.storageMode ?? 'memory',
+          storageEncrypted: Boolean(options.storageEncrypted),
+          betaAccessConfigured: Boolean(options.betaAccessCode),
+          maxJsonBodyBytes,
+          rateLimitMaxRequests
+        });
+        const [executionRecords, supportRequests, betaRequests, feedback, recentErrors] = await Promise.all([
+          executionLogStore.readRecent(parseAdminLimit(url.searchParams.get('limit'), 200, 200)),
+          supportRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit'), 100, 200)),
+          betaRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit'), 100, 200)),
+          feedbackStore.readRecent(parseAdminLimit(url.searchParams.get('limit'), 100, 200)),
+          executionLogStore.readRecentErrors(parseAdminLimit(url.searchParams.get('limit'), 100, 200))
+        ]);
+
+        return sendJson(
+          buildBetaCohortReadiness({
+            generatedAt,
+            readiness,
+            selfTest,
+            duplicateWriteAudit: buildDuplicateWriteAudit({ generatedAt, records: executionRecords }),
+            supportSla: buildSupportSlaReport({ generatedAt, requests: supportRequests }),
+            betaRequests,
+            feedback,
+            recentErrors
           })
         );
       }

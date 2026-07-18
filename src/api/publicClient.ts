@@ -1,6 +1,7 @@
 import type { AnalyticsEvent, BrainDumpRequest, BrainDumpResponse, UserWorkspace } from '../lib/types';
 import {
   publicBackendRoutes,
+  type BetaCohortReadinessReport,
   type BetaAccessStatus,
   type BetaRequestInput,
   type BetaRequestRecord,
@@ -239,6 +240,18 @@ export async function getPublicAdminSupportSla(
 ): Promise<SupportSlaReport> {
   return readJson<SupportSlaReport>(
     await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminSupportSla), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function getPublicAdminBetaCohortReadiness(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<BetaCohortReadinessReport> {
+  return readJson<BetaCohortReadinessReport>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminBetaCohortReadiness), {
       headers: adminHeaders(adminToken)
     })
   );

@@ -110,6 +110,25 @@ export type SupportSlaReport = {
   }>;
 };
 
+export type BetaCohortReadinessReport = {
+  generatedAt: string;
+  ok: boolean;
+  recommendedNextCohortSize: number;
+  queueCounts: {
+    betaNew: number;
+    betaInvited: number;
+    feedbackNew: number;
+    supportOpen: number;
+    executionErrors: number;
+  };
+  checks: Array<{
+    key: string;
+    label: string;
+    ok: boolean;
+    detail: string;
+  }>;
+};
+
 export type PublicBackendContract = {
   getWorkspace(): Promise<UserWorkspace>;
   getBetaAccessStatus(): Promise<BetaAccessStatus>;
@@ -146,6 +165,7 @@ export const publicBackendRoutes = {
   adminSelfTest: '/api/admin/self-test',
   adminDuplicateWriteAudit: '/api/admin/duplicate-write-audit',
   adminSupportSla: '/api/admin/support-sla',
+  adminBetaCohortReadiness: '/api/admin/beta-cohort-readiness',
   adminReadiness: '/api/admin/readiness',
   adminLaunchSummary: '/api/admin/launch-summary',
   adminExecutionErrors: '/api/admin/execution-errors',

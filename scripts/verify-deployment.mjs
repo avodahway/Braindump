@@ -30,6 +30,7 @@ const adminRoutes = [
   { label: 'Admin self-test', path: '/api/admin/self-test', kind: 'self-test' },
   { label: 'Admin duplicate-write audit', path: '/api/admin/duplicate-write-audit', kind: 'duplicate-audit' },
   { label: 'Admin support SLA', path: '/api/admin/support-sla', kind: 'support-sla' },
+  { label: 'Admin beta cohort readiness', path: '/api/admin/beta-cohort-readiness', kind: 'beta-cohort-readiness' },
   { label: 'Admin readiness', path: '/api/admin/readiness', kind: 'readiness' },
   { label: 'Admin launch summary', path: '/api/admin/launch-summary', kind: 'json' },
   { label: 'Admin execution errors', path: '/api/admin/execution-errors', kind: 'json' },
@@ -203,6 +204,13 @@ async function expectAdminResponse(fetchImpl, url, adminToken, kind) {
   if (kind === 'support-sla') {
     if (typeof body.ok !== 'boolean' || typeof body.overdueCount !== 'number' || !Array.isArray(body.overdueRequests)) {
       throw new Error(`Unexpected support SLA response: ${response.status} ${JSON.stringify(body)}`);
+    }
+    return;
+  }
+
+  if (kind === 'beta-cohort-readiness') {
+    if (typeof body.ok !== 'boolean' || typeof body.recommendedNextCohortSize !== 'number' || !Array.isArray(body.checks)) {
+      throw new Error(`Unexpected beta cohort readiness response: ${response.status} ${JSON.stringify(body)}`);
     }
     return;
   }

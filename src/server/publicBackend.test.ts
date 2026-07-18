@@ -1754,6 +1754,77 @@ describe('public backend scaffold', () => {
       overdueRequests: [{ id: 'support-old', ageHours: 26 }]
     });
   });
+
+  it('returns a protected beta cohort readiness report', async () => {
+    const betaRequestStore = createMemoryBetaRequestStore();
+    const feedbackStore = createMemoryFeedbackStore();
+    const supportRequestStore = createMemorySupportRequestStore();
+    const executionLogStore = createMemoryExecutionLogStore();
+    await betaRequestStore.append({
+      id: 'beta-1',
+      name: 'Jay',
+      email: 'jay@example.com',
+      tools: 'Google Tasks',
+      googleComfort: 'comfortable',
+      status: 'new',
+      createdAt: '2026-07-18T10:00:00.000Z'
+    });
+    await betaRequestStore.append({
+      id: 'beta-2',
+      name: 'Sam',
+      email: 'sam@example.com',
+      tools: 'Google Calendar',
+      googleComfort: 'comfortable',
+      status: 'invited',
+      createdAt: '2026-07-18T09:00:00.000Z'
+    });
+    await feedbackStore.append({
+      id: 'feedback-1',
+      email: 'jay@example.com',
+      lookedRight: 'Tasks',
+      confusing: 'No',
+      expected: 'Calendar event',
+      status: 'reviewed',
+      createdAt: '2026-07-18T10:30:00.000Z'
+    });
+    const backend = createPublicBackend({
+      googleOAuth: {
+        ...googleOAuth,
+        scopes: [...googleOAuth.scopes, 'https://www.googleapis.com/auth/calendar.events']
+      },
+      frontendAppUrl: 'https://braindump.app/app',
+      betaRequestStore,
+      feedbackStore,
+      supportRequestStore,
+      executionLogStore,
+      adminToken: 'admin-secret',
+      storageMode: 'durable',
+      storageEncrypted: true,
+      betaAccessCode: 'founder-beta',
+      now: () => new Date('2026-07-18T12:00:00.000Z')
+    });
+
+    const unauthorized = await backend.handle(new Request('https://api.example.com/api/admin/beta-cohort-readiness'));
+    const authorized = await backend.handle(
+      new Request('https://api.example.com/api/admin/beta-cohort-readiness', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-secret' }
+      })
+    );
+
+    expect(unauthorized.status).toBe(401);
+    await expect(authorized.json()).resolves.toMatchObject({
+      generatedAt: '2026-07-18T12:00:00.000Z',
+      ok: true,
+      recommendedNextCohortSize: 3,
+      queueCounts: {
+        betaNew: 1,
+        betaInvited: 1,
+        feedbackNew: 0,
+        supportOpen: 0,
+        executionErrors: 0
+      }
+    });
+  });
 });
 
 function connectedWorkspace() {

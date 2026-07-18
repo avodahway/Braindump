@@ -45,6 +45,7 @@ describe('deployment verifier', () => {
       'Admin self-test rejects anonymous requests',
       'Admin duplicate-write audit rejects anonymous requests',
       'Admin support SLA rejects anonymous requests',
+      'Admin beta cohort readiness rejects anonymous requests',
       'Admin readiness rejects anonymous requests',
       'Admin launch summary rejects anonymous requests',
       'Admin execution errors rejects anonymous requests',
@@ -60,6 +61,7 @@ describe('deployment verifier', () => {
       'Admin self-test accepts configured token',
       'Admin duplicate-write audit accepts configured token',
       'Admin support SLA accepts configured token',
+      'Admin beta cohort readiness accepts configured token',
       'Admin readiness accepts configured token',
       'Admin launch summary accepts configured token',
       'Admin execution errors accepts configured token',
@@ -113,6 +115,7 @@ describe('deployment verifier', () => {
       if (String(url).endsWith('/api/admin/self-test')) return jsonResponse({ ok: false, checks: [] });
       if (String(url).endsWith('/api/admin/duplicate-write-audit')) return jsonResponse({ ok: true, duplicateGroups: [] });
       if (String(url).endsWith('/api/admin/support-sla')) return jsonResponse({ ok: true, overdueCount: 0, overdueRequests: [] });
+      if (String(url).endsWith('/api/admin/beta-cohort-readiness')) return jsonResponse({ ok: true, recommendedNextCohortSize: 5, checks: [] });
       if (String(url).includes('format=csv')) return csvResponse('createdAt,email\n2026-07-17,user@example.com');
       return jsonResponse({ ok: true, calls: [], requests: [], feedback: [] });
     });
@@ -127,6 +130,7 @@ describe('deployment verifier', () => {
     await checks.find((check) => check.label === 'Admin self-test accepts configured token')?.run();
     await checks.find((check) => check.label === 'Admin duplicate-write audit accepts configured token')?.run();
     await checks.find((check) => check.label === 'Admin support SLA accepts configured token')?.run();
+    await checks.find((check) => check.label === 'Admin beta cohort readiness accepts configured token')?.run();
     await checks.find((check) => check.label === 'Admin feedback CSV accepts configured token')?.run();
     await checks.find((check) => check.label === 'Admin support requests CSV accepts configured token')?.run();
 
@@ -140,6 +144,9 @@ describe('deployment verifier', () => {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetchImpl).toHaveBeenCalledWith('https://api.braindump.app/api/admin/support-sla', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetchImpl).toHaveBeenCalledWith('https://api.braindump.app/api/admin/beta-cohort-readiness', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetchImpl).toHaveBeenCalledWith('https://api.braindump.app/api/admin/feedback?format=csv', {

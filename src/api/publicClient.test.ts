@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   deletePublicAccountData,
   getPublicAdminBackupPlan,
+  getPublicAdminBetaCohortReadiness,
   getPublicAdminBetaRequests,
   getPublicAdminBetaRequestsCsv,
   getPublicAdminExecutionErrors,
@@ -281,6 +282,7 @@ describe('public API client', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, generatedAt: '2026-07-17T12:00:00.000Z', checks: [] })))
       .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, generatedAt: '2026-07-17T12:00:00.000Z', totalCreated: 0, duplicateGroups: [] })))
       .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, generatedAt: '2026-07-17T12:00:00.000Z', thresholdHours: 24, openCount: 0, overdueCount: 0, overdueRequests: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, generatedAt: '2026-07-17T12:00:00.000Z', recommendedNextCohortSize: 5, queueCounts: {}, checks: [] })))
       .mockResolvedValueOnce(new Response(JSON.stringify({ generatedAt: '2026-07-17T12:00:00.000Z', storagePrefix: 'prod', sections: [], operatorChecklist: [] })))
       .mockResolvedValueOnce(new Response(JSON.stringify({ generatedAt: '2026-07-17T12:00:00.000Z', ready: true, totalEvents: 0, uniqueUsers: 0, totalErrors: 0, queueCounts: { beta: { new: 0, invited: 0, archived: 0 }, feedback: { new: 0, reviewed: 0, archived: 0 }, support: { new: 0, in_progress: 0, resolved: 0, archived: 0 }, recentExecutionErrors: 0 } })))
       .mockResolvedValueOnce(new Response(JSON.stringify({ recentErrors: [] })))
@@ -292,6 +294,7 @@ describe('public API client', () => {
     await getPublicAdminSelfTest('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminDuplicateWriteAudit('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminSupportSla('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminBetaCohortReadiness('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminBackupPlan('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminLaunchSummary('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminExecutionErrors('https://api.example.com', 'admin-token', fetcher);
@@ -313,19 +316,22 @@ describe('public API client', () => {
     expect(fetcher).toHaveBeenNthCalledWith(5, 'https://api.example.com/api/admin/support-sla', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
-    expect(fetcher).toHaveBeenNthCalledWith(6, 'https://api.example.com/api/admin/backup-plan', {
+    expect(fetcher).toHaveBeenNthCalledWith(6, 'https://api.example.com/api/admin/beta-cohort-readiness', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
-    expect(fetcher).toHaveBeenNthCalledWith(7, 'https://api.example.com/api/admin/launch-summary', {
+    expect(fetcher).toHaveBeenNthCalledWith(7, 'https://api.example.com/api/admin/backup-plan', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
-    expect(fetcher).toHaveBeenNthCalledWith(8, 'https://api.example.com/api/admin/execution-errors', {
+    expect(fetcher).toHaveBeenNthCalledWith(8, 'https://api.example.com/api/admin/launch-summary', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
-    expect(fetcher).toHaveBeenNthCalledWith(9, 'https://api.example.com/api/admin/beta-requests', {
+    expect(fetcher).toHaveBeenNthCalledWith(9, 'https://api.example.com/api/admin/execution-errors', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
-    expect(fetcher).toHaveBeenNthCalledWith(10, 'https://api.example.com/api/admin/feedback', {
+    expect(fetcher).toHaveBeenNthCalledWith(10, 'https://api.example.com/api/admin/beta-requests', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(11, 'https://api.example.com/api/admin/feedback', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });
