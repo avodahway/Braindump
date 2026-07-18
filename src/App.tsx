@@ -94,6 +94,7 @@ export function App() {
   if (route === '/security') return <SecurityPage />;
   if (route === '/install') return <InstallPage />;
   if (route === '/roadmap') return <RoadmapPage />;
+  if (route === '/press') return <PressPage />;
   if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
@@ -692,6 +693,10 @@ function HomePage() {
           <a href="/roadmap">
             <ArrowRight size={20} />
             Roadmap
+          </a>
+          <a href="/press">
+            <FileText size={20} />
+            Press
           </a>
           <a href="/feedback">
             <UserCheck size={20} />
@@ -1415,6 +1420,42 @@ function RoadmapPage() {
       <p>
         Brain Dump does not send email, make unreviewed Google changes, manage shared inboxes, or replace a project
         management system during beta.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function PressPage() {
+  const email = supportEmail;
+  return (
+    <PublicDocument
+      title="Press"
+      subtitle="Approved Brain Dump language and brand assets for beta coverage."
+    >
+      <h2>Short description</h2>
+      <p>
+        Brain Dump turns messy thoughts into reviewed Google Tasks, Calendar events, projects, and follow-ups.
+      </p>
+      <h2>Boilerplate</h2>
+      <p>
+        Brain Dump is an installable browser app for people who capture scattered thoughts and need a trusted review step
+        before work lands in Google Tasks or Calendar. During beta, users connect their own Google account, review planned
+        actions, and stay in control of what gets created.
+      </p>
+      <h2>Beta boundaries</h2>
+      <ul>
+        <li>Brain Dump does not send email during beta.</li>
+        <li>Brain Dump does not make unreviewed Google changes.</li>
+        <li>Brain Dump is not a team workspace or project management replacement yet.</li>
+      </ul>
+      <h2>Assets</h2>
+      <ul>
+        <li><a href="/icons/brain-dump-icon-180.png">App icon 180</a></li>
+        <li><a href="/icons/brain-dump-icon-512.png">App icon 512</a></li>
+      </ul>
+      <h2>Contact</h2>
+      <p>
+        Send beta coverage, interview, and partnership questions to <a href={`mailto:${email}`}>{email}</a>.
       </p>
     </PublicDocument>
   );
@@ -2276,6 +2317,7 @@ function PublicNav() {
         <a href="/security">Security</a>
         <a href="/install">Install</a>
         <a href="/roadmap">Roadmap</a>
+        <a href="/press">Press</a>
         <a href="/data-deletion">Data deletion</a>
         <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
@@ -2315,6 +2357,7 @@ function normalizedPath(path: string): string {
     path === '/security' ||
     path === '/install' ||
     path === '/roadmap' ||
+    path === '/press' ||
     path === '/operator' ||
     path === '/app'
   ) return path;

@@ -30,6 +30,7 @@ Use this inventory when moving from local development to a real beta deployment.
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/security` | Security | Password/token guidance, reviewed writes, exports, and concern reporting |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/install` | Install help | PWA install guidance for mobile and desktop |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/roadmap` | Roadmap | Beta scope, next improvements, later work, and out-of-scope features |
+| `[BRAIN_DUMP_FRONTEND_ORIGIN]/press` | Press | Approved beta description, boundaries, assets, and contact |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/operator` | Protected operator dashboard | Admin token loads readiness, metrics, backup plan, beta requests, and recent errors |
 
 The frontend host must serve the same app entry point for every route above.

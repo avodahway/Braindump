@@ -137,6 +137,15 @@ describe('App routes', () => {
     expect(screen.getByText(/Brain Dump does not send email/i)).toBeInTheDocument();
   });
 
+  it('renders the public press page', () => {
+    renderAt('/press');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Press' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Short description' })).toBeInTheDocument();
+    expect(screen.getByText(/reviewed Google Tasks, Calendar events/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'App icon 512' })).toHaveAttribute('href', '/icons/brain-dump-icon-512.png');
+  });
+
   it('renders the product tool at the app route', () => {
     renderAt('/app');
 
