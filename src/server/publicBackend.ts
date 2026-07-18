@@ -411,7 +411,11 @@ export function createPublicBackend(options: PublicBackendOptions) {
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminFeedback) {
         const adminError = requireAdmin(request, options.adminToken, 'Admin feedback is not configured.');
         if (adminError) return withCors(adminError, request, options.frontendAppUrl);
-        const feedback = await feedbackStore.readRecent(parseAdminLimit(url.searchParams.get('limit')));
+        const status = parseFeedbackStatusFilter(url.searchParams.get('status'));
+        if (!status.ok) return sendJson({ error: status.error }, 400);
+        const feedback = (await feedbackStore.readRecent(parseAdminLimit(url.searchParams.get('limit')))).filter((record) =>
+          status.value ? record.status === status.value : true
+        );
         if (url.searchParams.get('format') === 'csv') {
           return withCors(csv(feedbackCsv(feedback), 'brain-dump-feedback.csv'), request, options.frontendAppUrl);
         }
@@ -1075,6 +1079,12 @@ function parseBetaRequestStatusFilter(value: string | null): { ok: true; value?:
   if (!value) return { ok: true };
   if (value === 'new' || value === 'invited' || value === 'archived') return { ok: true, value };
   return { ok: false, error: 'Invalid beta request status filter.' };
+}
+
+function parseFeedbackStatusFilter(value: string | null): { ok: true; value?: FeedbackStatus } | { ok: false; error: string } {
+  if (!value) return { ok: true };
+  if (value === 'new' || value === 'reviewed' || value === 'archived') return { ok: true, value };
+  return { ok: false, error: 'Invalid feedback status filter.' };
 }
 
 function betaRequestsCsv(requests: BetaRequestRecord[]): string {

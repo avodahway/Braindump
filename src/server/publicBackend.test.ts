@@ -448,6 +448,57 @@ describe('public backend scaffold', () => {
     );
   });
 
+  it('filters protected feedback by status', async () => {
+    const feedbackStore = createMemoryFeedbackStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      feedbackStore,
+      adminToken: 'admin-token'
+    });
+
+    await feedbackStore.append({
+      id: 'feedback-new',
+      status: 'new',
+      email: 'new@example.com',
+      lookedRight: 'Tasks',
+      confusing: 'Calendar',
+      expected: 'Review',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+    await feedbackStore.append({
+      id: 'feedback-reviewed',
+      status: 'reviewed',
+      email: 'reviewed@example.com',
+      lookedRight: 'Projects',
+      confusing: 'None',
+      expected: 'Good',
+      createdAt: '2026-07-17T12:01:00.000Z'
+    });
+
+    const listed = await backend.handle(
+      new Request('https://api.example.com/api/admin/feedback?status=reviewed', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+    const csvResponse = await backend.handle(
+      new Request('https://api.example.com/api/admin/feedback?status=reviewed&format=csv', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+    const invalid = await backend.handle(
+      new Request('https://api.example.com/api/admin/feedback?status=maybe', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+
+    expect(await listed.json()).toMatchObject({
+      feedback: [{ id: 'feedback-reviewed', email: 'reviewed@example.com' }]
+    });
+    expect(await csvResponse.text()).toContain('reviewed@example.com');
+    expect(invalid.status).toBe(400);
+    expect(await invalid.json()).toEqual({ error: 'Invalid feedback status filter.' });
+  });
+
   it('updates protected feedback status', async () => {
     const feedbackStore = createMemoryFeedbackStore();
     const backend = createPublicBackend({

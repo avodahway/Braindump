@@ -303,10 +303,12 @@ export async function updatePublicAdminBetaRequestStatus(
 export async function getPublicAdminFeedback(
   baseUrl: string,
   adminToken: string,
+  statusOrFetcher?: FeedbackStatus | JsonFetcher,
   fetcher: JsonFetcher = fetch
 ): Promise<{ feedback: FeedbackRecord[] }> {
+  const { status, fetcher: resolvedFetcher } = feedbackArgs(statusOrFetcher, fetcher);
   return readJson<{ feedback: FeedbackRecord[] }>(
-    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminFeedback), {
+    await resolvedFetcher(publicApiUrl(baseUrl, adminFeedbackPath(status)), {
       headers: adminHeaders(adminToken)
     })
   );
@@ -315,10 +317,12 @@ export async function getPublicAdminFeedback(
 export async function getPublicAdminFeedbackCsv(
   baseUrl: string,
   adminToken: string,
+  statusOrFetcher?: FeedbackStatus | JsonFetcher,
   fetcher: JsonFetcher = fetch
 ): Promise<string> {
+  const { status, fetcher: resolvedFetcher } = feedbackArgs(statusOrFetcher, fetcher);
   return readText(
-    await fetcher(publicApiUrl(baseUrl, `${publicBackendRoutes.adminFeedback}?format=csv`), {
+    await resolvedFetcher(publicApiUrl(baseUrl, adminFeedbackPath(status, 'csv')), {
       headers: adminHeaders(adminToken)
     })
   );
@@ -404,6 +408,23 @@ function betaRequestArgs(
   statusOrFetcher: BetaRequestStatus | JsonFetcher | undefined,
   fetcher: JsonFetcher
 ): { status?: BetaRequestStatus; fetcher: JsonFetcher } {
+  return typeof statusOrFetcher === 'function'
+    ? { fetcher: statusOrFetcher }
+    : { status: statusOrFetcher, fetcher };
+}
+
+function adminFeedbackPath(status?: FeedbackStatus, format?: 'csv'): string {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (format) params.set('format', format);
+  const query = params.toString();
+  return query ? `${publicBackendRoutes.adminFeedback}?${query}` : publicBackendRoutes.adminFeedback;
+}
+
+function feedbackArgs(
+  statusOrFetcher: FeedbackStatus | JsonFetcher | undefined,
+  fetcher: JsonFetcher
+): { status?: FeedbackStatus; fetcher: JsonFetcher } {
   return typeof statusOrFetcher === 'function'
     ? { fetcher: statusOrFetcher }
     : { status: statusOrFetcher, fetcher };

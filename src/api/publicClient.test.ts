@@ -353,6 +353,23 @@ describe('public API client', () => {
     });
   });
 
+  it('filters protected feedback lists and CSV exports by status', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ feedback: [] })))
+      .mockResolvedValueOnce(new Response('createdAt,email,status\n2026-07-17T12:00:00.000Z,user@example.com,reviewed'));
+
+    await getPublicAdminFeedback('https://api.example.com', 'admin-token', 'reviewed', fetcher);
+    await getPublicAdminFeedbackCsv('https://api.example.com', 'admin-token', 'reviewed', fetcher);
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/feedback?status=reviewed', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/admin/feedback?status=reviewed&format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
   it('updates beta request status through the protected operator API', async () => {
     const fetcher = vi.fn().mockResolvedValue(
       new Response(
