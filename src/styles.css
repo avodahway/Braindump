@@ -95,6 +95,242 @@ a {
   color: var(--paper);
 }
 
+.operatorShell {
+  width: min(100%, 1180px);
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: max(18px, env(safe-area-inset-top)) 18px max(28px, env(safe-area-inset-bottom));
+  color: var(--ink);
+}
+
+.operatorHeader,
+.operatorIntro,
+.operatorControls,
+.operatorPanel,
+.operatorMetric,
+.operatorEmpty {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.14);
+}
+
+.operatorHeader {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+}
+
+.operatorHeader a:last-child {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--paper);
+  background: var(--green);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.operatorIntro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+  padding: 18px;
+}
+
+.operatorIntro h1 {
+  margin: 0;
+  color: var(--green);
+  font-size: 34px;
+}
+
+.operatorIntro p,
+.operatorPanel p {
+  margin: 6px 0 0;
+  color: rgba(24, 50, 40, 0.68);
+  line-height: 1.45;
+}
+
+.operatorBadge {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: #893225;
+  background: #fff1ee;
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.operatorBadge.ready {
+  color: var(--green);
+  background: #eef7ef;
+}
+
+.operatorControls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 0.8fr) auto;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
+}
+
+.operatorControls label {
+  display: grid;
+  gap: 6px;
+  color: rgba(24, 50, 40, 0.76);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.operatorControls input {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 11px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.operatorGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.operatorMetric,
+.operatorPanel,
+.operatorEmpty {
+  padding: 14px;
+}
+
+.operatorMetric {
+  display: grid;
+  gap: 4px;
+}
+
+.operatorMetric span {
+  color: rgba(24, 50, 40, 0.62);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.operatorMetric strong {
+  color: var(--green);
+  font-size: 25px;
+  line-height: 1.1;
+}
+
+.warningMetric strong {
+  color: #893225;
+}
+
+.operatorPanel {
+  grid-column: span 3;
+}
+
+.widePanel {
+  grid-column: span 6;
+}
+
+.operatorPanel h2 {
+  margin: 0 0 12px;
+  color: var(--green);
+  font-size: 18px;
+}
+
+.readinessList,
+.eventMix {
+  display: grid;
+  gap: 8px;
+}
+
+.readyItem,
+.blockedItem,
+.eventMix div {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid rgba(39, 89, 70, 0.12);
+  border-radius: 8px;
+  background: #f5f8f4;
+}
+
+.blockedItem {
+  border-color: #e7b7ab;
+  background: #fff1ee;
+}
+
+.readyItem svg,
+.blockedItem svg {
+  flex: 0 0 auto;
+  color: var(--green-2);
+}
+
+.blockedItem svg {
+  color: #893225;
+}
+
+.readyItem div,
+.blockedItem div {
+  display: grid;
+  gap: 3px;
+}
+
+.readyItem strong,
+.blockedItem strong,
+.eventMix strong {
+  color: var(--green);
+  font-size: 13px;
+}
+
+.readyItem span,
+.blockedItem span,
+.eventMix span,
+.operatorPanel li {
+  color: rgba(24, 50, 40, 0.72);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.eventMix div {
+  justify-content: space-between;
+}
+
+.operatorPanel ul,
+.operatorPanel ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.operatorPanel li + li {
+  margin-top: 6px;
+}
+
+.operatorEmpty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(24, 50, 40, 0.72);
+}
+
+.operatorEmpty p {
+  margin: 0;
+}
+
 .homeHero {
   min-height: min(720px, calc(100vh - 120px));
   display: grid;
@@ -938,6 +1174,27 @@ input:disabled {
 
   .publicBand {
     grid-template-columns: 1fr;
+  }
+
+  .operatorIntro,
+  .operatorHeader,
+  .operatorEmpty {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .operatorControls,
+  .operatorGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .operatorPanel,
+  .widePanel {
+    grid-column: span 1;
+  }
+
+  .operatorIntro h1 {
+    font-size: 30px;
   }
 
   .legalDocument {

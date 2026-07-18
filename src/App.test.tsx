@@ -101,6 +101,73 @@ describe('App routes', () => {
     expect(screen.getByRole('button', { name: /Review/i })).toBeInTheDocument();
   });
 
+  it('renders the operator dashboard shell', () => {
+    renderAt('/operator');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Operator Dashboard' })).toBeInTheDocument();
+    expect(screen.getByText('Enter the production API URL and admin token to load launch readiness.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Refresh/i })).toBeInTheDocument();
+  });
+
+  it('loads protected operator dashboard data', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === 'https://api.example.com/api/admin/metrics') {
+        return new Response(
+          JSON.stringify({
+            totalEvents: 7,
+            uniqueUsers: 2,
+            uniqueRequests: 3,
+            totalActions: 5,
+            totalErrors: 1,
+            latestEventAt: '2026-07-17T12:00:00.000Z',
+            byName: { create_failed: 1, create_completed: 2 }
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/readiness') {
+        return new Response(
+          JSON.stringify({
+            ready: false,
+            generatedAt: '2026-07-17T12:00:00.000Z',
+            checks: [
+              { key: 'admin_token', label: 'Admin endpoints protected', ready: true, detail: 'Configured' },
+              { key: 'storage_encryption', label: 'Storage encryption codec', ready: false, detail: 'Missing BRAIN_DUMP_STORAGE_SECRET' }
+            ]
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/backup-plan') {
+        return new Response(
+          JSON.stringify({
+            generatedAt: '2026-07-17T12:00:00.000Z',
+            storagePrefix: 'prod',
+            sections: [{ name: 'OAuth tokens', keys: [], sensitivity: 'secret', backupAction: 'Snapshot', restoreAction: 'Restore' }],
+            operatorChecklist: ['Take a provider-level snapshot before deploy.']
+          })
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/operator');
+
+    fireEvent.change(screen.getByPlaceholderText('BRAIN_DUMP_ADMIN_TOKEN'), { target: { value: 'admin-token' } });
+    fireEvent.click(screen.getByRole('button', { name: /Refresh/i }));
+
+    expect(await screen.findByText('Storage encryption codec')).toBeInTheDocument();
+    expect(screen.getByText('Missing BRAIN_DUMP_STORAGE_SECRET')).toBeInTheDocument();
+    expect(screen.getByText('OAuth tokens')).toBeInTheDocument();
+    expect(screen.getByText('Take a provider-level snapshot before deploy.')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/metrics', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
   it('shows demo connection readiness for public mode without a backend URL', async () => {
     localStorage.setItem(
       'brain-dump-settings',

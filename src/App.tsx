@@ -20,6 +20,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { trackEvent } from './api/analytics';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
+import { getPublicAdminBackupPlan, getPublicAdminMetrics, getPublicAdminReadiness } from './api/publicClient';
 import {
   connectPublicWorkspace,
   deletePublicAccountRecords,
@@ -33,6 +34,9 @@ import { parseBrainDump } from './lib/parser';
 import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
 import type { BetaAccessStatus } from './api/publicContract';
+import type { AnalyticsMetrics } from './server/analyticsStore';
+import type { BackupPlan } from './server/backupPlan';
+import type { ReadinessReport } from './server/readinessReport';
 
 const groups = [
   { key: 'calendar', label: 'Calendar', icon: CalendarDays },
@@ -53,6 +57,7 @@ export function App() {
   if (route === '/data-deletion') return <DataDeletionPage />;
   if (route === '/feedback') return <FeedbackPage />;
   if (route === '/beta') return <BetaPage />;
+  if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
 }
@@ -839,6 +844,185 @@ function BetaPage() {
   );
 }
 
+type OperatorSnapshot = {
+  metrics: AnalyticsMetrics;
+  readiness: ReadinessReport;
+  backupPlan: BackupPlan;
+};
+
+function OperatorPage() {
+  const [settings, setSettings] = useState(() => loadSettings());
+  const [adminToken, setAdminToken] = useState(() => localStorage.getItem('brain-dump-admin-token') ?? '');
+  const [snapshot, setSnapshot] = useState<OperatorSnapshot | null>(null);
+  const [error, setError] = useState('');
+  const [isLoading, setLoading] = useState(false);
+
+  async function handleLoad(event: FormEvent) {
+    event.preventDefault();
+    const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+    const token = adminToken.trim();
+    if (!publicApiBaseUrl) {
+      setError('Add the public API URL first.');
+      return;
+    }
+    if (!token) {
+      setError('Add the admin token first.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      const [metrics, readiness, backupPlan] = await Promise.all([
+        getPublicAdminMetrics(publicApiBaseUrl, token),
+        getPublicAdminReadiness(publicApiBaseUrl, token),
+        getPublicAdminBackupPlan(publicApiBaseUrl, token)
+      ]);
+      localStorage.setItem('brain-dump-admin-token', token);
+      saveSettings(settings);
+      setSnapshot({ metrics, readiness, backupPlan });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load operator dashboard.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="operatorShell">
+      <header className="operatorHeader">
+        <a className="navBrand" href="/">
+          <img src="/icons/brain-dump-icon-180.png" alt="" />
+          <span>Brain Dump</span>
+        </a>
+        <a href="/app">Open app</a>
+      </header>
+
+      <section className="operatorIntro">
+        <div>
+          <h1>Operator Dashboard</h1>
+          <p>Launch readiness, beta analytics, and backup posture from protected backend endpoints.</p>
+        </div>
+        {snapshot?.readiness.ready ? <span className="operatorBadge ready">Ready</span> : <span className="operatorBadge">Not ready</span>}
+      </section>
+
+      <form className="operatorControls" onSubmit={handleLoad}>
+        <label>
+          Public API URL
+          <input
+            value={settings.publicApiBaseUrl}
+            onChange={(event) => setSettings({ ...settings, publicApiBaseUrl: event.target.value })}
+            placeholder="https://api.braindump.app"
+          />
+        </label>
+        <label>
+          Admin token
+          <input
+            value={adminToken}
+            onChange={(event) => setAdminToken(event.target.value)}
+            type="password"
+            placeholder="BRAIN_DUMP_ADMIN_TOKEN"
+          />
+        </label>
+        <button className="processButton" type="submit" disabled={isLoading}>
+          <ShieldCheck size={18} />
+          {isLoading ? 'Loading' : 'Refresh'}
+        </button>
+      </form>
+
+      {error && <div className="errorCard">{error}</div>}
+
+      {snapshot ? (
+        <section className="operatorGrid" aria-live="polite">
+          <OperatorMetric label="Events" value={snapshot.metrics.totalEvents} />
+          <OperatorMetric label="Users" value={snapshot.metrics.uniqueUsers} />
+          <OperatorMetric label="Requests" value={snapshot.metrics.uniqueRequests} />
+          <OperatorMetric label="Actions" value={snapshot.metrics.totalActions} />
+          <OperatorMetric label="Errors" value={snapshot.metrics.totalErrors} warning={snapshot.metrics.totalErrors > 0} />
+          <OperatorMetric label="Latest Event" value={snapshot.metrics.latestEventAt ? shortDateTime(snapshot.metrics.latestEventAt) : 'None'} />
+
+          <article className="operatorPanel widePanel">
+            <h2>Readiness</h2>
+            <div className="readinessList">
+              {snapshot.readiness.checks.map((check) => (
+                <div className={check.ready ? 'readyItem' : 'blockedItem'} key={check.key}>
+                  <CheckCircle2 size={17} />
+                  <div>
+                    <strong>{check.label}</strong>
+                    <span>{check.detail}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="operatorPanel">
+            <h2>Event Mix</h2>
+            <div className="eventMix">
+              {Object.entries(snapshot.metrics.byName).length ? (
+                Object.entries(snapshot.metrics.byName).map(([name, value]) => (
+                  <div key={name}>
+                    <span>{operatorEventLabel(name)}</span>
+                    <strong>{value}</strong>
+                  </div>
+                ))
+              ) : (
+                <p>No beta events yet.</p>
+              )}
+            </div>
+          </article>
+
+          <article className="operatorPanel">
+            <h2>Backup</h2>
+            <p>Storage prefix: {snapshot.backupPlan.storagePrefix}</p>
+            <ul>
+              {snapshot.backupPlan.sections.map((section) => (
+                <li key={section.name}>{section.name}</li>
+              ))}
+            </ul>
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <h2>Operator Checklist</h2>
+            <ol>
+              {snapshot.backupPlan.operatorChecklist.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ol>
+          </article>
+        </section>
+      ) : (
+        <section className="operatorEmpty">
+          <Lock size={24} />
+          <p>Enter the production API URL and admin token to load launch readiness.</p>
+        </section>
+      )}
+    </main>
+  );
+}
+
+function OperatorMetric({ label, value, warning = false }: { label: string; value: number | string; warning?: boolean }) {
+  return (
+    <article className={warning ? 'operatorMetric warningMetric' : 'operatorMetric'}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </article>
+  );
+}
+
+function shortDateTime(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(new Date(value));
+}
+
+function operatorEventLabel(name: string): string {
+  return name.replaceAll('_', ' ');
+}
+
 function PublicDocument({
   title,
   subtitle,
@@ -906,6 +1090,7 @@ function normalizedPath(path: string): string {
     path === '/data-deletion' ||
     path === '/feedback' ||
     path === '/beta' ||
+    path === '/operator' ||
     path === '/app'
   ) return path;
   return '/';

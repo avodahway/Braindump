@@ -9,8 +9,9 @@
 - Publish basic home page.
 - Publish privacy policy draft page.
 - Publish terms draft page.
-- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, and `/app` routes work on the deployed frontend.
+- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/operator`, and `/app` routes work on the deployed frontend.
 - Confirm `/app` explains setup progress, demo mode, Google connection, destinations, and disconnect.
+- Confirm `/operator` loads readiness, metrics, backup status, and checklist with the admin token.
 - Pick frontend host.
 - Pick backend host.
 - Pick durable encrypted storage.

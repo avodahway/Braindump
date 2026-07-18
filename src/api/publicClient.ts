@@ -1,5 +1,8 @@
 import type { AnalyticsEvent, BrainDumpRequest, BrainDumpResponse, UserWorkspace } from '../lib/types';
 import { publicBackendRoutes, type BetaAccessStatus } from './publicContract';
+import type { AnalyticsMetrics } from '../server/analyticsStore';
+import type { BackupPlan } from '../server/backupPlan';
+import type { ReadinessReport } from '../server/readinessReport';
 
 type JsonFetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -111,6 +114,48 @@ export async function trackPublicEvent(
       body: JSON.stringify(event)
     })
   );
+}
+
+export async function getPublicAdminMetrics(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<AnalyticsMetrics> {
+  return readJson<AnalyticsMetrics>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminMetrics), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function getPublicAdminBackupPlan(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<BackupPlan> {
+  return readJson<BackupPlan>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminBackupPlan), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function getPublicAdminReadiness(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<ReadinessReport> {
+  return readJson<ReadinessReport>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminReadiness), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+function adminHeaders(adminToken: string): HeadersInit {
+  return {
+    'X-Brain-Dump-Admin-Token': adminToken
+  };
 }
 
 async function readJson<T>(response: Response): Promise<T> {
