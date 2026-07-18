@@ -44,6 +44,9 @@ Use these columns in the operator tracker, CRM, or a private spreadsheet:
 | Would use again | Yes, maybe, no, not asked |
 | Follow-up due | Date |
 
+In `/operator`, use the Beta Requests status filter before exports and keep the cohort label in invite notes until a
+dedicated cohort field is needed.
+
 ## Cohort Questions
 
 Ask every tester the same core questions:

@@ -9,5 +9,6 @@ describe('beta cohort plan', () => {
     expect(plan).toContain('Use Google Calendar or Google Tasks weekly');
     expect(plan).toContain('Do not expand to the next cohort until');
     expect(plan).toContain('At least one launch-notes export is saved from `/operator`');
+    expect(plan).toContain('use the Beta Requests status filter before exports');
   });
 });

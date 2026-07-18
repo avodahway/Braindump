@@ -392,6 +392,8 @@ describe('App routes', () => {
     expect(screen.getByText('Beta Queue')).toBeInTheDocument();
     expect(screen.getByText('Feedback Queue')).toBeInTheDocument();
     expect(screen.getByText('Support Queue')).toBeInTheDocument();
+    expect(screen.getByText('Cohort Review')).toBeInTheDocument();
+    expect(screen.getByText(/Tag each invite note with Founder watched run/i)).toBeInTheDocument();
     expect(screen.getByText('in progress')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Export Notes/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Export Notes/i }));

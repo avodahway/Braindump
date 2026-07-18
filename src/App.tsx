@@ -1751,6 +1751,15 @@ function OperatorPage() {
             labels={['new', 'in_progress', 'resolved', 'archived']}
           />
 
+          <article className="operatorPanel">
+            <h2>Cohort Review</h2>
+            <ul>
+              <li>Tag each invite note with Founder watched run, Small operator cohort, or Public beta seed.</li>
+              <li>Use the status filter before exporting beta requests for the next invite batch.</li>
+              <li>Expand only after the current cohort meets the gates in the beta cohort plan.</li>
+            </ul>
+          </article>
+
           <article className="operatorPanel widePanel">
             <h2>Readiness</h2>
             <ReadinessGroups checks={snapshot.readiness.checks} />
