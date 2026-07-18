@@ -82,6 +82,7 @@ Before inviting users:
 pnpm test
 pnpm build
 pnpm build:backend
+pnpm validate:env
 ```
 
 Then verify the deployed stack. With an admin token, this checks public pages, search/share metadata, `/operator`,

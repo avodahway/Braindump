@@ -14,6 +14,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "start:backend": "node dist-server/nodeServer.js",
     "test": "vitest run",
+    "validate:env": "node scripts/validate-production-env.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs"
   },
   "dependencies": {
