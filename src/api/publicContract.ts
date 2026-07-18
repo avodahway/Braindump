@@ -27,9 +27,12 @@ export type FeedbackInput = {
 
 export type FeedbackRecord = FeedbackInput & {
   id: string;
-  status: 'new';
+  status: FeedbackStatus;
   createdAt: string;
+  updatedAt?: string;
 };
+
+export type FeedbackStatus = 'new' | 'reviewed' | 'archived';
 
 export type PublicBackendContract = {
   getWorkspace(): Promise<UserWorkspace>;
@@ -67,5 +70,6 @@ export const publicBackendRoutes = {
   adminBetaRequests: '/api/admin/beta-requests',
   adminBetaRequest: '/api/admin/beta-request',
   adminFeedback: '/api/admin/feedback',
+  adminFeedbackItem: '/api/admin/feedback-item',
   brainDump: '/api/brain-dump'
 } as const;

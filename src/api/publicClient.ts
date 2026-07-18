@@ -6,7 +6,8 @@ import {
   type BetaRequestRecord,
   type BetaRequestStatus,
   type FeedbackInput,
-  type FeedbackRecord
+  type FeedbackRecord,
+  type FeedbackStatus
 } from './publicContract';
 import type { AnalyticsMetrics } from '../server/analyticsStore';
 import type { BackupPlan } from '../server/backupPlan';
@@ -270,6 +271,25 @@ export async function getPublicAdminFeedbackCsv(
   return readText(
     await fetcher(publicApiUrl(baseUrl, `${publicBackendRoutes.adminFeedback}?format=csv`), {
       headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function updatePublicAdminFeedbackStatus(
+  baseUrl: string,
+  adminToken: string,
+  id: string,
+  status: FeedbackStatus,
+  fetcher: JsonFetcher = fetch
+): Promise<{ ok: true; feedback: FeedbackRecord }> {
+  return readJson<{ ok: true; feedback: FeedbackRecord }>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminFeedbackItem), {
+      method: 'POST',
+      headers: {
+        ...adminHeaders(adminToken),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id, status })
     })
   );
 }

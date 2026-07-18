@@ -1,9 +1,10 @@
 import { createPlainTextCodec, type KeyValueStore, type SecretCodec } from './durableStore';
-import type { FeedbackRecord } from '../api/publicContract';
+import type { FeedbackRecord, FeedbackStatus } from '../api/publicContract';
 
 export type FeedbackStore = {
   append(record: FeedbackRecord): Promise<void>;
   readRecent(limit?: number): Promise<FeedbackRecord[]>;
+  updateStatus(id: string, status: FeedbackStatus, updatedAt: string): Promise<FeedbackRecord | undefined>;
   clear(): Promise<void>;
 };
 
@@ -24,6 +25,13 @@ export function createMemoryFeedbackStore(): FeedbackStore & { records: Feedback
       return [...records]
         .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
         .slice(0, limit);
+    },
+    async updateStatus(id, status, updatedAt) {
+      const record = records.find((current) => current.id === id);
+      if (!record) return undefined;
+      record.status = status;
+      record.updatedAt = updatedAt;
+      return record;
     },
     async clear() {
       records.length = 0;
@@ -49,6 +57,14 @@ export function createDurableFeedbackStore(
     async readRecent(limit = 50) {
       return (await readRecords(store, codec, storeKey)).slice(0, limit);
     },
+    async updateStatus(id, status, updatedAt) {
+      const records = await readRecords(store, codec, storeKey);
+      const index = records.findIndex((record) => record.id === id);
+      if (index < 0) return undefined;
+      records[index] = { ...records[index], status, updatedAt };
+      await store.set(storeKey, await codec.encode(JSON.stringify(records)));
+      return records[index];
+    },
     async clear() {
       await store.delete(storeKey);
     }
@@ -71,12 +87,16 @@ function isFeedbackRecord(value: unknown): value is FeedbackRecord {
   return (
     isRecord(value) &&
     typeof value.id === 'string' &&
-    value.status === 'new' &&
+    isFeedbackStatus(value.status) &&
     typeof value.lookedRight === 'string' &&
     typeof value.confusing === 'string' &&
     typeof value.expected === 'string' &&
     typeof value.createdAt === 'string'
   );
+}
+
+function isFeedbackStatus(value: unknown): value is FeedbackStatus {
+  return value === 'new' || value === 'reviewed' || value === 'archived';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

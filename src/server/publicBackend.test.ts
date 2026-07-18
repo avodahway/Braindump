@@ -395,6 +395,43 @@ describe('public backend scaffold', () => {
     );
   });
 
+  it('updates protected feedback status', async () => {
+    const feedbackStore = createMemoryFeedbackStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      feedbackStore,
+      adminToken: 'admin-token',
+      now: () => new Date('2026-07-17T12:30:00.000Z')
+    });
+
+    await feedbackStore.append({
+      id: 'feedback-1',
+      status: 'new',
+      email: 'user@example.com',
+      lookedRight: 'Tasks were right.',
+      confusing: 'Calendar felt unclear.',
+      expected: 'More review guidance.',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+
+    const updated = await backend.handle(
+      new Request('https://api.example.com/api/admin/feedback-item', {
+        method: 'POST',
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' },
+        body: JSON.stringify({ id: 'feedback-1', status: 'reviewed' })
+      })
+    );
+
+    expect(await updated.json()).toMatchObject({
+      ok: true,
+      feedback: {
+        id: 'feedback-1',
+        status: 'reviewed',
+        updatedAt: '2026-07-17T12:30:00.000Z'
+      }
+    });
+  });
+
   it('validates feedback fields', async () => {
     const backend = createPublicBackend({ googleOAuth });
 

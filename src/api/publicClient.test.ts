@@ -18,7 +18,8 @@ import {
   submitPublicBetaRequest,
   submitPublicFeedback,
   trackPublicEvent,
-  updatePublicAdminBetaRequestStatus
+  updatePublicAdminBetaRequestStatus,
+  updatePublicAdminFeedbackStatus
 } from './publicClient';
 
 describe('public API client', () => {
@@ -304,6 +305,36 @@ describe('public API client', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ id: 'beta-1', status: 'invited' })
+    });
+  });
+
+  it('updates feedback status through the protected operator API', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          feedback: {
+            id: 'feedback-1',
+            status: 'reviewed',
+            lookedRight: 'Tasks were right.',
+            confusing: 'Calendar felt unclear.',
+            expected: 'More review guidance.',
+            createdAt: '2026-07-17T12:00:00.000Z',
+            updatedAt: '2026-07-17T12:30:00.000Z'
+          }
+        })
+      )
+    );
+
+    await updatePublicAdminFeedbackStatus('https://api.example.com', 'admin-token', 'feedback-1', 'reviewed', fetcher);
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/feedback-item', {
+      method: 'POST',
+      headers: {
+        'X-Brain-Dump-Admin-Token': 'admin-token',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 'feedback-1', status: 'reviewed' })
     });
   });
 });

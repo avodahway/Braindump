@@ -6,7 +6,8 @@ import {
   type BetaRequestRecord,
   type BetaRequestStatus,
   type FeedbackInput,
-  type FeedbackRecord
+  type FeedbackRecord,
+  type FeedbackStatus
 } from '../api/publicContract';
 import { createDemoActionExecutor, type ActionExecutor } from './actionExecutor';
 import {
@@ -365,6 +366,18 @@ export function createPublicBackend(options: PublicBackendOptions) {
         });
       }
 
+      if (request.method === 'POST' && url.pathname === publicBackendRoutes.adminFeedbackItem) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin feedback updates are not configured.');
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        const body = await readJsonBody(request, maxJsonBodyBytes);
+        if (!body.ok) return sendJson({ error: body.error }, body.status);
+        const update = parseFeedbackStatusUpdate(body.value);
+        if (!update.ok) return sendJson({ error: update.error }, 400);
+        const record = await feedbackStore.updateStatus(update.value.id, update.value.status, now().toISOString());
+        if (!record) return sendJson({ error: 'Feedback was not found.' }, 404);
+        return sendJson({ ok: true, feedback: record });
+      }
+
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.brainDump) {
         const requestWorkspace = await readRequestWorkspace(request, sessionStore, oauthStore);
         const workspace = requestWorkspace?.workspace ?? fallbackWorkspace ?? disconnectedWorkspace();
@@ -489,6 +502,20 @@ function parseBetaRequestStatusUpdate(
 
 function isBetaRequestStatus(value: unknown): value is BetaRequestStatus {
   return value === 'new' || value === 'invited' || value === 'archived';
+}
+
+function parseFeedbackStatusUpdate(
+  value: unknown
+): { ok: true; value: { id: string; status: FeedbackStatus } } | { ok: false; error: string } {
+  if (!isRecord(value)) return { ok: false, error: 'Feedback update must be an object.' };
+  const id = trimmedString(value.id);
+  if (!id) return { ok: false, error: 'Feedback id is required.' };
+  if (!isFeedbackStatus(value.status)) return { ok: false, error: 'Feedback status is invalid.' };
+  return { ok: true, value: { id, status: value.status } };
+}
+
+function isFeedbackStatus(value: unknown): value is FeedbackStatus {
+  return value === 'new' || value === 'reviewed' || value === 'archived';
 }
 
 async function betaAccessCookieValue(betaAccessCode: string): Promise<string> {

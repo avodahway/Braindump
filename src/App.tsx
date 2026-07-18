@@ -31,7 +31,8 @@ import {
   getPublicAdminReadiness,
   submitPublicBetaRequest,
   submitPublicFeedback,
-  updatePublicAdminBetaRequestStatus
+  updatePublicAdminBetaRequestStatus,
+  updatePublicAdminFeedbackStatus
 } from './api/publicClient';
 import {
   connectPublicWorkspace,
@@ -45,7 +46,7 @@ import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
 import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
-import type { BetaAccessStatus, BetaRequestRecord, BetaRequestStatus, FeedbackRecord } from './api/publicContract';
+import type { BetaAccessStatus, BetaRequestRecord, BetaRequestStatus, FeedbackRecord, FeedbackStatus } from './api/publicContract';
 import type { AnalyticsMetrics } from './server/analyticsStore';
 import type { BackupPlan } from './server/backupPlan';
 import type { ExecutionLogRecord } from './server/executionLogStore';
@@ -1147,6 +1148,33 @@ function OperatorPage() {
     }
   }
 
+  async function handleFeedbackStatus(id: string, status: FeedbackStatus) {
+    const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+    const token = adminToken.trim();
+    if (!publicApiBaseUrl || !token) {
+      setError('Add the public API URL and admin token first.');
+      return;
+    }
+
+    setUpdatingRecordId(id);
+    setError('');
+    try {
+      const result = await updatePublicAdminFeedbackStatus(publicApiBaseUrl, token, id, status);
+      setSnapshot((current) =>
+        current
+          ? {
+              ...current,
+              feedback: current.feedback.map((record) => (record.id === id ? result.feedback : record))
+            }
+          : current
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update feedback.');
+    } finally {
+      setUpdatingRecordId('');
+    }
+  }
+
   return (
     <main className="operatorShell">
       <header className="operatorHeader">
@@ -1371,6 +1399,10 @@ function OperatorPage() {
                         <dt>Sent</dt>
                         <dd>{shortDateTime(record.createdAt)}</dd>
                       </div>
+                      <div>
+                        <dt>Status</dt>
+                        <dd>{operatorStatusLabel(record.status)}</dd>
+                      </div>
                     </dl>
                     <div>
                       <strong>Right</strong>
@@ -1383,6 +1415,24 @@ function OperatorPage() {
                     <div>
                       <strong>Expected</strong>
                       <p>{record.expected}</p>
+                    </div>
+                    <div className="operatorInlineActions">
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === record.id || record.status === 'reviewed'}
+                        onClick={() => handleFeedbackStatus(record.id, 'reviewed')}
+                      >
+                        Mark reviewed
+                      </button>
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === record.id || record.status === 'archived'}
+                        onClick={() => handleFeedbackStatus(record.id, 'archived')}
+                      >
+                        Archive
+                      </button>
                     </div>
                   </div>
                 ))}

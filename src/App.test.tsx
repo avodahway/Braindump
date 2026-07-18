@@ -222,6 +222,24 @@ describe('App routes', () => {
           })
         );
       }
+      if (url === 'https://api.example.com/api/admin/feedback-item') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            feedback: {
+              id: 'feedback-1',
+              status: 'reviewed',
+              email: 'user@example.com',
+              requestId: 'req-1',
+              lookedRight: 'Tasks were right.',
+              confusing: 'Calendar felt unclear.',
+              expected: 'More review guidance.',
+              createdAt: '2026-07-17T12:00:00.000Z',
+              updatedAt: '2026-07-17T12:30:00.000Z'
+            }
+          })
+        );
+      }
       return new Response(JSON.stringify({ ok: true }));
     });
     vi.stubGlobal('fetch', fetcher);
@@ -241,7 +259,7 @@ describe('App routes', () => {
     expect(screen.getByText('Calendar write failed')).toBeInTheDocument();
     expect(screen.getByText('Beta Requests')).toBeInTheDocument();
     expect(screen.getByText('jay@example.com')).toBeInTheDocument();
-    expect(screen.getByText('new')).toBeInTheDocument();
+    expect(screen.getAllByText('new')).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: /Mark invited/i }));
     expect(await screen.findByText('invited')).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-request', {
@@ -254,6 +272,16 @@ describe('App routes', () => {
     });
     expect(screen.getByText('Beta Feedback')).toBeInTheDocument();
     expect(screen.getByText('Tasks were right.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Mark reviewed/i }));
+    expect(await screen.findByText('reviewed')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/feedback-item', {
+      method: 'POST',
+      headers: {
+        'X-Brain-Dump-Admin-Token': 'admin-token',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 'feedback-1', status: 'reviewed' })
+    });
     expect(screen.getAllByRole('button', { name: /Export CSV/i })).toHaveLength(2);
     expect(screen.getByText('Take a provider-level snapshot before deploy.')).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/metrics', {
