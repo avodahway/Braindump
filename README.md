@@ -69,6 +69,7 @@ Go-to-market planning lives in:
 - `CHANGELOG.md`
 - `docs/BETA_LAUNCH_PLAN.md`
 - `docs/DEPLOYMENT_RUNBOOK.md`
+- `docs/DEPLOYMENT_SMOKE_TEST.md`
 - `docs/PRODUCTION_DEPLOYMENT.md`
 - `docs/LAUNCH_URLS.md`
 - `docs/RELEASE_GATE.md`
