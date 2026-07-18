@@ -37,6 +37,7 @@
 - Send first-user beta packet invite.
 - Review `docs/OPERATOR_PRIVACY_GUIDE.md` before exporting beta, feedback, or support CSVs.
 - Use `docs/OPERATOR_TRIAGE.md` to classify support, feedback, and execution-error reports.
+- Use `docs/BETA_COHORT_PLAN.md` to select testers, track cohort fit, and decide when to expand.
 - Complete `docs/LAUNCH_DECISION_RECORD.md` before expanding beyond the current beta batch.
 - Watch every first-run session if possible.
 - Record where onboarding confuses them.
@@ -112,6 +113,7 @@ Test these value propositions:
 - Support and data-deletion request intake through `/support` and `/data-deletion`.
 - Operator lifecycle actions for beta requests, feedback, and support requests.
 - Operator privacy and triage guides.
+- Beta cohort plan.
 - Deployment smoke-test worksheet.
 - OAuth verification assets worksheet.
 - Public launch status page at `/status`.

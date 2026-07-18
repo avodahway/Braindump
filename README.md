@@ -80,6 +80,7 @@ Go-to-market planning lives in:
 - `docs/SUPABASE_STORAGE.md`
 - `docs/FIRST_USER_BETA_PACKET.md`
 - `docs/BETA_LAUNCH_WORKSHEET.md`
+- `docs/BETA_COHORT_PLAN.md`
 - `docs/OPERATOR_PRIVACY_GUIDE.md`
 - `docs/OPERATOR_TRIAGE.md`
 - `docs/LAUNCH_DECISION_RECORD.md`
