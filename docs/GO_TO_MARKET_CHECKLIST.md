@@ -43,6 +43,7 @@
 - Review `docs/LAUNCH_RISK_REGISTER.md` before each invite batch.
 - Complete `docs/LAUNCH_DECISION_RECORD.md` before expanding beyond the current beta batch.
 - Watch every first-run session if possible.
+- Use `docs/BETA_USER_INTERVIEW_GUIDE.md` for watched runs and follow-up calls.
 - Record where onboarding confuses them.
 - Track parser mistakes.
 - Track write failures.
@@ -115,6 +116,7 @@ Test these value propositions:
 - Founder beta invitation email.
 - Launch announcement kit.
 - Founder beta follow-up email.
+- Beta user interview guide.
 - 3-question post-run feedback form at `/feedback`.
 - Beta access request page at `/beta`.
 - Protected beta request list in `/operator`.
