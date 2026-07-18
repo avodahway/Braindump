@@ -34,12 +34,29 @@ export type FeedbackRecord = FeedbackInput & {
 
 export type FeedbackStatus = 'new' | 'reviewed' | 'archived';
 
+export type SupportRequestInput = {
+  email: string;
+  issueType: string;
+  summary: string;
+  details: string;
+};
+
+export type SupportRequestRecord = SupportRequestInput & {
+  id: string;
+  status: SupportRequestStatus;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type SupportRequestStatus = 'new' | 'in_progress' | 'resolved' | 'archived';
+
 export type PublicBackendContract = {
   getWorkspace(): Promise<UserWorkspace>;
   getBetaAccessStatus(): Promise<BetaAccessStatus>;
   redeemBetaAccessCode(code: string): Promise<{ ok: true; access: BetaAccessStatus }>;
   submitBetaRequest(request: BetaRequestInput): Promise<{ ok: true; request: BetaRequestRecord }>;
   submitFeedback(feedback: FeedbackInput): Promise<{ ok: true; feedback: FeedbackRecord }>;
+  submitSupportRequest(request: SupportRequestInput): Promise<{ ok: true; supportRequest: SupportRequestRecord }>;
   startGoogleConnection(): Promise<{ authorizationUrl: string }>;
   disconnectGoogle(): Promise<{ ok: true }>;
   deleteAccountData(): Promise<{ ok: true; deleted: string[] }>;
@@ -63,6 +80,7 @@ export const publicBackendRoutes = {
   accountDelete: '/api/account/delete',
   events: '/api/events',
   feedback: '/api/feedback',
+  supportRequest: '/api/support/request',
   adminMetrics: '/api/admin/metrics',
   adminBackupPlan: '/api/admin/backup-plan',
   adminReadiness: '/api/admin/readiness',
@@ -71,5 +89,7 @@ export const publicBackendRoutes = {
   adminBetaRequest: '/api/admin/beta-request',
   adminFeedback: '/api/admin/feedback',
   adminFeedbackItem: '/api/admin/feedback-item',
+  adminSupportRequests: '/api/admin/support-requests',
+  adminSupportRequest: '/api/admin/support-request',
   brainDump: '/api/brain-dump'
 } as const;

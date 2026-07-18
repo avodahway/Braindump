@@ -7,7 +7,10 @@ import {
   type BetaRequestStatus,
   type FeedbackInput,
   type FeedbackRecord,
-  type FeedbackStatus
+  type FeedbackStatus,
+  type SupportRequestInput,
+  type SupportRequestRecord,
+  type SupportRequestStatus
 } from '../api/publicContract';
 import { createDemoActionExecutor, type ActionExecutor } from './actionExecutor';
 import {
@@ -30,6 +33,7 @@ import { createMemoryExecutionLogStore, type ExecutionLogStore } from './executi
 import { createMemoryAnalyticsStore, sanitizeAnalyticsEvent, summarizeAnalytics, type AnalyticsStore } from './analyticsStore';
 import { createMemoryBetaRequestStore, type BetaRequestStore } from './betaRequestStore';
 import { createMemoryFeedbackStore, type FeedbackStore } from './feedbackStore';
+import { createMemorySupportRequestStore, type SupportRequestStore } from './supportRequestStore';
 import { buildBackupPlan } from './backupPlan';
 import { buildReadinessReport } from './readinessReport';
 
@@ -53,6 +57,7 @@ export type PublicBackendOptions = {
   analyticsStore?: AnalyticsStore;
   betaRequestStore?: BetaRequestStore;
   feedbackStore?: FeedbackStore;
+  supportRequestStore?: SupportRequestStore;
   adminToken?: string;
   storageKeyPrefix?: string;
   storageMode?: 'memory' | 'durable';
@@ -84,6 +89,7 @@ const rateLimitedPaths = new Set<string>([
   publicBackendRoutes.brainDump,
   publicBackendRoutes.events,
   publicBackendRoutes.feedback,
+  publicBackendRoutes.supportRequest,
   publicBackendRoutes.googleConnect,
   publicBackendRoutes.googleDisconnect,
   publicBackendRoutes.accountDelete
@@ -102,6 +108,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
   const analyticsStore = options.analyticsStore ?? createMemoryAnalyticsStore();
   const betaRequestStore = options.betaRequestStore ?? createMemoryBetaRequestStore();
   const feedbackStore = options.feedbackStore ?? createMemoryFeedbackStore();
+  const supportRequestStore = options.supportRequestStore ?? createMemorySupportRequestStore();
   const now = options.now ?? (() => new Date());
   const maxJsonBodyBytes = options.requestLimits?.maxJsonBodyBytes ?? defaultMaxJsonBodyBytes;
   const rateLimiter = createRateLimiter(options.requestLimits?.rateLimit, now);
@@ -192,6 +199,21 @@ export function createPublicBackend(options: PublicBackendOptions) {
         };
         await feedbackStore.append(record);
         return sendJson({ ok: true, feedback: record });
+      }
+
+      if (request.method === 'POST' && url.pathname === publicBackendRoutes.supportRequest) {
+        const body = await readJsonBody(request, maxJsonBodyBytes);
+        if (!body.ok) return sendJson({ error: body.error }, body.status);
+        const parsedSupportRequest = parseSupportRequest(body.value);
+        if (!parsedSupportRequest.ok) return sendJson({ error: parsedSupportRequest.error }, 400);
+        const record = {
+          ...parsedSupportRequest.value,
+          id: crypto.randomUUID(),
+          status: 'new' as const,
+          createdAt: now().toISOString()
+        };
+        await supportRequestStore.append(record);
+        return sendJson({ ok: true, supportRequest: record });
       }
 
       const betaError = await requireBetaAccess(request, url.pathname, betaAccessCode);
@@ -378,6 +400,26 @@ export function createPublicBackend(options: PublicBackendOptions) {
         return sendJson({ ok: true, feedback: record });
       }
 
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminSupportRequests) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin support requests are not configured.');
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        return sendJson({
+          supportRequests: await supportRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit')))
+        });
+      }
+
+      if (request.method === 'POST' && url.pathname === publicBackendRoutes.adminSupportRequest) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin support request updates are not configured.');
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        const body = await readJsonBody(request, maxJsonBodyBytes);
+        if (!body.ok) return sendJson({ error: body.error }, body.status);
+        const update = parseSupportRequestStatusUpdate(body.value);
+        if (!update.ok) return sendJson({ error: update.error }, 400);
+        const record = await supportRequestStore.updateStatus(update.value.id, update.value.status, now().toISOString());
+        if (!record) return sendJson({ error: 'Support request was not found.' }, 404);
+        return sendJson({ ok: true, supportRequest: record });
+      }
+
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.brainDump) {
         const requestWorkspace = await readRequestWorkspace(request, sessionStore, oauthStore);
         const workspace = requestWorkspace?.workspace ?? fallbackWorkspace ?? disconnectedWorkspace();
@@ -490,6 +532,27 @@ function parseFeedback(value: unknown): { ok: true; value: FeedbackInput } | { o
   };
 }
 
+function parseSupportRequest(value: unknown): { ok: true; value: SupportRequestInput } | { ok: false; error: string } {
+  if (!isRecord(value)) return { ok: false, error: 'Support request must be an object.' };
+  const email = trimmedString(value.email);
+  const issueType = trimmedString(value.issueType);
+  const summary = trimmedString(value.summary);
+  const details = trimmedString(value.details);
+  if (!email || !email.includes('@')) return { ok: false, error: 'A valid email is required.' };
+  if (!issueType) return { ok: false, error: 'Issue type is required.' };
+  if (!summary) return { ok: false, error: 'Summary is required.' };
+  if (!details) return { ok: false, error: 'Details are required.' };
+  return {
+    ok: true,
+    value: {
+      email: email.toLowerCase(),
+      issueType,
+      summary,
+      details
+    }
+  };
+}
+
 function parseBetaRequestStatusUpdate(
   value: unknown
 ): { ok: true; value: { id: string; status: BetaRequestStatus } } | { ok: false; error: string } {
@@ -516,6 +579,20 @@ function parseFeedbackStatusUpdate(
 
 function isFeedbackStatus(value: unknown): value is FeedbackStatus {
   return value === 'new' || value === 'reviewed' || value === 'archived';
+}
+
+function parseSupportRequestStatusUpdate(
+  value: unknown
+): { ok: true; value: { id: string; status: SupportRequestStatus } } | { ok: false; error: string } {
+  if (!isRecord(value)) return { ok: false, error: 'Support request update must be an object.' };
+  const id = trimmedString(value.id);
+  if (!id) return { ok: false, error: 'Support request id is required.' };
+  if (!isSupportRequestStatus(value.status)) return { ok: false, error: 'Support request status is invalid.' };
+  return { ok: true, value: { id, status: value.status } };
+}
+
+function isSupportRequestStatus(value: unknown): value is SupportRequestStatus {
+  return value === 'new' || value === 'in_progress' || value === 'resolved' || value === 'archived';
 }
 
 async function betaAccessCookieValue(betaAccessCode: string): Promise<string> {

@@ -240,6 +240,40 @@ describe('App routes', () => {
           })
         );
       }
+      if (url === 'https://api.example.com/api/admin/support-requests') {
+        return new Response(
+          JSON.stringify({
+            supportRequests: [
+              {
+                id: 'support-1',
+                status: 'new',
+                email: 'user@example.com',
+                issueType: 'google_connection',
+                summary: 'Connection failed',
+                details: 'OAuth callback showed an error.',
+                createdAt: '2026-07-17T12:00:00.000Z'
+              }
+            ]
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/support-request') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            supportRequest: {
+              id: 'support-1',
+              status: 'resolved',
+              email: 'user@example.com',
+              issueType: 'google_connection',
+              summary: 'Connection failed',
+              details: 'OAuth callback showed an error.',
+              createdAt: '2026-07-17T12:00:00.000Z',
+              updatedAt: '2026-07-17T12:30:00.000Z'
+            }
+          })
+        );
+      }
       return new Response(JSON.stringify({ ok: true }));
     });
     vi.stubGlobal('fetch', fetcher);
@@ -259,7 +293,7 @@ describe('App routes', () => {
     expect(screen.getByText('Calendar write failed')).toBeInTheDocument();
     expect(screen.getByText('Beta Requests')).toBeInTheDocument();
     expect(screen.getByText('jay@example.com')).toBeInTheDocument();
-    expect(screen.getAllByText('new')).toHaveLength(2);
+    expect(screen.getAllByText('new')).toHaveLength(3);
     fireEvent.click(screen.getByRole('button', { name: /Mark invited/i }));
     expect(await screen.findByText('invited')).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-request', {
@@ -282,6 +316,18 @@ describe('App routes', () => {
       },
       body: JSON.stringify({ id: 'feedback-1', status: 'reviewed' })
     });
+    expect(screen.getByText('Support Requests')).toBeInTheDocument();
+    expect(screen.getByText('Connection failed')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Resolve/i }));
+    expect(await screen.findByText('resolved')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/support-request', {
+      method: 'POST',
+      headers: {
+        'X-Brain-Dump-Admin-Token': 'admin-token',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 'support-1', status: 'resolved' })
+    });
     expect(screen.getAllByRole('button', { name: /Export CSV/i })).toHaveLength(2);
     expect(screen.getByText('Take a provider-level snapshot before deploy.')).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/metrics', {
@@ -302,6 +348,53 @@ describe('App routes', () => {
     expect(await screen.findByText('Beta Requests')).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-requests?format=csv', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
+  it('submits support requests from the public support page', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === 'https://api.example.com/api/support/request') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            supportRequest: {
+              id: 'support-1',
+              status: 'new',
+              email: 'user@example.com',
+              issueType: 'google_connection',
+              summary: 'Connection failed',
+              details: 'OAuth callback showed an error.',
+              createdAt: '2026-07-17T12:00:00.000Z'
+            }
+          })
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/support');
+
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'user@example.com' } });
+    fireEvent.change(screen.getByLabelText('Issue type'), { target: { value: 'google_connection' } });
+    fireEvent.change(screen.getByLabelText('Summary'), { target: { value: 'Connection failed' } });
+    fireEvent.change(screen.getByLabelText('Details'), { target: { value: 'OAuth callback showed an error.' } });
+    fireEvent.click(screen.getByRole('button', { name: /Send support request/i }));
+
+    expect(await screen.findByText('Support request sent. We will follow up by email.')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/support/request', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'user@example.com',
+        issueType: 'google_connection',
+        summary: 'Connection failed',
+        details: 'OAuth callback showed an error.'
+      })
     });
   });
 

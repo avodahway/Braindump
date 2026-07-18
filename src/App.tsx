@@ -31,8 +31,11 @@ import {
   getPublicAdminReadiness,
   submitPublicBetaRequest,
   submitPublicFeedback,
+  submitPublicSupportRequest,
   updatePublicAdminBetaRequestStatus,
-  updatePublicAdminFeedbackStatus
+  updatePublicAdminFeedbackStatus,
+  getPublicAdminSupportRequests,
+  updatePublicAdminSupportRequestStatus
 } from './api/publicClient';
 import {
   connectPublicWorkspace,
@@ -46,7 +49,15 @@ import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
 import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
-import type { BetaAccessStatus, BetaRequestRecord, BetaRequestStatus, FeedbackRecord, FeedbackStatus } from './api/publicContract';
+import type {
+  BetaAccessStatus,
+  BetaRequestRecord,
+  BetaRequestStatus,
+  FeedbackRecord,
+  FeedbackStatus,
+  SupportRequestRecord,
+  SupportRequestStatus
+} from './api/publicContract';
 import type { AnalyticsMetrics } from './server/analyticsStore';
 import type { BackupPlan } from './server/backupPlan';
 import type { ExecutionLogRecord } from './server/executionLogStore';
@@ -735,6 +746,40 @@ function TermsPage() {
 }
 
 function SupportPage() {
+  const [settings] = useState(() => loadSettings());
+  const [form, setForm] = useState({
+    email: '',
+    issueType: '',
+    summary: '',
+    details: ''
+  });
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setSubmitting] = useState(false);
+  const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError('');
+    setStatus('');
+
+    if (!publicApiBaseUrl) {
+      setError('Support form is not connected yet. Use the email link below.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await submitPublicSupportRequest(publicApiBaseUrl, form);
+      setStatus('Support request sent. We will follow up by email.');
+      setForm({ email: '', issueType: '', summary: '', details: '' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send support request.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <PublicDocument
       title="Support"
@@ -742,9 +787,58 @@ function SupportPage() {
     >
       <h2>Contact</h2>
       <p>
-        Email <a href={supportRequestMailto('Support page')}>{supportEmail}</a> with what happened and what you expected.
-        Include screenshots only if you are comfortable sharing them.
+        Send a request here, or email <a href={supportRequestMailto('Support page')}>{supportEmail}</a> with what
+        happened and what you expected. Include screenshots only if you are comfortable sharing them.
       </p>
+      <form className="publicForm" onSubmit={handleSubmit}>
+        <label>
+          Email
+          <input
+            value={form.email}
+            onChange={(event) => setForm({ ...form, email: event.target.value })}
+            autoComplete="email"
+            type="email"
+            required
+          />
+        </label>
+        <label>
+          Issue type
+          <select
+            value={form.issueType}
+            onChange={(event) => setForm({ ...form, issueType: event.target.value })}
+            required
+          >
+            <option value="">Choose one</option>
+            <option value="google_connection">Google connection</option>
+            <option value="task_or_calendar_write">Task or calendar write</option>
+            <option value="wrong_preview">Wrong preview</option>
+            <option value="account_or_data">Account or data request</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>
+          Summary
+          <input
+            value={form.summary}
+            onChange={(event) => setForm({ ...form, summary: event.target.value })}
+            required
+          />
+        </label>
+        <label>
+          Details
+          <textarea
+            value={form.details}
+            onChange={(event) => setForm({ ...form, details: event.target.value })}
+            required
+          />
+        </label>
+        {error && <div className="errorCard">{error}</div>}
+        {status && <div className="successCard">{status}</div>}
+        <button className="processButton" type="submit" disabled={isSubmitting}>
+          <MessageCircle size={18} />
+          {isSubmitting ? 'Sending' : 'Send support request'}
+        </button>
+      </form>
       <h2>What to include</h2>
       <ul>
         <li>Your Google account email used with Brain Dump.</li>
@@ -1046,6 +1140,7 @@ type OperatorSnapshot = {
   recentErrors: ExecutionLogRecord[];
   betaRequests: BetaRequestRecord[];
   feedback: FeedbackRecord[];
+  supportRequests: SupportRequestRecord[];
 };
 
 function OperatorPage() {
@@ -1073,13 +1168,14 @@ function OperatorPage() {
     setLoading(true);
     setError('');
     try {
-      const [metrics, readiness, backupPlan, executionErrors, betaRequests, feedback] = await Promise.all([
+      const [metrics, readiness, backupPlan, executionErrors, betaRequests, feedback, supportRequests] = await Promise.all([
         getPublicAdminMetrics(publicApiBaseUrl, token),
         getPublicAdminReadiness(publicApiBaseUrl, token),
         getPublicAdminBackupPlan(publicApiBaseUrl, token),
         getPublicAdminExecutionErrors(publicApiBaseUrl, token),
         getPublicAdminBetaRequests(publicApiBaseUrl, token),
-        getPublicAdminFeedback(publicApiBaseUrl, token)
+        getPublicAdminFeedback(publicApiBaseUrl, token),
+        getPublicAdminSupportRequests(publicApiBaseUrl, token)
       ]);
       localStorage.setItem('brain-dump-admin-token', token);
       saveSettings(settings);
@@ -1089,7 +1185,8 @@ function OperatorPage() {
         backupPlan,
         recentErrors: executionErrors.recentErrors,
         betaRequests: betaRequests.requests,
-        feedback: feedback.feedback
+        feedback: feedback.feedback,
+        supportRequests: supportRequests.supportRequests
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load operator dashboard.');
@@ -1170,6 +1267,35 @@ function OperatorPage() {
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update feedback.');
+    } finally {
+      setUpdatingRecordId('');
+    }
+  }
+
+  async function handleSupportRequestStatus(id: string, status: SupportRequestStatus) {
+    const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+    const token = adminToken.trim();
+    if (!publicApiBaseUrl || !token) {
+      setError('Add the public API URL and admin token first.');
+      return;
+    }
+
+    setUpdatingRecordId(id);
+    setError('');
+    try {
+      const result = await updatePublicAdminSupportRequestStatus(publicApiBaseUrl, token, id, status);
+      setSnapshot((current) =>
+        current
+          ? {
+              ...current,
+              supportRequests: current.supportRequests.map((request) =>
+                request.id === id ? result.supportRequest : request
+              )
+            }
+          : current
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update support request.');
     } finally {
       setUpdatingRecordId('');
     }
@@ -1439,6 +1565,68 @@ function OperatorPage() {
               </div>
             ) : (
               <p>No beta feedback yet.</p>
+            )}
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <h2>Support Requests</h2>
+            {snapshot.supportRequests.length ? (
+              <div className="feedbackRecordList">
+                {snapshot.supportRequests.map((request) => (
+                  <div className="feedbackRecordItem" key={request.id}>
+                    <dl>
+                      <div>
+                        <dt>Email</dt>
+                        <dd>{request.email}</dd>
+                      </div>
+                      <div>
+                        <dt>Type</dt>
+                        <dd>{operatorEventLabel(request.issueType)}</dd>
+                      </div>
+                      <div>
+                        <dt>Sent</dt>
+                        <dd>{shortDateTime(request.createdAt)}</dd>
+                      </div>
+                      <div>
+                        <dt>Status</dt>
+                        <dd>{operatorStatusLabel(request.status)}</dd>
+                      </div>
+                    </dl>
+                    <div>
+                      <strong>{request.summary}</strong>
+                      <p>{request.details}</p>
+                    </div>
+                    <div className="operatorInlineActions">
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === request.id || request.status === 'in_progress'}
+                        onClick={() => handleSupportRequestStatus(request.id, 'in_progress')}
+                      >
+                        Mark in progress
+                      </button>
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === request.id || request.status === 'resolved'}
+                        onClick={() => handleSupportRequestStatus(request.id, 'resolved')}
+                      >
+                        Resolve
+                      </button>
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === request.id || request.status === 'archived'}
+                        onClick={() => handleSupportRequestStatus(request.id, 'archived')}
+                      >
+                        Archive
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No support requests yet.</p>
             )}
           </article>
 

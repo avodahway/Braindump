@@ -7,7 +7,10 @@ import {
   type BetaRequestStatus,
   type FeedbackInput,
   type FeedbackRecord,
-  type FeedbackStatus
+  type FeedbackStatus,
+  type SupportRequestInput,
+  type SupportRequestRecord,
+  type SupportRequestStatus
 } from './publicContract';
 import type { AnalyticsMetrics } from '../server/analyticsStore';
 import type { BackupPlan } from '../server/backupPlan';
@@ -89,6 +92,23 @@ export async function submitPublicFeedback(
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(feedback)
+    })
+  );
+}
+
+export async function submitPublicSupportRequest(
+  baseUrl: string,
+  request: SupportRequestInput,
+  fetcher: JsonFetcher = fetch
+): Promise<{ ok: true; supportRequest: SupportRequestRecord }> {
+  return readJson<{ ok: true; supportRequest: SupportRequestRecord }>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.supportRequest), {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request)
     })
   );
 }
@@ -284,6 +304,37 @@ export async function updatePublicAdminFeedbackStatus(
 ): Promise<{ ok: true; feedback: FeedbackRecord }> {
   return readJson<{ ok: true; feedback: FeedbackRecord }>(
     await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminFeedbackItem), {
+      method: 'POST',
+      headers: {
+        ...adminHeaders(adminToken),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id, status })
+    })
+  );
+}
+
+export async function getPublicAdminSupportRequests(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<{ supportRequests: SupportRequestRecord[] }> {
+  return readJson<{ supportRequests: SupportRequestRecord[] }>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminSupportRequests), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function updatePublicAdminSupportRequestStatus(
+  baseUrl: string,
+  adminToken: string,
+  id: string,
+  status: SupportRequestStatus,
+  fetcher: JsonFetcher = fetch
+): Promise<{ ok: true; supportRequest: SupportRequestRecord }> {
+  return readJson<{ ok: true; supportRequest: SupportRequestRecord }>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminSupportRequest), {
       method: 'POST',
       headers: {
         ...adminHeaders(adminToken),

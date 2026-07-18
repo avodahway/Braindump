@@ -17,9 +17,12 @@ import {
   startPublicGoogleConnection,
   submitPublicBetaRequest,
   submitPublicFeedback,
+  submitPublicSupportRequest,
   trackPublicEvent,
   updatePublicAdminBetaRequestStatus,
-  updatePublicAdminFeedbackStatus
+  updatePublicAdminFeedbackStatus,
+  getPublicAdminSupportRequests,
+  updatePublicAdminSupportRequestStatus
 } from './publicClient';
 
 describe('public API client', () => {
@@ -176,6 +179,49 @@ describe('public API client', () => {
       })
     });
   });
+
+  it('submits support requests through the public backend', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          supportRequest: {
+            id: 'support-1',
+            status: 'new',
+            email: 'user@example.com',
+            issueType: 'google_connection',
+            summary: 'Connection failed',
+            details: 'OAuth callback showed an error.',
+            createdAt: '2026-07-17T12:00:00.000Z'
+          }
+        })
+      )
+    );
+
+    await submitPublicSupportRequest(
+      'https://api.example.com',
+      {
+        email: 'user@example.com',
+        issueType: 'google_connection',
+        summary: 'Connection failed',
+        details: 'OAuth callback showed an error.'
+      },
+      fetcher
+    );
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/support/request', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'user@example.com',
+        issueType: 'google_connection',
+        summary: 'Connection failed',
+        details: 'OAuth callback showed an error.'
+      })
+    });
+  });
+
 
 
 
@@ -335,6 +381,44 @@ describe('public API client', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ id: 'feedback-1', status: 'reviewed' })
+    });
+  });
+
+  it('reads and updates support requests through protected operator APIs', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ supportRequests: [] })))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            supportRequest: {
+              id: 'support-1',
+              status: 'resolved',
+              email: 'user@example.com',
+              issueType: 'google_connection',
+              summary: 'Connection failed',
+              details: 'OAuth callback showed an error.',
+              createdAt: '2026-07-17T12:00:00.000Z',
+              updatedAt: '2026-07-17T12:30:00.000Z'
+            }
+          })
+        )
+      );
+
+    await getPublicAdminSupportRequests('https://api.example.com', 'admin-token', fetcher);
+    await updatePublicAdminSupportRequestStatus('https://api.example.com', 'admin-token', 'support-1', 'resolved', fetcher);
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/support-requests', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/admin/support-request', {
+      method: 'POST',
+      headers: {
+        'X-Brain-Dump-Admin-Token': 'admin-token',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 'support-1', status: 'resolved' })
     });
   });
 });

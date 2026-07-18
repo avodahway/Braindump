@@ -8,6 +8,7 @@ import { createMemoryExecutionLogStore } from './executionLogStore';
 import { createMemoryAnalyticsStore } from './analyticsStore';
 import { createMemoryBetaRequestStore } from './betaRequestStore';
 import { createMemoryFeedbackStore } from './feedbackStore';
+import { createMemorySupportRequestStore } from './supportRequestStore';
 
 const googleOAuth = {
   clientId: 'client-id',
@@ -448,6 +449,83 @@ describe('public backend scaffold', () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'What looked right is required.' });
+  });
+
+  it('accepts support requests and protects the admin support queue', async () => {
+    const supportRequestStore = createMemorySupportRequestStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      supportRequestStore,
+      adminToken: 'admin-token',
+      now: () => new Date('2026-07-17T12:00:00.000Z')
+    });
+
+    const created = await backend.handle(
+      new Request('https://api.example.com/api/support/request', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'USER@EXAMPLE.COM',
+          issueType: 'google_connection',
+          summary: 'Connection failed',
+          details: 'OAuth callback showed an error.'
+        })
+      })
+    );
+    const listed = await backend.handle(
+      new Request('https://api.example.com/api/admin/support-requests', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+
+    expect(await created.json()).toMatchObject({
+      ok: true,
+      supportRequest: {
+        email: 'user@example.com',
+        issueType: 'google_connection',
+        summary: 'Connection failed',
+        status: 'new',
+        createdAt: '2026-07-17T12:00:00.000Z'
+      }
+    });
+    expect(await listed.json()).toMatchObject({
+      supportRequests: [{ email: 'user@example.com', summary: 'Connection failed' }]
+    });
+  });
+
+  it('updates protected support request status', async () => {
+    const supportRequestStore = createMemorySupportRequestStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      supportRequestStore,
+      adminToken: 'admin-token',
+      now: () => new Date('2026-07-17T12:30:00.000Z')
+    });
+    await supportRequestStore.append({
+      id: 'support-1',
+      status: 'new',
+      email: 'user@example.com',
+      issueType: 'google_connection',
+      summary: 'Connection failed',
+      details: 'OAuth callback showed an error.',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+
+    const updated = await backend.handle(
+      new Request('https://api.example.com/api/admin/support-request', {
+        method: 'POST',
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' },
+        body: JSON.stringify({ id: 'support-1', status: 'resolved' })
+      })
+    );
+
+    expect(await updated.json()).toMatchObject({
+      ok: true,
+      supportRequest: {
+        id: 'support-1',
+        status: 'resolved',
+        updatedAt: '2026-07-17T12:30:00.000Z'
+      }
+    });
   });
 
   it('blocks public brain dump execution until beta access is granted', async () => {
