@@ -172,6 +172,14 @@ describe('App routes', () => {
     expect(screen.getByText(/Brain Dump does not send email during beta/i)).toBeInTheDocument();
   });
 
+  it('renders the OAuth verification demo checklist page', () => {
+    renderAt('/oauth-demo-checklist');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'OAuth Demo Checklist' })).toBeInTheDocument();
+    expect(screen.getByText(/Google OAuth verification recordings/i)).toBeInTheDocument();
+    expect(screen.getByText(/Show Disconnect Google and Delete account data/i)).toBeInTheDocument();
+  });
+
   it('keeps public launch pages accessible by heading and labeled controls', () => {
     const publicRoutes = [
       '/',
@@ -189,7 +197,8 @@ describe('App routes', () => {
       '/press',
       '/examples',
       '/pricing',
-      '/demo'
+      '/demo',
+      '/oauth-demo-checklist'
     ];
 
     for (const route of publicRoutes) {

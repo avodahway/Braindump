@@ -2,7 +2,7 @@
 
 import { pathToFileURL } from 'node:url';
 
-const frontendRoutes = ['/', '/privacy', '/terms', '/support', '/data-deletion', '/feedback', '/beta', '/status', '/faq', '/security', '/install', '/roadmap', '/press', '/examples', '/pricing', '/demo', '/operator', '/app'];
+const frontendRoutes = ['/', '/privacy', '/terms', '/support', '/data-deletion', '/feedback', '/beta', '/status', '/faq', '/security', '/install', '/roadmap', '/press', '/examples', '/pricing', '/demo', '/oauth-demo-checklist', '/operator', '/app'];
 const frontendAssets = [
   {
     label: 'Frontend metadata',
@@ -20,7 +20,7 @@ const frontendAssets = [
     label: 'Frontend sitemap',
     path: '/sitemap.xml',
     kind: 'xml-markers',
-    markers: ['<urlset', '<loc>https://braindump.app/</loc>', '<loc>https://braindump.app/roadmap</loc>', '<loc>https://braindump.app/press</loc>', '<loc>https://braindump.app/examples</loc>', '<loc>https://braindump.app/pricing</loc>', '<loc>https://braindump.app/demo</loc>']
+    markers: ['<urlset', '<loc>https://braindump.app/</loc>', '<loc>https://braindump.app/roadmap</loc>', '<loc>https://braindump.app/press</loc>', '<loc>https://braindump.app/examples</loc>', '<loc>https://braindump.app/pricing</loc>', '<loc>https://braindump.app/demo</loc>', '<loc>https://braindump.app/oauth-demo-checklist</loc>']
   }
 ];
 

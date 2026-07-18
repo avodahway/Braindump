@@ -102,6 +102,7 @@ export function App() {
   if (route === '/examples') return <ExamplesPage />;
   if (route === '/pricing') return <PricingPage />;
   if (route === '/demo') return <DemoPage />;
+  if (route === '/oauth-demo-checklist') return <OAuthDemoChecklistPage />;
   if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
@@ -719,6 +720,10 @@ function HomePage() {
           <a href="/demo">
             <Sparkles size={20} />
             Demo
+          </a>
+          <a href="/oauth-demo-checklist">
+            <ShieldCheck size={20} />
+            OAuth checklist
           </a>
           <a href="/feedback">
             <UserCheck size={20} />
@@ -1572,6 +1577,38 @@ function DemoPage() {
         <li>Brain Dump does not send email during beta.</li>
         <li>Ambiguous calendar items stay in review.</li>
         <li>Each user connects their own Google account.</li>
+      </ul>
+    </PublicDocument>
+  );
+}
+
+function OAuthDemoChecklistPage() {
+  return (
+    <PublicDocument
+      title="OAuth Demo Checklist"
+      subtitle="A public checklist for Google OAuth verification recordings and reviewer walkthroughs."
+    >
+      <h2>Before recording</h2>
+      <ul>
+        <li>Use a dedicated Google test user, not a private production account.</li>
+        <li>Show the production home page, privacy policy, support page, and app page.</li>
+        <li>Confirm the OAuth consent screen app name and logo match Brain Dump branding.</li>
+      </ul>
+      <h2>Required walkthrough</h2>
+      <ol>
+        <li>Open `/app` and show the user starts disconnected.</li>
+        <li>Enter beta access if invite-only beta is enabled.</li>
+        <li>Click Connect Google and complete Google consent.</li>
+        <li>Return to Brain Dump and confirm the workspace shows connected destinations.</li>
+        <li>Review a mixed brain dump before creating anything.</li>
+        <li>Create reviewed task and calendar actions in the test user's Google account.</li>
+        <li>Show Disconnect Google and Delete account data.</li>
+      </ol>
+      <h2>What to say clearly</h2>
+      <ul>
+        <li>Brain Dump uses Google access only to create reviewed user-requested tasks and calendar events.</li>
+        <li>Brain Dump does not sell Google user data, use it for ads, or send email during beta.</li>
+        <li>Users can disconnect Google and request deletion of stored Brain Dump account records.</li>
       </ul>
     </PublicDocument>
   );
@@ -2555,6 +2592,7 @@ function PublicNav() {
         <a href="/examples">Examples</a>
         <a href="/pricing">Pricing</a>
         <a href="/demo">Demo</a>
+        <a href="/oauth-demo-checklist">OAuth checklist</a>
         <a href="/data-deletion">Data deletion</a>
         <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
@@ -2598,6 +2636,7 @@ function normalizedPath(path: string): string {
     path === '/examples' ||
     path === '/pricing' ||
     path === '/demo' ||
+    path === '/oauth-demo-checklist' ||
     path === '/operator' ||
     path === '/app'
   ) return path;

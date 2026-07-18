@@ -32,6 +32,7 @@ describe('deployment verifier', () => {
       'Frontend /examples',
       'Frontend /pricing',
       'Frontend /demo',
+      'Frontend /oauth-demo-checklist',
       'Frontend /operator',
       'Frontend /app',
       'Frontend metadata',
@@ -86,7 +87,7 @@ describe('deployment verifier', () => {
   it('checks public metadata and search index files', async () => {
     const fetchImpl = vi.fn(async (url) => {
       if (String(url).endsWith('/robots.txt')) return textResponse('User-agent: *\nDisallow: /operator\nSitemap: https://braindump.app/sitemap.xml');
-      if (String(url).endsWith('/sitemap.xml')) return xmlResponse('<urlset><url><loc>https://braindump.app/</loc></url><url><loc>https://braindump.app/roadmap</loc></url><url><loc>https://braindump.app/press</loc></url><url><loc>https://braindump.app/examples</loc></url><url><loc>https://braindump.app/pricing</loc></url><url><loc>https://braindump.app/demo</loc></url></urlset>');
+      if (String(url).endsWith('/sitemap.xml')) return xmlResponse('<urlset><url><loc>https://braindump.app/</loc></url><url><loc>https://braindump.app/roadmap</loc></url><url><loc>https://braindump.app/press</loc></url><url><loc>https://braindump.app/examples</loc></url><url><loc>https://braindump.app/pricing</loc></url><url><loc>https://braindump.app/demo</loc></url><url><loc>https://braindump.app/oauth-demo-checklist</loc></url></urlset>');
       return htmlResponse('<!doctype html><meta name="description"><meta property="og:title" content="Brain Dump"><meta name="twitter:card" content="summary">');
     });
     const checks = buildDeploymentChecks({
