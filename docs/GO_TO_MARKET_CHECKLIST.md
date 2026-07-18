@@ -9,7 +9,7 @@
 - Publish basic home page.
 - Publish privacy policy draft page.
 - Publish terms draft page.
-- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/faq`, `/security`, `/install`, `/roadmap`, `/press`, `/examples`, `/pricing`, `/demo`, `/operator`, and `/app` routes work on the deployed frontend.
+- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/faq`, `/security`, `/install`, `/roadmap`, `/press`, `/examples`, `/pricing`, `/demo`, `/oauth-demo-checklist`, `/timeline`, `/operator`, and `/app` routes work on the deployed frontend.
 - Confirm `/robots.txt`, `/sitemap.xml`, and public metadata checks pass in deployment verification.
 - Confirm Vercel security headers are present from `vercel.json`.
 - Confirm `/app` explains setup progress, demo mode, Google connection, destinations, and disconnect.
