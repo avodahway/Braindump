@@ -93,6 +93,7 @@ export function App() {
   if (route === '/faq') return <FaqPage />;
   if (route === '/security') return <SecurityPage />;
   if (route === '/install') return <InstallPage />;
+  if (route === '/roadmap') return <RoadmapPage />;
   if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
@@ -687,6 +688,10 @@ function HomePage() {
           <a href="/install">
             <Sparkles size={20} />
             Install
+          </a>
+          <a href="/roadmap">
+            <ArrowRight size={20} />
+            Roadmap
           </a>
           <a href="/feedback">
             <UserCheck size={20} />
@@ -1376,6 +1381,40 @@ function InstallPage() {
       <p>
         Installing Brain Dump does not connect Google by itself. Google connects only from inside the app setup panel
         after you approve access.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function RoadmapPage() {
+  return (
+    <PublicDocument
+      title="Roadmap"
+      subtitle="What Brain Dump supports during beta, what is next, and what is intentionally later."
+    >
+      <h2>Current beta</h2>
+      <ul>
+        <li>Messy thought capture with a reviewed action preview.</li>
+        <li>Google Tasks and primary Google Calendar creation after user approval.</li>
+        <li>Projects, waiting-on items, and ambiguous items kept in app-owned review records.</li>
+        <li>Public support, feedback, data-deletion, install, FAQ, and status pages.</li>
+      </ul>
+      <h2>Next</h2>
+      <ul>
+        <li>Sharper parsing for natural follow-up language and vague calendar requests.</li>
+        <li>Better first-run guidance after Google connection.</li>
+        <li>Operator workflows for tester cohorts, launch notes, and issue triage.</li>
+      </ul>
+      <h2>Later</h2>
+      <ul>
+        <li>Team workspaces and shared destination setup.</li>
+        <li>Payments and public self-serve account upgrades.</li>
+        <li>Native app-store distribution if the PWA path proves useful.</li>
+      </ul>
+      <h2>Not in beta</h2>
+      <p>
+        Brain Dump does not send email, make unreviewed Google changes, manage shared inboxes, or replace a project
+        management system during beta.
       </p>
     </PublicDocument>
   );
@@ -2236,6 +2275,7 @@ function PublicNav() {
         <a href="/faq">FAQ</a>
         <a href="/security">Security</a>
         <a href="/install">Install</a>
+        <a href="/roadmap">Roadmap</a>
         <a href="/data-deletion">Data deletion</a>
         <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
@@ -2274,6 +2314,7 @@ function normalizedPath(path: string): string {
     path === '/faq' ||
     path === '/security' ||
     path === '/install' ||
+    path === '/roadmap' ||
     path === '/operator' ||
     path === '/app'
   ) return path;

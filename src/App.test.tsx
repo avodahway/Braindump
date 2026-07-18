@@ -128,6 +128,15 @@ describe('App routes', () => {
     expect(screen.getByText(/Installing Brain Dump does not connect Google/i)).toBeInTheDocument();
   });
 
+  it('renders the public roadmap page', () => {
+    renderAt('/roadmap');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Roadmap' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Current beta' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Not in beta' })).toBeInTheDocument();
+    expect(screen.getByText(/Brain Dump does not send email/i)).toBeInTheDocument();
+  });
+
   it('renders the product tool at the app route', () => {
     renderAt('/app');
 
