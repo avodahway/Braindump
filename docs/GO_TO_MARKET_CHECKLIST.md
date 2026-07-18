@@ -101,3 +101,4 @@ Test these value propositions:
 - Beta access request page at `/beta`.
 - Protected beta request list in `/operator`.
 - Protected beta feedback list in `/operator`.
+- CSV exports for beta requests and feedback.

@@ -180,8 +180,10 @@ After deploy:
 30. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
 31. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/execution-errors` returns recent provider write failures only when `X-Brain-Dump-Admin-Token` is provided.
 32. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests` returns beta requests only when `X-Brain-Dump-Admin-Token` is provided.
-33. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback` returns feedback only when `X-Brain-Dump-Admin-Token` is provided.
-34. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
+33. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests?format=csv` downloads the beta request CSV from `/operator`.
+34. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback` returns feedback only when `X-Brain-Dump-Admin-Token` is provided.
+35. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback?format=csv` downloads the feedback CSV from `/operator`.
+36. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
 
 You can automate the public page, health, and readiness checks with:
 

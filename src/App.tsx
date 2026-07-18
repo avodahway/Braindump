@@ -23,8 +23,10 @@ import { loadSettings, processBrainDump, saveSettings, type BackendSettings } fr
 import {
   getPublicAdminBackupPlan,
   getPublicAdminBetaRequests,
+  getPublicAdminBetaRequestsCsv,
   getPublicAdminExecutionErrors,
   getPublicAdminFeedback,
+  getPublicAdminFeedbackCsv,
   getPublicAdminMetrics,
   getPublicAdminReadiness,
   submitPublicBetaRequest,
@@ -1050,6 +1052,7 @@ function OperatorPage() {
   const [snapshot, setSnapshot] = useState<OperatorSnapshot | null>(null);
   const [error, setError] = useState('');
   const [isLoading, setLoading] = useState(false);
+  const [isExporting, setExporting] = useState('');
 
   async function handleLoad(event: FormEvent) {
     event.preventDefault();
@@ -1089,6 +1092,29 @@ function OperatorPage() {
       setError(err instanceof Error ? err.message : 'Could not load operator dashboard.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleExport(kind: 'beta-requests' | 'feedback') {
+    const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+    const token = adminToken.trim();
+    if (!publicApiBaseUrl || !token) {
+      setError('Add the public API URL and admin token first.');
+      return;
+    }
+
+    setExporting(kind);
+    setError('');
+    try {
+      const csv =
+        kind === 'beta-requests'
+          ? await getPublicAdminBetaRequestsCsv(publicApiBaseUrl, token)
+          : await getPublicAdminFeedbackCsv(publicApiBaseUrl, token);
+      downloadTextFile(csv, kind === 'beta-requests' ? 'brain-dump-beta-requests.csv' : 'brain-dump-feedback.csv', 'text/csv');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not export CSV.');
+    } finally {
+      setExporting('');
     }
   }
 
@@ -1223,7 +1249,17 @@ function OperatorPage() {
           </article>
 
           <article className="operatorPanel widePanel">
-            <h2>Beta Requests</h2>
+            <div className="operatorPanelHeader">
+              <h2>Beta Requests</h2>
+              <button
+                type="button"
+                className="smallButton exportButton"
+                disabled={isExporting === 'beta-requests'}
+                onClick={() => handleExport('beta-requests')}
+              >
+                {isExporting === 'beta-requests' ? 'Exporting' : 'Export CSV'}
+              </button>
+            </div>
             {snapshot.betaRequests.length ? (
               <div className="betaRequestList">
                 {snapshot.betaRequests.map((request) => (
@@ -1256,7 +1292,17 @@ function OperatorPage() {
           </article>
 
           <article className="operatorPanel widePanel">
-            <h2>Beta Feedback</h2>
+            <div className="operatorPanelHeader">
+              <h2>Beta Feedback</h2>
+              <button
+                type="button"
+                className="smallButton exportButton"
+                disabled={isExporting === 'feedback'}
+                onClick={() => handleExport('feedback')}
+              >
+                {isExporting === 'feedback' ? 'Exporting' : 'Export CSV'}
+              </button>
+            </div>
             {snapshot.feedback.length ? (
               <div className="feedbackRecordList">
                 {snapshot.feedback.map((record) => (
@@ -1341,6 +1387,18 @@ function betaComfortLabel(value: string): string {
   if (value === 'preview_first') return 'Preview first';
   if (value === 'not_ready') return 'Not ready yet';
   return value;
+}
+
+function downloadTextFile(contents: string, filename: string, type: string): void {
+  const blob = new Blob([contents], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function PublicDocument({

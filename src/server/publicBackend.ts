@@ -1,6 +1,12 @@
 import { parseBrainDump } from '../lib/parser';
 import type { ActionType, BrainDumpRequest, BrainDumpResponse, ParsedAction, UserWorkspace } from '../lib/types';
-import { publicBackendRoutes, type BetaRequestInput, type FeedbackInput } from '../api/publicContract';
+import {
+  publicBackendRoutes,
+  type BetaRequestInput,
+  type BetaRequestRecord,
+  type FeedbackInput,
+  type FeedbackRecord
+} from '../api/publicContract';
 import { createDemoActionExecutor, type ActionExecutor } from './actionExecutor';
 import {
   completeOAuthSession,
@@ -325,16 +331,24 @@ export function createPublicBackend(options: PublicBackendOptions) {
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminBetaRequests) {
         const adminError = requireAdmin(request, options.adminToken, 'Admin beta requests are not configured.');
         if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        const requests = await betaRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit')));
+        if (url.searchParams.get('format') === 'csv') {
+          return withCors(csv(betaRequestsCsv(requests), 'brain-dump-beta-requests.csv'), request, options.frontendAppUrl);
+        }
         return sendJson({
-          requests: await betaRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit')))
+          requests
         });
       }
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminFeedback) {
         const adminError = requireAdmin(request, options.adminToken, 'Admin feedback is not configured.');
         if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        const feedback = await feedbackStore.readRecent(parseAdminLimit(url.searchParams.get('limit')));
+        if (url.searchParams.get('format') === 'csv') {
+          return withCors(csv(feedbackCsv(feedback), 'brain-dump-feedback.csv'), request, options.frontendAppUrl);
+        }
         return sendJson({
-          feedback: await feedbackStore.readRecent(parseAdminLimit(url.searchParams.get('limit')))
+          feedback
         });
       }
 
@@ -849,6 +863,16 @@ function json(value: unknown, status = 200, headers: Record<string, string> = {}
   });
 }
 
+function csv(value: string, filename: string): Response {
+  return new Response(value, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`
+    }
+  });
+}
+
 function redirect(location: string, headers: Record<string, string> = {}): Response {
   return new Response(null, {
     status: 302,
@@ -878,4 +902,48 @@ function parseAdminLimit(value: string | null): number {
   const limit = Number(value);
   if (!Number.isInteger(limit) || limit <= 0) return 20;
   return Math.min(limit, 100);
+}
+
+function betaRequestsCsv(requests: BetaRequestRecord[]): string {
+  return recordsToCsv(
+    ['createdAt', 'name', 'email', 'tools', 'googleComfort', 'notes', 'status', 'id'],
+    requests.map((request) => ({
+      createdAt: request.createdAt,
+      name: request.name,
+      email: request.email,
+      tools: request.tools,
+      googleComfort: request.googleComfort,
+      notes: request.notes ?? '',
+      status: request.status,
+      id: request.id
+    }))
+  );
+}
+
+function feedbackCsv(feedback: FeedbackRecord[]): string {
+  return recordsToCsv(
+    ['createdAt', 'email', 'requestId', 'lookedRight', 'confusing', 'expected', 'status', 'id'],
+    feedback.map((record) => ({
+      createdAt: record.createdAt,
+      email: record.email ?? '',
+      requestId: record.requestId ?? '',
+      lookedRight: record.lookedRight,
+      confusing: record.confusing,
+      expected: record.expected,
+      status: record.status,
+      id: record.id
+    }))
+  );
+}
+
+function recordsToCsv(headers: string[], rows: Array<Record<string, string>>): string {
+  return [headers, ...rows.map((row) => headers.map((header) => row[header] ?? ''))]
+    .map((row) => row.map(csvCell).join(','))
+    .join('\n');
+}
+
+function csvCell(value: string): string {
+  const normalized = value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  if (!/[",\n]/.test(normalized)) return normalized;
+  return `"${normalized.replace(/"/g, '""')}"`;
 }

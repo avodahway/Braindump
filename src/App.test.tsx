@@ -207,6 +207,9 @@ describe('App routes', () => {
       return new Response(JSON.stringify({ ok: true }));
     });
     vi.stubGlobal('fetch', fetcher);
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:csv-export') });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
     renderAt('/operator');
 
     fireEvent.change(screen.getByPlaceholderText('BRAIN_DUMP_ADMIN_TOKEN'), { target: { value: 'admin-token' } });
@@ -222,6 +225,7 @@ describe('App routes', () => {
     expect(screen.getByText('jay@example.com')).toBeInTheDocument();
     expect(screen.getByText('Beta Feedback')).toBeInTheDocument();
     expect(screen.getByText('Tasks were right.')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Export CSV/i })).toHaveLength(2);
     expect(screen.getByText('Take a provider-level snapshot before deploy.')).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/metrics', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
@@ -233,6 +237,13 @@ describe('App routes', () => {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/feedback', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+
+    fetcher.mockResolvedValueOnce(new Response('createdAt,name,email\n2026-07-17T12:00:00.000Z,Jay,jay@example.com'));
+    fireEvent.click(screen.getAllByRole('button', { name: /Export CSV/i })[0]);
+    expect(await screen.findByText('Beta Requests')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-requests?format=csv', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });

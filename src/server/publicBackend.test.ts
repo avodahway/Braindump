@@ -215,6 +215,39 @@ describe('public backend scaffold', () => {
     });
   });
 
+  it('exports beta requests as protected CSV', async () => {
+    const betaRequestStore = createMemoryBetaRequestStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      betaRequestStore,
+      adminToken: 'admin-token',
+      now: () => new Date('2026-07-17T12:00:00.000Z')
+    });
+
+    await betaRequestStore.append({
+      id: 'beta-1',
+      status: 'new',
+      name: 'Jay Cleveland',
+      email: 'jay@example.com',
+      tools: 'Google Tasks, Calendar',
+      googleComfort: 'comfortable',
+      notes: 'Wants "simple" follow-up',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/admin/beta-requests?format=csv', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+
+    expect(response.headers.get('Content-Type')).toContain('text/csv');
+    expect(await response.text()).toBe(
+      'createdAt,name,email,tools,googleComfort,notes,status,id\n' +
+        '2026-07-17T12:00:00.000Z,Jay Cleveland,jay@example.com,"Google Tasks, Calendar",comfortable,"Wants ""simple"" follow-up",new,beta-1'
+    );
+  });
+
   it('validates beta request fields', async () => {
     const backend = createPublicBackend({ googleOAuth });
 
@@ -284,6 +317,38 @@ describe('public backend scaffold', () => {
         }
       ]
     });
+  });
+
+  it('exports feedback as protected CSV', async () => {
+    const feedbackStore = createMemoryFeedbackStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      feedbackStore,
+      adminToken: 'admin-token'
+    });
+
+    await feedbackStore.append({
+      id: 'feedback-1',
+      status: 'new',
+      email: 'user@example.com',
+      requestId: 'req-1',
+      lookedRight: 'Tasks were right.',
+      confusing: 'Calendar felt unclear.',
+      expected: 'More review guidance.',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/admin/feedback?format=csv', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+
+    expect(response.headers.get('Content-Disposition')).toContain('brain-dump-feedback.csv');
+    expect(await response.text()).toBe(
+      'createdAt,email,requestId,lookedRight,confusing,expected,status,id\n' +
+        '2026-07-17T12:00:00.000Z,user@example.com,req-1,Tasks were right.,Calendar felt unclear.,More review guidance.,new,feedback-1'
+    );
   });
 
   it('validates feedback fields', async () => {

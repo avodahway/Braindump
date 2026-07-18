@@ -3,8 +3,10 @@ import {
   deletePublicAccountData,
   getPublicAdminBackupPlan,
   getPublicAdminBetaRequests,
+  getPublicAdminBetaRequestsCsv,
   getPublicAdminExecutionErrors,
   getPublicAdminFeedback,
+  getPublicAdminFeedbackCsv,
   getPublicAdminMetrics,
   getPublicAdminReadiness,
   getPublicBetaAccessStatus,
@@ -250,6 +252,25 @@ describe('public API client', () => {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenNthCalledWith(6, 'https://api.example.com/api/admin/feedback', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
+  it('reads protected operator CSV exports with the admin token header', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('createdAt,name,email\n2026-07-17T12:00:00.000Z,Jay,jay@example.com'))
+      .mockResolvedValueOnce(new Response('createdAt,email,lookedRight\n2026-07-17T12:00:00.000Z,user@example.com,Tasks'));
+
+    await expect(getPublicAdminBetaRequestsCsv('https://api.example.com', 'admin-token', fetcher)).resolves.toContain(
+      'jay@example.com'
+    );
+    await expect(getPublicAdminFeedbackCsv('https://api.example.com', 'admin-token', fetcher)).resolves.toContain('Tasks');
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/beta-requests?format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/admin/feedback?format=csv', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });

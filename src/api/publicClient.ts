@@ -218,6 +218,18 @@ export async function getPublicAdminBetaRequests(
   );
 }
 
+export async function getPublicAdminBetaRequestsCsv(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<string> {
+  return readText(
+    await fetcher(publicApiUrl(baseUrl, `${publicBackendRoutes.adminBetaRequests}?format=csv`), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
 export async function getPublicAdminFeedback(
   baseUrl: string,
   adminToken: string,
@@ -225,6 +237,18 @@ export async function getPublicAdminFeedback(
 ): Promise<{ feedback: FeedbackRecord[] }> {
   return readJson<{ feedback: FeedbackRecord[] }>(
     await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminFeedback), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function getPublicAdminFeedbackCsv(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<string> {
+  return readText(
+    await fetcher(publicApiUrl(baseUrl, `${publicBackendRoutes.adminFeedback}?format=csv`), {
       headers: adminHeaders(adminToken)
     })
   );
@@ -241,6 +265,13 @@ async function readJson<T>(response: Response): Promise<T> {
     throw new Error(await publicApiErrorMessage(response));
   }
   return response.json() as Promise<T>;
+}
+
+async function readText(response: Response): Promise<string> {
+  if (!response.ok) {
+    throw new Error(await publicApiErrorMessage(response));
+  }
+  return response.text();
 }
 
 async function publicApiErrorMessage(response: Response): Promise<string> {

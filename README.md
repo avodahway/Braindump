@@ -115,10 +115,10 @@ Set `BRAIN_DUMP_STORAGE_SECRET` so durable values are encrypted before being wri
 `GET /api/admin/execution-errors` returns recent protected provider write failures for the `/operator` dashboard.
 
 `POST /api/beta/request` records first-user beta interest without using the founder's Google Sheets. `/operator` reads
-those records from protected `GET /api/admin/beta-requests`.
+those records from protected `GET /api/admin/beta-requests`. Add `?format=csv` to export a follow-up list.
 
 `POST /api/feedback` records structured first-run feedback. `/operator` reads those records from protected
-`GET /api/admin/feedback`.
+`GET /api/admin/feedback`. Add `?format=csv` to export feedback for user interviews and launch notes.
 
 `src/server/idempotencyStore.ts` keeps processed request IDs from writing twice. When the backend is configured with durable storage, duplicate requests return the original response even after a backend restart.
 
