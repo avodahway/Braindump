@@ -99,6 +99,7 @@ Go-to-market planning lives in:
 - `docs/LAUNCH_ASSET_CHECKLIST.md`
 - `docs/BETA_USER_INTERVIEW_GUIDE.md`
 - `docs/LAUNCH_RISK_REGISTER.md`
+- `docs/LAUNCH_INCIDENT_RESPONSE.md`
 - `docs/OPERATOR_PRIVACY_GUIDE.md`
 - `docs/OPERATOR_TRIAGE.md`
 - `docs/LAUNCH_DECISION_RECORD.md`
