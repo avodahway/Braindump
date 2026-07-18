@@ -45,9 +45,11 @@ After deployment verification, run the OAuth start smoke test against the deploy
 
 ```sh
 pnpm smoke:oauth
+pnpm rehearse:restore
 ```
 
 It uses `BRAIN_DUMP_PUBLIC_API_ORIGIN`; if invite-only beta is enabled, also provide `BRAIN_DUMP_BETA_ACCESS_CODE`.
+The restore rehearsal also requires `BRAIN_DUMP_ADMIN_TOKEN`.
 
 ## Backend Direction
 

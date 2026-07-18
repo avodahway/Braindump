@@ -16,6 +16,7 @@
     "test": "vitest run",
     "validate:env": "node scripts/validate-production-env.mjs",
     "smoke:oauth": "node scripts/oauth-smoke-test.mjs",
+    "rehearse:restore": "node scripts/backup-restore-rehearsal.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs"
   },
   "dependencies": {

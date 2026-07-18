@@ -85,9 +85,11 @@ pnpm build
 pnpm build:backend
 pnpm validate:env
 pnpm smoke:oauth
+pnpm rehearse:restore
 ```
 
 `pnpm smoke:oauth` uses `BRAIN_DUMP_PUBLIC_API_ORIGIN`; include `BRAIN_DUMP_BETA_ACCESS_CODE` when the deployed backend is invite-only.
+`pnpm rehearse:restore` uses `BRAIN_DUMP_PUBLIC_API_ORIGIN` and `BRAIN_DUMP_ADMIN_TOKEN` to inspect the protected backup plan without exporting secrets.
 
 Then verify the deployed stack. With an admin token, this checks public pages, search/share metadata, `/operator`,
 backend health, protected operator feeds, launch summary, and CSV exports:
