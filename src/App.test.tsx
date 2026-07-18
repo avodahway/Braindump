@@ -119,6 +119,16 @@ describe('App routes', () => {
     expect(screen.getByText(/Protected operator CSV exports/i)).toBeInTheDocument();
   });
 
+  it('renders the public trust center page', () => {
+    renderAt('/trust');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Trust Center' })).toBeInTheDocument();
+    expect(screen.getByText('User approved')).toBeInTheDocument();
+    expect(screen.getByText('Reviewed first')).toBeInTheDocument();
+    expect(screen.getByText(/analytics privacy audit/i)).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /data deletion/i })[0]).toHaveAttribute('href', '/data-deletion');
+  });
+
   it('renders the public install page', () => {
     renderAt('/install');
 
@@ -200,6 +210,7 @@ describe('App routes', () => {
       '/status',
       '/faq',
       '/security',
+      '/trust',
       '/install',
       '/roadmap',
       '/press',

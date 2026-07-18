@@ -98,6 +98,7 @@ export function App() {
   if (route === '/status') return <StatusPage />;
   if (route === '/faq') return <FaqPage />;
   if (route === '/security') return <SecurityPage />;
+  if (route === '/trust') return <TrustPage />;
   if (route === '/install') return <InstallPage />;
   if (route === '/roadmap') return <RoadmapPage />;
   if (route === '/press') return <PressPage />;
@@ -699,6 +700,10 @@ function HomePage() {
           <a href="/security">
             <ShieldCheck size={20} />
             Security
+          </a>
+          <a href="/trust">
+            <Lock size={20} />
+            Trust center
           </a>
           <a href="/install">
             <Sparkles size={20} />
@@ -1387,6 +1392,58 @@ function SecurityPage() {
       <p>
         If you notice unexpected account access, duplicate writes, disconnect trouble, or a privacy concern, use{' '}
         <a href="/support">support</a> or email <a href={supportRequestMailto('Security concern')}>{supportEmail}</a>.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function TrustPage() {
+  return (
+    <PublicDocument
+      title="Trust Center"
+      subtitle="The plain-language safety posture for Brain Dump users, beta testers, and reviewers."
+    >
+      <section className="statusOverview" aria-label="Trust summary">
+        <div>
+          <span>Google access</span>
+          <strong>User approved</strong>
+        </div>
+        <div>
+          <span>Action creation</span>
+          <strong>Reviewed first</strong>
+        </div>
+        <div>
+          <span>Email sending</span>
+          <strong>Not enabled</strong>
+        </div>
+      </section>
+      <h2>What Brain Dump can access</h2>
+      <p>
+        Brain Dump asks for Google access only after you choose to connect. During beta, it uses Google sign-in, Google
+        Tasks access, and Google Calendar event access so reviewed actions can be created in your own account.
+      </p>
+      <h2>What Brain Dump will not do</h2>
+      <ul>
+        <li>It will not ask for your Google password, recovery code, OAuth token, or browser cookies.</li>
+        <li>It will not sell Google user data or use it for advertising.</li>
+        <li>It will not send email during beta.</li>
+        <li>It will not create ambiguous actions without a review step.</li>
+      </ul>
+      <h2>Your controls</h2>
+      <ul>
+        <li>Use <a href="/app">the app</a> to disconnect Google.</li>
+        <li>Use <a href="/data-deletion">data deletion</a> to request stored Brain Dump account record deletion.</li>
+        <li>Use <a href="/support">support</a> to report duplicate writes, connection trouble, or privacy concerns.</li>
+      </ul>
+      <h2>Launch safeguards</h2>
+      <p>
+        Public launch is gated by protected readiness checks, duplicate-write auditing, support SLA monitoring, restore
+        rehearsal, OAuth smoke testing, and an analytics privacy audit that blocks private fields from telemetry.
+      </p>
+      <h2>Current posture</h2>
+      <p>
+        See <a href="/status">launch status</a> for the current beta phase, <a href="/privacy">privacy</a> for Google
+        user data language, and <a href="/security">security</a> for safe support practices.
       </p>
     </PublicDocument>
   );
@@ -2730,6 +2787,7 @@ function PublicNav() {
         <a href="/status">Status</a>
         <a href="/faq">FAQ</a>
         <a href="/security">Security</a>
+        <a href="/trust">Trust</a>
         <a href="/install">Install</a>
         <a href="/roadmap">Roadmap</a>
         <a href="/press">Press</a>
@@ -2775,6 +2833,7 @@ function normalizedPath(path: string): string {
     path === '/status' ||
     path === '/faq' ||
     path === '/security' ||
+    path === '/trust' ||
     path === '/install' ||
     path === '/roadmap' ||
     path === '/press' ||
