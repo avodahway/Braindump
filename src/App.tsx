@@ -35,6 +35,7 @@ import {
   updatePublicAdminBetaRequestStatus,
   updatePublicAdminFeedbackStatus,
   getPublicAdminSupportRequests,
+  getPublicAdminSupportRequestsCsv,
   updatePublicAdminSupportRequestStatus
 } from './api/publicClient';
 import {
@@ -1259,7 +1260,7 @@ function OperatorPage() {
     }
   }
 
-  async function handleExport(kind: 'beta-requests' | 'feedback') {
+  async function handleExport(kind: 'beta-requests' | 'feedback' | 'support-requests') {
     const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
     const token = adminToken.trim();
     if (!publicApiBaseUrl || !token) {
@@ -1273,8 +1274,16 @@ function OperatorPage() {
       const csv =
         kind === 'beta-requests'
           ? await getPublicAdminBetaRequestsCsv(publicApiBaseUrl, token)
-          : await getPublicAdminFeedbackCsv(publicApiBaseUrl, token);
-      downloadTextFile(csv, kind === 'beta-requests' ? 'brain-dump-beta-requests.csv' : 'brain-dump-feedback.csv', 'text/csv');
+          : kind === 'feedback'
+            ? await getPublicAdminFeedbackCsv(publicApiBaseUrl, token)
+            : await getPublicAdminSupportRequestsCsv(publicApiBaseUrl, token);
+      const filename =
+        kind === 'beta-requests'
+          ? 'brain-dump-beta-requests.csv'
+          : kind === 'feedback'
+            ? 'brain-dump-feedback.csv'
+            : 'brain-dump-support-requests.csv';
+      downloadTextFile(csv, filename, 'text/csv');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not export CSV.');
     } finally {
@@ -1633,7 +1642,17 @@ function OperatorPage() {
           </article>
 
           <article className="operatorPanel widePanel">
-            <h2>Support Requests</h2>
+            <div className="operatorPanelHeader">
+              <h2>Support Requests</h2>
+              <button
+                type="button"
+                className="smallButton exportButton"
+                disabled={isExporting === 'support-requests'}
+                onClick={() => handleExport('support-requests')}
+              >
+                {isExporting === 'support-requests' ? 'Exporting' : 'Export CSV'}
+              </button>
+            </div>
             {snapshot.supportRequests.length ? (
               <div className="feedbackRecordList">
                 {snapshot.supportRequests.map((request) => (

@@ -403,8 +403,12 @@ export function createPublicBackend(options: PublicBackendOptions) {
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminSupportRequests) {
         const adminError = requireAdmin(request, options.adminToken, 'Admin support requests are not configured.');
         if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        const supportRequests = await supportRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit')));
+        if (url.searchParams.get('format') === 'csv') {
+          return withCors(csv(supportRequestsCsv(supportRequests), 'brain-dump-support-requests.csv'), request, options.frontendAppUrl);
+        }
         return sendJson({
-          supportRequests: await supportRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit')))
+          supportRequests
         });
       }
 
@@ -1063,6 +1067,21 @@ function feedbackCsv(feedback: FeedbackRecord[]): string {
       expected: record.expected,
       status: record.status,
       id: record.id
+    }))
+  );
+}
+
+function supportRequestsCsv(requests: SupportRequestRecord[]): string {
+  return recordsToCsv(
+    ['createdAt', 'email', 'issueType', 'summary', 'details', 'status', 'id'],
+    requests.map((request) => ({
+      createdAt: request.createdAt,
+      email: request.email,
+      issueType: request.issueType,
+      summary: request.summary,
+      details: request.details,
+      status: request.status,
+      id: request.id
     }))
   );
 }

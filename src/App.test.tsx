@@ -329,7 +329,7 @@ describe('App routes', () => {
       },
       body: JSON.stringify({ id: 'support-1', status: 'resolved' })
     });
-    expect(screen.getAllByRole('button', { name: /Export CSV/i })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /Export CSV/i })).toHaveLength(3);
     expect(screen.getByText('Take a provider-level snapshot before deploy.')).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/metrics', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
@@ -348,6 +348,12 @@ describe('App routes', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /Export CSV/i })[0]);
     expect(await screen.findByText('Beta Requests')).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-requests?format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    fetcher.mockResolvedValueOnce(new Response('createdAt,email\n2026-07-17,user@example.com'));
+    fireEvent.click(screen.getAllByRole('button', { name: /Export CSV/i })[2]);
+    expect(await screen.findByText('Support Requests')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/support-requests?format=csv', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });

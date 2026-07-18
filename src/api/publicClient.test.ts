@@ -22,6 +22,7 @@ import {
   updatePublicAdminBetaRequestStatus,
   updatePublicAdminFeedbackStatus,
   getPublicAdminSupportRequests,
+  getPublicAdminSupportRequestsCsv,
   updatePublicAdminSupportRequestStatus
 } from './publicClient';
 
@@ -419,6 +420,18 @@ describe('public API client', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ id: 'support-1', status: 'resolved' })
+    });
+  });
+
+  it('reads support request CSV exports with the admin token header', async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response('createdAt,email\n2026-07-17,user@example.com'));
+
+    await expect(getPublicAdminSupportRequestsCsv('https://api.example.com', 'admin-token', fetcher)).resolves.toContain(
+      'user@example.com'
+    );
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/support-requests?format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });
 });

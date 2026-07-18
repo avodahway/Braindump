@@ -528,6 +528,36 @@ describe('public backend scaffold', () => {
     });
   });
 
+  it('exports support requests as protected CSV', async () => {
+    const supportRequestStore = createMemorySupportRequestStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      supportRequestStore,
+      adminToken: 'admin-token'
+    });
+    await supportRequestStore.append({
+      id: 'support-1',
+      status: 'new',
+      email: 'user@example.com',
+      issueType: 'google_connection',
+      summary: 'Connection failed',
+      details: 'OAuth callback showed an error.',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/admin/support-requests?format=csv', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+
+    expect(response.headers.get('Content-Disposition')).toContain('brain-dump-support-requests.csv');
+    expect(await response.text()).toBe(
+      'createdAt,email,issueType,summary,details,status,id\n' +
+        '2026-07-17T12:00:00.000Z,user@example.com,google_connection,Connection failed,OAuth callback showed an error.,new,support-1'
+    );
+  });
+
   it('blocks public brain dump execution until beta access is granted', async () => {
     const backend = createPublicBackend({
       googleOAuth,

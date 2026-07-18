@@ -326,6 +326,18 @@ export async function getPublicAdminSupportRequests(
   );
 }
 
+export async function getPublicAdminSupportRequestsCsv(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<string> {
+  return readText(
+    await fetcher(publicApiUrl(baseUrl, `${publicBackendRoutes.adminSupportRequests}?format=csv`), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
 export async function updatePublicAdminSupportRequestStatus(
   baseUrl: string,
   adminToken: string,
