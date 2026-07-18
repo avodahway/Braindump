@@ -58,6 +58,7 @@ describe('App routes', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Data Deletion' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Disconnect Google' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Send deletion request/i })).toBeInTheDocument();
     expect(screen.getByText(/does not remove tasks or calendar events already created/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /support@braindump.app/i })).toHaveAttribute(
       'href',
@@ -394,6 +395,53 @@ describe('App routes', () => {
         issueType: 'google_connection',
         summary: 'Connection failed',
         details: 'OAuth callback showed an error.'
+      })
+    });
+  });
+
+  it('submits data deletion requests through the support pipeline', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === 'https://api.example.com/api/support/request') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            supportRequest: {
+              id: 'support-2',
+              status: 'new',
+              email: 'user@example.com',
+              issueType: 'account_or_data',
+              summary: 'Data deletion request',
+              details: 'Please delete my stored Brain Dump records.',
+              createdAt: '2026-07-17T12:00:00.000Z'
+            }
+          })
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/data-deletion');
+
+    fireEvent.change(screen.getByLabelText('Google account email'), { target: { value: 'user@example.com' } });
+    fireEvent.change(screen.getByLabelText('Request details'), {
+      target: { value: 'Please delete my stored Brain Dump records.' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Send deletion request/i }));
+
+    expect(await screen.findByText('Data deletion request sent. We will follow up by email.')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/support/request', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'user@example.com',
+        issueType: 'account_or_data',
+        summary: 'Data deletion request',
+        details: 'Please delete my stored Brain Dump records.'
       })
     });
   });

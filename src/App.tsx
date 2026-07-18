@@ -864,6 +864,43 @@ function SupportPage() {
 }
 
 function DataDeletionPage() {
+  const [settings] = useState(() => loadSettings());
+  const [form, setForm] = useState({
+    email: '',
+    details: ''
+  });
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setSubmitting] = useState(false);
+  const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError('');
+    setStatus('');
+
+    if (!publicApiBaseUrl) {
+      setError('Data deletion request form is not connected yet. Use the email link below.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await submitPublicSupportRequest(publicApiBaseUrl, {
+        email: form.email,
+        issueType: 'account_or_data',
+        summary: 'Data deletion request',
+        details: form.details
+      });
+      setStatus('Data deletion request sent. We will follow up by email.');
+      setForm({ email: '', details: '' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send data deletion request.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <PublicDocument
       title="Data Deletion"
@@ -879,6 +916,33 @@ function DataDeletionPage() {
         Email <a href={supportRequestMailto('Data deletion request')}>{supportEmail}</a> with "Data deletion request" in
         the subject and include the Google account email you used with Brain Dump.
       </p>
+      <form className="publicForm" onSubmit={handleSubmit}>
+        <label>
+          Google account email
+          <input
+            value={form.email}
+            onChange={(event) => setForm({ ...form, email: event.target.value })}
+            autoComplete="email"
+            type="email"
+            required
+          />
+        </label>
+        <label>
+          Request details
+          <textarea
+            value={form.details}
+            onChange={(event) => setForm({ ...form, details: event.target.value })}
+            placeholder="Tell us what records you want deleted."
+            required
+          />
+        </label>
+        {error && <div className="errorCard">{error}</div>}
+        {status && <div className="successCard">{status}</div>}
+        <button className="processButton" type="submit" disabled={isSubmitting}>
+          <ShieldCheck size={18} />
+          {isSubmitting ? 'Sending' : 'Send deletion request'}
+        </button>
+      </form>
       <p>
         The public backend also supports signed-in account deletion at <code>/api/account/delete</code>. This clears the
         stored Brain Dump records associated with the current session.
