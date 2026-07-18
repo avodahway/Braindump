@@ -155,6 +155,49 @@ describe('App routes', () => {
     expect(screen.getByText(/keeps ambiguous calendar requests and email-like instructions in review/i)).toBeInTheDocument();
   });
 
+  it('keeps public launch pages accessible by heading and labeled controls', () => {
+    const publicRoutes = [
+      '/',
+      '/privacy',
+      '/terms',
+      '/support',
+      '/data-deletion',
+      '/feedback',
+      '/beta',
+      '/status',
+      '/faq',
+      '/security',
+      '/install',
+      '/roadmap',
+      '/press',
+      '/examples'
+    ];
+
+    for (const route of publicRoutes) {
+      cleanup();
+      renderAt(route);
+      expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    }
+
+    cleanup();
+    renderAt('/support');
+    expect(screen.getByLabelText('Email')).toBeInTheDocument();
+    expect(screen.getByLabelText('Issue type')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Send support request/i })).toBeInTheDocument();
+
+    cleanup();
+    renderAt('/feedback');
+    expect(screen.getByLabelText('What looked right?')).toBeInTheDocument();
+    expect(screen.getByLabelText('What looked wrong or confusing?')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Send feedback/i })).toBeInTheDocument();
+
+    cleanup();
+    renderAt('/beta');
+    expect(screen.getByLabelText('Name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Email')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Request beta access/i })).toBeInTheDocument();
+  });
+
   it('renders the product tool at the app route', () => {
     renderAt('/app');
 
