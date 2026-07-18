@@ -204,6 +204,24 @@ describe('App routes', () => {
           })
         );
       }
+      if (url === 'https://api.example.com/api/admin/beta-request') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            request: {
+              id: 'beta-1',
+              status: 'invited',
+              name: 'Jay Cleveland',
+              email: 'jay@example.com',
+              tools: 'Google Tasks',
+              googleComfort: 'comfortable',
+              notes: 'I want to test it.',
+              createdAt: '2026-07-17T12:00:00.000Z',
+              updatedAt: '2026-07-17T12:30:00.000Z'
+            }
+          })
+        );
+      }
       return new Response(JSON.stringify({ ok: true }));
     });
     vi.stubGlobal('fetch', fetcher);
@@ -223,6 +241,17 @@ describe('App routes', () => {
     expect(screen.getByText('Calendar write failed')).toBeInTheDocument();
     expect(screen.getByText('Beta Requests')).toBeInTheDocument();
     expect(screen.getByText('jay@example.com')).toBeInTheDocument();
+    expect(screen.getByText('new')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Mark invited/i }));
+    expect(await screen.findByText('invited')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-request', {
+      method: 'POST',
+      headers: {
+        'X-Brain-Dump-Admin-Token': 'admin-token',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 'beta-1', status: 'invited' })
+    });
     expect(screen.getByText('Beta Feedback')).toBeInTheDocument();
     expect(screen.getByText('Tasks were right.')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /Export CSV/i })).toHaveLength(2);

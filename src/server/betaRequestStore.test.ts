@@ -23,6 +23,20 @@ describe('beta request store', () => {
     expect(requests).toHaveLength(1);
     expect(requests[0]).toMatchObject({ id: 'updated', email: 'USER@example.com' });
   });
+
+  it('updates beta request status in durable storage', async () => {
+    const keyValueStore = createMemoryKeyValueStore();
+    const store = createDurableBetaRequestStore(keyValueStore, { keyPrefix: 'test' });
+
+    await store.append(betaRequest('first', 'user@example.com', '2026-07-17T10:00:00.000Z'));
+
+    await expect(store.updateStatus('first', 'invited', '2026-07-17T11:00:00.000Z')).resolves.toMatchObject({
+      id: 'first',
+      status: 'invited',
+      updatedAt: '2026-07-17T11:00:00.000Z'
+    });
+    await expect(store.updateStatus('missing', 'archived', '2026-07-17T11:00:00.000Z')).resolves.toBeUndefined();
+  });
 });
 
 function betaRequest(id: string, email: string, createdAt: string) {

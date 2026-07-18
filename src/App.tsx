@@ -30,7 +30,8 @@ import {
   getPublicAdminMetrics,
   getPublicAdminReadiness,
   submitPublicBetaRequest,
-  submitPublicFeedback
+  submitPublicFeedback,
+  updatePublicAdminBetaRequestStatus
 } from './api/publicClient';
 import {
   connectPublicWorkspace,
@@ -44,7 +45,7 @@ import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
 import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
-import type { BetaAccessStatus, BetaRequestRecord, FeedbackRecord } from './api/publicContract';
+import type { BetaAccessStatus, BetaRequestRecord, BetaRequestStatus, FeedbackRecord } from './api/publicContract';
 import type { AnalyticsMetrics } from './server/analyticsStore';
 import type { BackupPlan } from './server/backupPlan';
 import type { ExecutionLogRecord } from './server/executionLogStore';
@@ -1053,6 +1054,7 @@ function OperatorPage() {
   const [error, setError] = useState('');
   const [isLoading, setLoading] = useState(false);
   const [isExporting, setExporting] = useState('');
+  const [updatingRecordId, setUpdatingRecordId] = useState('');
 
   async function handleLoad(event: FormEvent) {
     event.preventDefault();
@@ -1115,6 +1117,33 @@ function OperatorPage() {
       setError(err instanceof Error ? err.message : 'Could not export CSV.');
     } finally {
       setExporting('');
+    }
+  }
+
+  async function handleBetaRequestStatus(id: string, status: BetaRequestStatus) {
+    const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+    const token = adminToken.trim();
+    if (!publicApiBaseUrl || !token) {
+      setError('Add the public API URL and admin token first.');
+      return;
+    }
+
+    setUpdatingRecordId(id);
+    setError('');
+    try {
+      const result = await updatePublicAdminBetaRequestStatus(publicApiBaseUrl, token, id, status);
+      setSnapshot((current) =>
+        current
+          ? {
+              ...current,
+              betaRequests: current.betaRequests.map((request) => (request.id === id ? result.request : request))
+            }
+          : current
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update beta request.');
+    } finally {
+      setUpdatingRecordId('');
     }
   }
 
@@ -1281,8 +1310,30 @@ function OperatorPage() {
                         <dt>Requested</dt>
                         <dd>{shortDateTime(request.createdAt)}</dd>
                       </div>
+                      <div>
+                        <dt>Status</dt>
+                        <dd>{operatorStatusLabel(request.status)}</dd>
+                      </div>
                     </dl>
                     {request.notes && <p>{request.notes}</p>}
+                    <div className="operatorInlineActions">
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === request.id || request.status === 'invited'}
+                        onClick={() => handleBetaRequestStatus(request.id, 'invited')}
+                      >
+                        Mark invited
+                      </button>
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === request.id || request.status === 'archived'}
+                        onClick={() => handleBetaRequestStatus(request.id, 'archived')}
+                      >
+                        Archive
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1387,6 +1438,10 @@ function betaComfortLabel(value: string): string {
   if (value === 'preview_first') return 'Preview first';
   if (value === 'not_ready') return 'Not ready yet';
   return value;
+}
+
+function operatorStatusLabel(value: string): string {
+  return value.replaceAll('_', ' ');
 }
 
 function downloadTextFile(contents: string, filename: string, type: string): void {

@@ -4,6 +4,7 @@ import {
   publicBackendRoutes,
   type BetaRequestInput,
   type BetaRequestRecord,
+  type BetaRequestStatus,
   type FeedbackInput,
   type FeedbackRecord
 } from '../api/publicContract';
@@ -340,6 +341,18 @@ export function createPublicBackend(options: PublicBackendOptions) {
         });
       }
 
+      if (request.method === 'POST' && url.pathname === publicBackendRoutes.adminBetaRequest) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin beta request updates are not configured.');
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        const body = await readJsonBody(request, maxJsonBodyBytes);
+        if (!body.ok) return sendJson({ error: body.error }, body.status);
+        const update = parseBetaRequestStatusUpdate(body.value);
+        if (!update.ok) return sendJson({ error: update.error }, 400);
+        const record = await betaRequestStore.updateStatus(update.value.id, update.value.status, now().toISOString());
+        if (!record) return sendJson({ error: 'Beta request was not found.' }, 404);
+        return sendJson({ ok: true, request: record });
+      }
+
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminFeedback) {
         const adminError = requireAdmin(request, options.adminToken, 'Admin feedback is not configured.');
         if (adminError) return withCors(adminError, request, options.frontendAppUrl);
@@ -462,6 +475,20 @@ function parseFeedback(value: unknown): { ok: true; value: FeedbackInput } | { o
       expected
     }
   };
+}
+
+function parseBetaRequestStatusUpdate(
+  value: unknown
+): { ok: true; value: { id: string; status: BetaRequestStatus } } | { ok: false; error: string } {
+  if (!isRecord(value)) return { ok: false, error: 'Beta request update must be an object.' };
+  const id = trimmedString(value.id);
+  if (!id) return { ok: false, error: 'Beta request id is required.' };
+  if (!isBetaRequestStatus(value.status)) return { ok: false, error: 'Beta request status is invalid.' };
+  return { ok: true, value: { id, status: value.status } };
+}
+
+function isBetaRequestStatus(value: unknown): value is BetaRequestStatus {
+  return value === 'new' || value === 'invited' || value === 'archived';
 }
 
 async function betaAccessCookieValue(betaAccessCode: string): Promise<string> {

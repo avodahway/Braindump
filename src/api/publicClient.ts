@@ -4,6 +4,7 @@ import {
   type BetaAccessStatus,
   type BetaRequestInput,
   type BetaRequestRecord,
+  type BetaRequestStatus,
   type FeedbackInput,
   type FeedbackRecord
 } from './publicContract';
@@ -226,6 +227,25 @@ export async function getPublicAdminBetaRequestsCsv(
   return readText(
     await fetcher(publicApiUrl(baseUrl, `${publicBackendRoutes.adminBetaRequests}?format=csv`), {
       headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function updatePublicAdminBetaRequestStatus(
+  baseUrl: string,
+  adminToken: string,
+  id: string,
+  status: BetaRequestStatus,
+  fetcher: JsonFetcher = fetch
+): Promise<{ ok: true; request: BetaRequestRecord }> {
+  return readJson<{ ok: true; request: BetaRequestRecord }>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminBetaRequest), {
+      method: 'POST',
+      headers: {
+        ...adminHeaders(adminToken),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id, status })
     })
   );
 }

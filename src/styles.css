@@ -263,6 +263,12 @@ a {
   margin: 0;
 }
 
+.operatorInlineActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .exportButton {
   flex: 0 0 auto;
   border: 1px solid rgba(39, 89, 70, 0.14);

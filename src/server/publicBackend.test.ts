@@ -248,6 +248,50 @@ describe('public backend scaffold', () => {
     );
   });
 
+  it('updates protected beta request status', async () => {
+    const betaRequestStore = createMemoryBetaRequestStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      betaRequestStore,
+      adminToken: 'admin-token',
+      now: () => new Date('2026-07-17T12:30:00.000Z')
+    });
+
+    await betaRequestStore.append({
+      id: 'beta-1',
+      status: 'new',
+      name: 'Jay Cleveland',
+      email: 'jay@example.com',
+      tools: 'Google Tasks',
+      googleComfort: 'comfortable',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+
+    const blocked = await backend.handle(
+      new Request('https://api.example.com/api/admin/beta-request', {
+        method: 'POST',
+        body: JSON.stringify({ id: 'beta-1', status: 'invited' })
+      })
+    );
+    const updated = await backend.handle(
+      new Request('https://api.example.com/api/admin/beta-request', {
+        method: 'POST',
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' },
+        body: JSON.stringify({ id: 'beta-1', status: 'invited' })
+      })
+    );
+
+    expect(blocked.status).toBe(401);
+    expect(await updated.json()).toMatchObject({
+      ok: true,
+      request: {
+        id: 'beta-1',
+        status: 'invited',
+        updatedAt: '2026-07-17T12:30:00.000Z'
+      }
+    });
+  });
+
   it('validates beta request fields', async () => {
     const backend = createPublicBackend({ googleOAuth });
 

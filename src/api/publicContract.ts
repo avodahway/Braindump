@@ -10,9 +10,12 @@ export type BetaRequestInput = {
 
 export type BetaRequestRecord = BetaRequestInput & {
   id: string;
-  status: 'new';
+  status: BetaRequestStatus;
   createdAt: string;
+  updatedAt?: string;
 };
+
+export type BetaRequestStatus = 'new' | 'invited' | 'archived';
 
 export type FeedbackInput = {
   email?: string;
@@ -62,6 +65,7 @@ export const publicBackendRoutes = {
   adminReadiness: '/api/admin/readiness',
   adminExecutionErrors: '/api/admin/execution-errors',
   adminBetaRequests: '/api/admin/beta-requests',
+  adminBetaRequest: '/api/admin/beta-request',
   adminFeedback: '/api/admin/feedback',
   brainDump: '/api/brain-dump'
 } as const;
