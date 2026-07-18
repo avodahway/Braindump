@@ -13,7 +13,7 @@ pnpm dev
 
 The app starts in mock preview mode. It parses and groups results locally without touching any Google account.
 
-Public launch pages are available at `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, and `/beta`. The product tool is available at `/app`.
+Public launch pages are available at `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, and `/status`. The product tool is available at `/app`.
 
 Set `VITE_SUPPORT_EMAIL` at build time to show the live beta support address in public pages and feedback links.
 Set `VITE_PUBLIC_API_BASE_URL` at build time so public pages can submit beta access requests to the backend.
@@ -77,6 +77,8 @@ Go-to-market planning lives in:
 - `docs/SUPABASE_STORAGE.md`
 - `docs/FIRST_USER_BETA_PACKET.md`
 - `docs/BETA_LAUNCH_WORKSHEET.md`
+- `docs/OPERATOR_PRIVACY_GUIDE.md`
+- `docs/LAUNCH_DECISION_RECORD.md`
 - `docs/PRIVACY_POLICY_DRAFT.md`
 - `docs/TERMS_OF_SERVICE_DRAFT.md`
 
@@ -122,7 +124,8 @@ those records from protected `GET /api/admin/beta-requests`. Add `?format=csv` t
 `GET /api/admin/feedback`. Add `?format=csv` to export feedback for user interviews and launch notes.
 
 `POST /api/support/request` records structured support and data-deletion requests. `/operator` reads those records from
-protected `GET /api/admin/support-requests` and can mark beta, feedback, and support records through their lifecycle.
+protected `GET /api/admin/support-requests`, supports `?format=csv`, and can mark beta, feedback, and support records
+through their lifecycle.
 
 `src/server/idempotencyStore.ts` keeps processed request IDs from writing twice. When the backend is configured with durable storage, duplicate requests return the original response even after a backend restart.
 

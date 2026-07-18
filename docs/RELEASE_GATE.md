@@ -41,4 +41,6 @@ Do not invite the next tester batch unless:
 
 - CI is green.
 - Deployment verification is green.
+- Operator privacy guidance has been reviewed for this batch.
+- A launch decision record exists for the current tester batch or release.
 - The last tester batch has no unresolved duplicate-write, disconnect, OAuth, or wrong-calendar issues.

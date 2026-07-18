@@ -25,6 +25,7 @@ Use this inventory when moving from local development to a real beta deployment.
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/data-deletion` | Data deletion instructions | Disconnect and deletion request process |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/feedback` | Post-run feedback | Three-question feedback form |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/beta` | Beta access request | Public-user expectations and beta request form |
+| `[BRAIN_DUMP_FRONTEND_ORIGIN]/status` | Launch status | Current beta phase, known limits, and support path |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/operator` | Protected operator dashboard | Admin token loads readiness, metrics, backup plan, beta requests, and recent errors |
 
 The frontend host must serve the same app entry point for every route above.

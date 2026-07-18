@@ -9,8 +9,9 @@
 - Publish basic home page.
 - Publish privacy policy draft page.
 - Publish terms draft page.
-- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/operator`, and `/app` routes work on the deployed frontend.
+- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/operator`, and `/app` routes work on the deployed frontend.
 - Confirm `/app` explains setup progress, demo mode, Google connection, destinations, and disconnect.
+- Confirm `/app` first-run samples load and review successfully.
 - Confirm `/operator` loads readiness, metrics, backup status, and checklist with the admin token.
 - Pick frontend host.
 - Pick backend host.
@@ -104,5 +105,8 @@ Test these value propositions:
 - Protected beta request list in `/operator`.
 - Protected beta feedback list in `/operator`.
 - CSV exports for beta requests and feedback.
+- CSV exports for beta requests, feedback, and support requests.
 - Support and data-deletion request intake through `/support` and `/data-deletion`.
 - Operator lifecycle actions for beta requests, feedback, and support requests.
+- Public launch status page at `/status`.
+- Launch decision record.
