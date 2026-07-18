@@ -155,6 +155,14 @@ describe('App routes', () => {
     expect(screen.getByText(/keeps ambiguous calendar requests and email-like instructions in review/i)).toBeInTheDocument();
   });
 
+  it('renders the public pricing page', () => {
+    renderAt('/pricing');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Pricing' })).toBeInTheDocument();
+    expect(screen.getByText(/Paid plans are not active yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/will not charge you without a separate paid-plan sign-up/i)).toBeInTheDocument();
+  });
+
   it('keeps public launch pages accessible by heading and labeled controls', () => {
     const publicRoutes = [
       '/',
@@ -170,7 +178,8 @@ describe('App routes', () => {
       '/install',
       '/roadmap',
       '/press',
-      '/examples'
+      '/examples',
+      '/pricing'
     ];
 
     for (const route of publicRoutes) {

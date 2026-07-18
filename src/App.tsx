@@ -96,6 +96,7 @@ export function App() {
   if (route === '/roadmap') return <RoadmapPage />;
   if (route === '/press') return <PressPage />;
   if (route === '/examples') return <ExamplesPage />;
+  if (route === '/pricing') return <PricingPage />;
   if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
@@ -702,6 +703,10 @@ function HomePage() {
           <a href="/examples">
             <ClipboardList size={20} />
             Examples
+          </a>
+          <a href="/pricing">
+            <CheckCircle2 size={20} />
+            Pricing
           </a>
           <a href="/feedback">
             <UserCheck size={20} />
@@ -1497,6 +1502,34 @@ function ExamplesPage() {
         Brain Dump keeps ambiguous calendar requests and email-like instructions in review so you can decide what should
         happen next.
       </p>
+    </PublicDocument>
+  );
+}
+
+function PricingPage() {
+  return (
+    <PublicDocument
+      title="Pricing"
+      subtitle="Brain Dump is private beta software. Paid plans are not active yet."
+    >
+      <h2>During beta</h2>
+      <ul>
+        <li>No payment is required to use the current private beta.</li>
+        <li>Brain Dump will not charge you without a separate paid-plan sign-up.</li>
+        <li>Beta testers should expect product changes as the workflow is validated.</li>
+      </ul>
+      <h2>What we are learning</h2>
+      <p>
+        Pricing will be shaped around whether Brain Dump saves enough repeated planning time to justify a personal or
+        solo-operator subscription.
+      </p>
+      <h2>Likely future options</h2>
+      <ul>
+        <li>Free preview mode.</li>
+        <li>Paid connected Google execution.</li>
+        <li>Monthly solo plan.</li>
+        <li>Future small-team plan after individual use is proven.</li>
+      </ul>
     </PublicDocument>
   );
 }
@@ -2383,6 +2416,7 @@ function PublicNav() {
         <a href="/roadmap">Roadmap</a>
         <a href="/press">Press</a>
         <a href="/examples">Examples</a>
+        <a href="/pricing">Pricing</a>
         <a href="/data-deletion">Data deletion</a>
         <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
@@ -2424,6 +2458,7 @@ function normalizedPath(path: string): string {
     path === '/roadmap' ||
     path === '/press' ||
     path === '/examples' ||
+    path === '/pricing' ||
     path === '/operator' ||
     path === '/app'
   ) return path;
