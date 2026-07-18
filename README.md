@@ -74,6 +74,7 @@ Go-to-market planning lives in:
 - `docs/LAUNCH_URLS.md`
 - `docs/RELEASE_GATE.md`
 - `docs/GOOGLE_OAUTH_VERIFICATION.md`
+- `docs/OAUTH_VERIFICATION_ASSETS.md`
 - `docs/GO_TO_MARKET_CHECKLIST.md`
 - `docs/HOSTING_DECISION.md`
 - `docs/SUPABASE_STORAGE.md`

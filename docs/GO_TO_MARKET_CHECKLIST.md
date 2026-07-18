@@ -58,6 +58,7 @@
 - Confirm failed Google writes keep reviewed actions available and show Retry/support options.
 - Invite 10 to 25 users.
 - Prepare OAuth verification submission.
+- Fill `docs/OAUTH_VERIFICATION_ASSETS.md` before submitting OAuth verification.
 
 ## Phase 4: Public Beta
 

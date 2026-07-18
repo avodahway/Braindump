@@ -42,6 +42,7 @@ Do not add Gmail or Drive scopes for beta.
 
 Before verification submission:
 
+- Fill `docs/OAUTH_VERIFICATION_ASSETS.md` with production URLs, scope evidence, demo-video notes, and readiness status.
 - App name: `Brain Dump`
 - User support email: decide and configure.
 - App logo: use supplied Brain Dump icon.
