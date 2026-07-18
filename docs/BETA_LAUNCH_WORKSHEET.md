@@ -72,6 +72,7 @@ Expected:
 - Metrics response contains counts only.
 - Backup plan response says not to export Google refresh tokens.
 - Readiness response returns `ready: true` before invite emails go out.
+- Record the go/no-go call in `docs/LAUNCH_DECISION_RECORD.md`.
 
 ## Launch-Day Command Checklist
 
