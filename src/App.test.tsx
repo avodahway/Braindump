@@ -119,6 +119,15 @@ describe('App routes', () => {
     expect(screen.getByText(/Protected operator CSV exports/i)).toBeInTheDocument();
   });
 
+  it('renders the public install page', () => {
+    renderAt('/install');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Install' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'iPhone or iPad' })).toBeInTheDocument();
+    expect(screen.getByText('Choose Add to Home Screen.')).toBeInTheDocument();
+    expect(screen.getByText(/Installing Brain Dump does not connect Google/i)).toBeInTheDocument();
+  });
+
   it('renders the product tool at the app route', () => {
     renderAt('/app');
 

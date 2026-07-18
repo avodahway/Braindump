@@ -26,6 +26,7 @@ describe('deployment verifier', () => {
       'Frontend /status',
       'Frontend /faq',
       'Frontend /security',
+      'Frontend /install',
       'Frontend /operator',
       'Frontend /app',
       'Backend /api/health',

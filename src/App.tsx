@@ -92,6 +92,7 @@ export function App() {
   if (route === '/status') return <StatusPage />;
   if (route === '/faq') return <FaqPage />;
   if (route === '/security') return <SecurityPage />;
+  if (route === '/install') return <InstallPage />;
   if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
@@ -682,6 +683,10 @@ function HomePage() {
           <a href="/security">
             <ShieldCheck size={20} />
             Security
+          </a>
+          <a href="/install">
+            <Sparkles size={20} />
+            Install
           </a>
           <a href="/feedback">
             <UserCheck size={20} />
@@ -1338,6 +1343,39 @@ function SecurityPage() {
       <p>
         If you notice unexpected account access, duplicate writes, disconnect trouble, or a privacy concern, use{' '}
         <a href="/support">support</a> or email <a href={supportRequestMailto('Security concern')}>{supportEmail}</a>.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function InstallPage() {
+  return (
+    <PublicDocument
+      title="Install"
+      subtitle="Add Brain Dump to your home screen or desktop during beta."
+    >
+      <h2>iPhone or iPad</h2>
+      <ol>
+        <li>Open Brain Dump in Safari.</li>
+        <li>Tap Share.</li>
+        <li>Choose Add to Home Screen.</li>
+        <li>Open Brain Dump from the new home-screen icon.</li>
+      </ol>
+      <h2>Android</h2>
+      <ol>
+        <li>Open Brain Dump in Chrome.</li>
+        <li>Tap the browser menu.</li>
+        <li>Choose Install app or Add to Home screen.</li>
+      </ol>
+      <h2>Desktop</h2>
+      <p>
+        Open Brain Dump in Chrome or Edge and use the browser install option when it appears in the address bar or app
+        menu.
+      </p>
+      <h2>Beta note</h2>
+      <p>
+        Installing Brain Dump does not connect Google by itself. Google connects only from inside the app setup panel
+        after you approve access.
       </p>
     </PublicDocument>
   );
@@ -2131,6 +2169,7 @@ function PublicNav() {
         <a href="/status">Status</a>
         <a href="/faq">FAQ</a>
         <a href="/security">Security</a>
+        <a href="/install">Install</a>
         <a href="/data-deletion">Data deletion</a>
         <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
@@ -2168,6 +2207,7 @@ function normalizedPath(path: string): string {
     path === '/status' ||
     path === '/faq' ||
     path === '/security' ||
+    path === '/install' ||
     path === '/operator' ||
     path === '/app'
   ) return path;
