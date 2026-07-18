@@ -929,6 +929,54 @@ describe('public backend scaffold', () => {
     expect(JSON.stringify(plan)).toContain('Do not export tokens');
   });
 
+  it('returns protected recent execution errors', async () => {
+    const executionLogStore = createMemoryExecutionLogStore();
+    await executionLogStore.append({
+      requestId: 'req-created',
+      userId: 'user@example.com',
+      actionType: 'personal_task',
+      title: 'Buy coffee',
+      status: 'created',
+      message: 'Created',
+      createdAt: '2026-07-12T12:00:00.000Z'
+    });
+    await executionLogStore.append({
+      requestId: 'req-error',
+      userId: 'user@example.com',
+      actionType: 'calendar',
+      title: 'Lunch with Jack',
+      status: 'error',
+      message: 'Calendar write failed',
+      createdAt: '2026-07-12T12:01:00.000Z'
+    });
+    const backend = createPublicBackend({
+      googleOAuth,
+      executionLogStore,
+      adminToken: 'admin-secret'
+    });
+
+    const unauthorized = await backend.handle(new Request('https://api.example.com/api/admin/execution-errors'));
+    const authorized = await backend.handle(
+      new Request('https://api.example.com/api/admin/execution-errors?limit=5', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-secret' }
+      })
+    );
+    const body = await authorized.json();
+
+    expect(unauthorized.status).toBe(401);
+    expect(body.recentErrors).toEqual([
+      {
+        requestId: 'req-error',
+        userId: 'user@example.com',
+        actionType: 'calendar',
+        title: 'Lunch with Jack',
+        status: 'error',
+        message: 'Calendar write failed',
+        createdAt: '2026-07-12T12:01:00.000Z'
+      }
+    ]);
+  });
+
   it('returns protected launch readiness without exposing secrets', async () => {
     const backend = createPublicBackend({
       googleOAuth: {

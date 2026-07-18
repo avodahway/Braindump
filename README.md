@@ -109,6 +109,8 @@ Set `BRAIN_DUMP_STORAGE_SECRET` so durable values are encrypted before being wri
 
 `GET /api/admin/readiness` returns a protected launch-readiness report with boolean checks for OAuth config, frontend callback, admin protection, scopes, and durable storage.
 
+`GET /api/admin/execution-errors` returns recent protected provider write failures for the `/operator` dashboard.
+
 `src/server/idempotencyStore.ts` keeps processed request IDs from writing twice. When the backend is configured with durable storage, duplicate requests return the original response even after a backend restart.
 
 `src/server/executionLogStore.ts` records each attempted action with request id, user id, status, provider id, and failure messages so the public backend has an audit trail.

@@ -20,7 +20,12 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { trackEvent } from './api/analytics';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
-import { getPublicAdminBackupPlan, getPublicAdminMetrics, getPublicAdminReadiness } from './api/publicClient';
+import {
+  getPublicAdminBackupPlan,
+  getPublicAdminExecutionErrors,
+  getPublicAdminMetrics,
+  getPublicAdminReadiness
+} from './api/publicClient';
 import {
   connectPublicWorkspace,
   deletePublicAccountRecords,
@@ -36,6 +41,7 @@ import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types
 import type { BetaAccessStatus } from './api/publicContract';
 import type { AnalyticsMetrics } from './server/analyticsStore';
 import type { BackupPlan } from './server/backupPlan';
+import type { ExecutionLogRecord } from './server/executionLogStore';
 import type { ReadinessReport } from './server/readinessReport';
 
 const groups = [
@@ -848,6 +854,7 @@ type OperatorSnapshot = {
   metrics: AnalyticsMetrics;
   readiness: ReadinessReport;
   backupPlan: BackupPlan;
+  recentErrors: ExecutionLogRecord[];
 };
 
 function OperatorPage() {
@@ -873,14 +880,15 @@ function OperatorPage() {
     setLoading(true);
     setError('');
     try {
-      const [metrics, readiness, backupPlan] = await Promise.all([
+      const [metrics, readiness, backupPlan, executionErrors] = await Promise.all([
         getPublicAdminMetrics(publicApiBaseUrl, token),
         getPublicAdminReadiness(publicApiBaseUrl, token),
-        getPublicAdminBackupPlan(publicApiBaseUrl, token)
+        getPublicAdminBackupPlan(publicApiBaseUrl, token),
+        getPublicAdminExecutionErrors(publicApiBaseUrl, token)
       ]);
       localStorage.setItem('brain-dump-admin-token', token);
       saveSettings(settings);
-      setSnapshot({ metrics, readiness, backupPlan });
+      setSnapshot({ metrics, readiness, backupPlan, recentErrors: executionErrors.recentErrors });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load operator dashboard.');
     } finally {
@@ -980,6 +988,42 @@ function OperatorPage() {
                 <li key={section.name}>{section.name}</li>
               ))}
             </ul>
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <h2>Recent Execution Errors</h2>
+            {snapshot.recentErrors.length ? (
+              <div className="executionErrorList">
+                {snapshot.recentErrors.map((record) => (
+                  <div className="executionErrorItem" key={`${record.requestId}-${record.actionType}-${record.createdAt}`}>
+                    <div>
+                      <strong>{record.title}</strong>
+                      <span>{record.message}</span>
+                    </div>
+                    <dl>
+                      <div>
+                        <dt>Request</dt>
+                        <dd>{record.requestId}</dd>
+                      </div>
+                      <div>
+                        <dt>User</dt>
+                        <dd>{record.userId ?? 'Unknown'}</dd>
+                      </div>
+                      <div>
+                        <dt>Type</dt>
+                        <dd>{operatorEventLabel(record.actionType)}</dd>
+                      </div>
+                      <div>
+                        <dt>Time</dt>
+                        <dd>{shortDateTime(record.createdAt)}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No recent execution errors.</p>
+            )}
           </article>
 
           <article className="operatorPanel widePanel">

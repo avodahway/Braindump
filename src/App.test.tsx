@@ -151,6 +151,23 @@ describe('App routes', () => {
           })
         );
       }
+      if (url === 'https://api.example.com/api/admin/execution-errors') {
+        return new Response(
+          JSON.stringify({
+            recentErrors: [
+              {
+                requestId: 'req-error',
+                userId: 'user@example.com',
+                actionType: 'calendar',
+                title: 'Lunch with Jack',
+                status: 'error',
+                message: 'Calendar write failed',
+                createdAt: '2026-07-17T12:00:00.000Z'
+              }
+            ]
+          })
+        );
+      }
       return new Response(JSON.stringify({ ok: true }));
     });
     vi.stubGlobal('fetch', fetcher);
@@ -162,8 +179,14 @@ describe('App routes', () => {
     expect(await screen.findByText('Storage encryption codec')).toBeInTheDocument();
     expect(screen.getByText('Missing BRAIN_DUMP_STORAGE_SECRET')).toBeInTheDocument();
     expect(screen.getByText('OAuth tokens')).toBeInTheDocument();
+    expect(screen.getByText('Recent Execution Errors')).toBeInTheDocument();
+    expect(screen.getByText('Lunch with Jack')).toBeInTheDocument();
+    expect(screen.getByText('Calendar write failed')).toBeInTheDocument();
     expect(screen.getByText('Take a provider-level snapshot before deploy.')).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/metrics', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/execution-errors', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });

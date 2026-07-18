@@ -320,6 +320,58 @@ a {
   margin-top: 6px;
 }
 
+.executionErrorList {
+  display: grid;
+  gap: 10px;
+}
+
+.executionErrorItem {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e7b7ab;
+  border-radius: 8px;
+  background: #fff7f4;
+}
+
+.executionErrorItem > div {
+  display: grid;
+  gap: 4px;
+}
+
+.executionErrorItem strong {
+  color: #893225;
+  font-size: 14px;
+}
+
+.executionErrorItem span {
+  color: rgba(80, 42, 35, 0.78);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.executionErrorItem dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.executionErrorItem dt {
+  color: rgba(80, 42, 35, 0.62);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.executionErrorItem dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+  color: rgba(80, 42, 35, 0.88);
+  font-size: 12px;
+  font-weight: 750;
+}
+
 .operatorEmpty {
   display: flex;
   align-items: center;
@@ -1195,6 +1247,10 @@ input:disabled {
 
   .operatorIntro h1 {
     font-size: 30px;
+  }
+
+  .executionErrorItem dl {
+    grid-template-columns: 1fr;
   }
 
   .legalDocument {

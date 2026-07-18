@@ -2,6 +2,7 @@ import type { AnalyticsEvent, BrainDumpRequest, BrainDumpResponse, UserWorkspace
 import { publicBackendRoutes, type BetaAccessStatus } from './publicContract';
 import type { AnalyticsMetrics } from '../server/analyticsStore';
 import type { BackupPlan } from '../server/backupPlan';
+import type { ExecutionLogRecord } from '../server/executionLogStore';
 import type { ReadinessReport } from '../server/readinessReport';
 
 type JsonFetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -147,6 +148,18 @@ export async function getPublicAdminReadiness(
 ): Promise<ReadinessReport> {
   return readJson<ReadinessReport>(
     await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminReadiness), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function getPublicAdminExecutionErrors(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<{ recentErrors: ExecutionLogRecord[] }> {
+  return readJson<{ recentErrors: ExecutionLogRecord[] }>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminExecutionErrors), {
       headers: adminHeaders(adminToken)
     })
   );

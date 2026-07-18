@@ -19,6 +19,7 @@ export type ExecutionLogRecord = {
 export type ExecutionLogStore = {
   append(record: ExecutionLogRecord): Promise<void>;
   readByRequest(requestId: string): Promise<ExecutionLogRecord[]>;
+  readRecentErrors(limit?: number): Promise<ExecutionLogRecord[]>;
   deleteByUser(userId: string): Promise<void>;
   clear(): Promise<void>;
 };
@@ -40,6 +41,12 @@ export function createMemoryExecutionLogStore(): ExecutionLogStore & {
     },
     async readByRequest(requestId) {
       return records.filter((record) => record.requestId === requestId);
+    },
+    async readRecentErrors(limit = 20) {
+      return records
+        .filter((record) => record.status === 'error')
+        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+        .slice(0, limit);
     },
     async deleteByUser(userId) {
       const normalizedUserId = normalizedId(userId);
@@ -66,6 +73,12 @@ export function createDurableExecutionLogStore(
       const records = await readRecords(store, codec, logKey);
       records.push(record);
       await store.set(logKey, await codec.encode(JSON.stringify(records)));
+      if (record.status === 'error') {
+        const errors = await readRecords(store, codec, errorIndexKey(prefix));
+        errors.push(record);
+        errors.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+        await store.set(errorIndexKey(prefix), await codec.encode(JSON.stringify(errors.slice(0, 100))));
+      }
       if (record.userId) {
         const indexKey = userIndexKey(prefix, record.userId);
         const requestIds = await readStringArray(store, codec, indexKey);
@@ -78,10 +91,22 @@ export function createDurableExecutionLogStore(
     async readByRequest(requestId) {
       return readRecords(store, codec, key(prefix, requestId));
     },
+    async readRecentErrors(limit = 20) {
+      const records = await readRecords(store, codec, errorIndexKey(prefix));
+      return records.slice(0, limit);
+    },
     async deleteByUser(userId) {
       const indexKey = userIndexKey(prefix, userId);
       const requestIds = await readStringArray(store, codec, indexKey);
       await Promise.all(requestIds.map((requestId) => store.delete(key(prefix, requestId))));
+      const errors = await readRecords(store, codec, errorIndexKey(prefix));
+      const normalizedUserId = normalizedId(userId);
+      const remainingErrors = errors.filter((record) => record.userId?.toLowerCase() !== normalizedUserId);
+      if (remainingErrors.length) {
+        await store.set(errorIndexKey(prefix), await codec.encode(JSON.stringify(remainingErrors)));
+      } else {
+        await store.delete(errorIndexKey(prefix));
+      }
       await store.delete(indexKey);
     },
     async clear() {
@@ -112,6 +137,10 @@ function key(prefix: string, requestId: string): string {
 
 function userIndexKey(prefix: string, userId: string): string {
   return `${prefix}:execution-log-index:${normalizedId(userId)}`;
+}
+
+function errorIndexKey(prefix: string): string {
+  return `${prefix}:execution-log-errors`;
 }
 
 function normalizedId(value: string): string {

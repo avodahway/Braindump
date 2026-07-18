@@ -29,6 +29,34 @@ describe('execution log store', () => {
     expect([...kv.values.keys()][0]).toBe('test:execution-log:req-1');
   });
 
+  it('reads recent in-memory errors newest first', async () => {
+    const store = createMemoryExecutionLogStore();
+
+    await store.append({ ...logRecord('req-1'), status: 'error', message: 'Old failure', createdAt: '2026-07-12T12:00:00.000Z' });
+    await store.append({ ...logRecord('req-2'), status: 'created', message: 'Created', createdAt: '2026-07-12T12:01:00.000Z' });
+    await store.append({ ...logRecord('req-3'), status: 'error', message: 'New failure', createdAt: '2026-07-12T12:02:00.000Z' });
+
+    expect(await store.readRecentErrors()).toMatchObject([
+      { requestId: 'req-3', message: 'New failure' },
+      { requestId: 'req-1', message: 'Old failure' }
+    ]);
+    expect(await store.readRecentErrors(1)).toMatchObject([{ requestId: 'req-3' }]);
+  });
+
+  it('keeps a durable recent error index', async () => {
+    const kv = createMemoryKeyValueStore();
+    const store = createDurableExecutionLogStore(kv, { keyPrefix: 'test' });
+
+    await store.append({ ...logRecord('req-1'), status: 'error', message: 'Old failure', createdAt: '2026-07-12T12:00:00.000Z' });
+    await store.append({ ...logRecord('req-2'), status: 'error', message: 'New failure', createdAt: '2026-07-12T12:02:00.000Z' });
+
+    expect(await store.readRecentErrors()).toMatchObject([
+      { requestId: 'req-2', message: 'New failure' },
+      { requestId: 'req-1', message: 'Old failure' }
+    ]);
+    expect(kv.values.has('test:execution-log-errors')).toBe(true);
+  });
+
   it('uses the supplied codec before writing logs', async () => {
     const kv = createMemoryKeyValueStore();
     const codec: SecretCodec = {
@@ -69,6 +97,17 @@ describe('execution log store', () => {
     expect(await store.readByRequest('req-1')).toEqual([]);
     expect(await store.readByRequest('req-2')).toHaveLength(1);
     expect(kv.values.has('test:execution-log-index:user@example.com')).toBe(false);
+  });
+
+  it('removes durable user errors from the recent error index', async () => {
+    const kv = createMemoryKeyValueStore();
+    const store = createDurableExecutionLogStore(kv, { keyPrefix: 'test' });
+
+    await store.append({ ...logRecord('req-1'), status: 'error', message: 'User failure' });
+    await store.append({ ...logRecord('req-2'), userId: 'other@example.com', status: 'error', message: 'Other failure' });
+    await store.deleteByUser('user@example.com');
+
+    expect(await store.readRecentErrors()).toMatchObject([{ requestId: 'req-2', message: 'Other failure' }]);
   });
 });
 

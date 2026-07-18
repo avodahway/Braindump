@@ -24,7 +24,7 @@ Use this inventory when moving from local development to a real beta deployment.
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/data-deletion` | Data deletion instructions | Disconnect and deletion request process |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/feedback` | Post-run feedback | Three-question email template |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/beta` | Beta access request | Public-user expectations and beta request email |
-| `[BRAIN_DUMP_FRONTEND_ORIGIN]/operator` | Protected operator dashboard | Admin token loads readiness, metrics, and backup plan |
+| `[BRAIN_DUMP_FRONTEND_ORIGIN]/operator` | Protected operator dashboard | Admin token loads readiness, metrics, backup plan, and recent errors |
 
 The frontend host must serve the same app entry point for every route above.
 
@@ -43,6 +43,7 @@ The frontend host must serve the same app entry point for every route above.
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/metrics` | Protected beta metrics | Requires `X-Brain-Dump-Admin-Token` |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/backup-plan` | Protected backup checklist | Requires `X-Brain-Dump-Admin-Token` |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/readiness` | Protected launch readiness | Returns `ready: true` only after real config |
+| `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/execution-errors` | Protected recent execution errors | Shows recent Google/provider write failures |
 
 ## Verification Command
 

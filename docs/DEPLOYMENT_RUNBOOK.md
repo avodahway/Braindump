@@ -83,6 +83,7 @@ The frontend host must serve `index.html` for those routes.
 - `GET /api/admin/metrics`
 - `GET /api/admin/backup-plan`
 - `GET /api/admin/readiness`
+- `GET /api/admin/execution-errors`
 
 `GET /api/health` is anonymous and should return:
 
@@ -170,10 +171,11 @@ After deploy:
 25. Confirm `/feedback` opens a three-question beta feedback email.
 26. Confirm `/beta` opens a beta access request email.
 27. In Settings, type `DELETE`, click Delete account data, and confirm the session returns to not connected.
-28. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `/operator` loads readiness, metrics, backup plan, and checklist.
+28. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `/operator` loads readiness, metrics, recent errors, backup plan, and checklist.
 29. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
 30. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
-31. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
+31. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/execution-errors` returns recent provider write failures only when `X-Brain-Dump-Admin-Token` is provided.
+32. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
 
 You can automate the public page, health, and readiness checks with:
 

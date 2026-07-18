@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   deletePublicAccountData,
   getPublicAdminBackupPlan,
+  getPublicAdminExecutionErrors,
   getPublicAdminMetrics,
   getPublicAdminReadiness,
   getPublicBetaAccessStatus,
@@ -131,11 +132,13 @@ describe('public API client', () => {
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ totalEvents: 0, uniqueUsers: 0, uniqueRequests: 0, totalActions: 0, totalErrors: 0, byName: {} })))
       .mockResolvedValueOnce(new Response(JSON.stringify({ ready: true, generatedAt: '2026-07-17T12:00:00.000Z', checks: [] })))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ generatedAt: '2026-07-17T12:00:00.000Z', storagePrefix: 'prod', sections: [], operatorChecklist: [] })));
+      .mockResolvedValueOnce(new Response(JSON.stringify({ generatedAt: '2026-07-17T12:00:00.000Z', storagePrefix: 'prod', sections: [], operatorChecklist: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ recentErrors: [] })));
 
     await getPublicAdminMetrics('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminReadiness('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminBackupPlan('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminExecutionErrors('https://api.example.com', 'admin-token', fetcher);
 
     expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/metrics', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
@@ -144,6 +147,9 @@ describe('public API client', () => {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenNthCalledWith(3, 'https://api.example.com/api/admin/backup-plan', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(4, 'https://api.example.com/api/admin/execution-errors', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });

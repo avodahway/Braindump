@@ -272,6 +272,14 @@ export function createPublicBackend(options: PublicBackendOptions) {
         );
       }
 
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminExecutionErrors) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin execution errors are not configured.');
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        return sendJson({
+          recentErrors: await executionLogStore.readRecentErrors(parseAdminLimit(url.searchParams.get('limit')))
+        });
+      }
+
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.brainDump) {
         const requestWorkspace = await readRequestWorkspace(request, sessionStore, oauthStore);
         const workspace = requestWorkspace?.workspace ?? fallbackWorkspace ?? disconnectedWorkspace();
@@ -749,4 +757,11 @@ function requireAdmin(request: Request, adminToken: string | undefined, missingM
     return json({ error: 'Unauthorized.' }, 401);
   }
   return undefined;
+}
+
+function parseAdminLimit(value: string | null): number {
+  if (!value) return 20;
+  const limit = Number(value);
+  if (!Number.isInteger(limit) || limit <= 0) return 20;
+  return Math.min(limit, 100);
 }
