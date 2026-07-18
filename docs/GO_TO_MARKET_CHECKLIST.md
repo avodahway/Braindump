@@ -15,6 +15,7 @@
 - Pick frontend host.
 - Pick backend host.
 - Pick durable encrypted storage.
+- Review `docs/PRODUCTION_DEPLOYMENT.md`, `vercel.json`, and `render.yaml`.
 - Fill launch URL inventory from `docs/LAUNCH_URLS.md`.
 - Fill production env template from `.env.production.example` in host secret settings.
 - Deploy staging frontend.

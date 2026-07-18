@@ -17,6 +17,12 @@ Public launch pages are available at `/`, `/privacy`, `/terms`, `/support`, `/da
 
 Set `VITE_SUPPORT_EMAIL` at build time to show the live beta support address in public pages and feedback links.
 
+Production deployment scaffolding is included for Vercel, Render, and Supabase:
+
+- `vercel.json` serves the PWA and rewrites app routes to `index.html`.
+- `render.yaml` defines the public Node backend service.
+- `docs/PRODUCTION_DEPLOYMENT.md` walks through the required host settings.
+
 ## Checks
 
 ```sh
@@ -58,6 +64,7 @@ Go-to-market planning lives in:
 
 - `docs/BETA_LAUNCH_PLAN.md`
 - `docs/DEPLOYMENT_RUNBOOK.md`
+- `docs/PRODUCTION_DEPLOYMENT.md`
 - `docs/LAUNCH_URLS.md`
 - `docs/RELEASE_GATE.md`
 - `docs/GOOGLE_OAUTH_VERIFICATION.md`

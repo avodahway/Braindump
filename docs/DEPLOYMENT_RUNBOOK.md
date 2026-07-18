@@ -48,6 +48,8 @@ provider secret settings, not by committing real credentials.
 
 Use `docs/LAUNCH_URLS.md` as the canonical list of public pages, API routes, and missing production values.
 
+Use `docs/PRODUCTION_DEPLOYMENT.md` for the concrete Vercel, Render, and Supabase setup.
+
 Use `docs/RELEASE_GATE.md` before promoting a build from staging to beta testers.
 
 Use `docs/HOSTING_DECISION.md` to choose the frontend, backend, and storage providers before setting production secrets.
