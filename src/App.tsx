@@ -50,6 +50,7 @@ import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
 import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import { betaInvitationMailto } from './lib/betaInvite';
+import { sampleBrainDumps } from './lib/sampleBrainDumps';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
 import type {
   BetaAccessStatus,
@@ -356,6 +357,15 @@ function ProductApp() {
           placeholder="Put everything here. Do not organize it."
           disabled={isProcessing}
         />
+        {!text.trim() && (
+          <div className="samplePack" aria-label="Try a sample brain dump">
+            {sampleBrainDumps.map((sample) => (
+              <button key={sample.label} type="button" onClick={() => handleDraft(sample.text)}>
+                {sample.label}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="actionRow">
           <button className="secondaryButton" type="button" onClick={() => document.querySelector('textarea')?.focus()}>
             <Mic size={19} />

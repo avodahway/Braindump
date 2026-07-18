@@ -109,7 +109,18 @@ describe('App routes', () => {
     expect(screen.getByText('Setup progress')).toBeInTheDocument();
     expect(screen.getByText('Safe preview only. No Google account is connected.')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Put everything here. Do not organize it.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Busy morning' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Review/i })).toBeInTheDocument();
+  });
+
+  it('loads a first-run sample into the app', () => {
+    renderAt('/app');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Busy morning' }));
+
+    expect(screen.getByPlaceholderText('Put everything here. Do not organize it.')).toHaveValue(
+      'Pay employees tomorrow.\nLunch with Jack Thursday at noon; put on calendar.\nWaiting on Aaron to send estimate.\nBuy printer paper.'
+    );
   });
 
   it('renders the operator dashboard shell', () => {

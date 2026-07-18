@@ -1066,6 +1066,29 @@ input:focus {
   box-shadow: 0 0 0 4px rgba(39, 89, 70, 0.14);
 }
 
+.samplePack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.samplePack button {
+  min-height: 36px;
+  border: 1px solid rgba(39, 89, 70, 0.14);
+  border-radius: 999px;
+  padding: 0 12px;
+  color: var(--green);
+  background: #eef7ef;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.samplePack button:hover {
+  background: #e0f0e1;
+}
+
 .actionRow,
 .modalActions {
   display: grid;
