@@ -35,6 +35,7 @@ describe('deployment verifier', () => {
       'Admin feedback rejects anonymous requests',
       'Admin feedback CSV rejects anonymous requests',
       'Admin support requests rejects anonymous requests',
+      'Admin support requests CSV rejects anonymous requests',
       'Admin metrics accepts configured token',
       'Admin backup plan accepts configured token',
       'Admin readiness accepts configured token',
@@ -43,7 +44,8 @@ describe('deployment verifier', () => {
       'Admin beta requests CSV accepts configured token',
       'Admin feedback accepts configured token',
       'Admin feedback CSV accepts configured token',
-      'Admin support requests accepts configured token'
+      'Admin support requests accepts configured token',
+      'Admin support requests CSV accepts configured token'
     ]);
   });
 
@@ -76,11 +78,15 @@ describe('deployment verifier', () => {
 
     await checks.find((check) => check.label === 'Admin readiness accepts configured token')?.run();
     await checks.find((check) => check.label === 'Admin feedback CSV accepts configured token')?.run();
+    await checks.find((check) => check.label === 'Admin support requests CSV accepts configured token')?.run();
 
     expect(fetchImpl).toHaveBeenCalledWith('https://api.braindump.app/api/admin/readiness', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetchImpl).toHaveBeenCalledWith('https://api.braindump.app/api/admin/feedback?format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetchImpl).toHaveBeenCalledWith('https://api.braindump.app/api/admin/support-requests?format=csv', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });
