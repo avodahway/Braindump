@@ -28,6 +28,7 @@ import {
   getPublicAdminExecutionErrorsCsv,
   getPublicAdminFeedback,
   getPublicAdminFeedbackCsv,
+  getPublicAdminLaunchSummary,
   getPublicAdminMetrics,
   getPublicAdminReadiness,
   submitPublicBetaRequest,
@@ -60,6 +61,7 @@ import type {
   BetaRequestStatus,
   FeedbackRecord,
   FeedbackStatus,
+  LaunchSummary,
   SupportRequestRecord,
   SupportRequestStatus
 } from './api/publicContract';
@@ -1303,6 +1305,7 @@ function FaqPage() {
 
 type OperatorSnapshot = {
   metrics: AnalyticsMetrics;
+  launchSummary: LaunchSummary;
   readiness: ReadinessReport;
   backupPlan: BackupPlan;
   recentErrors: ExecutionLogRecord[];
@@ -1336,10 +1339,11 @@ function OperatorPage() {
     setLoading(true);
     setError('');
     try {
-      const [metrics, readiness, backupPlan, executionErrors, betaRequests, feedback, supportRequests] = await Promise.all([
+      const [metrics, readiness, backupPlan, launchSummary, executionErrors, betaRequests, feedback, supportRequests] = await Promise.all([
         getPublicAdminMetrics(publicApiBaseUrl, token),
         getPublicAdminReadiness(publicApiBaseUrl, token),
         getPublicAdminBackupPlan(publicApiBaseUrl, token),
+        getPublicAdminLaunchSummary(publicApiBaseUrl, token),
         getPublicAdminExecutionErrors(publicApiBaseUrl, token),
         getPublicAdminBetaRequests(publicApiBaseUrl, token),
         getPublicAdminFeedback(publicApiBaseUrl, token),
@@ -1349,6 +1353,7 @@ function OperatorPage() {
       saveSettings(settings);
       setSnapshot({
         metrics,
+        launchSummary,
         readiness,
         backupPlan,
         recentErrors: executionErrors.recentErrors,
@@ -1533,6 +1538,28 @@ function OperatorPage() {
           <OperatorMetric label="Actions" value={snapshot.metrics.totalActions} />
           <OperatorMetric label="Errors" value={snapshot.metrics.totalErrors} warning={snapshot.metrics.totalErrors > 0} />
           <OperatorMetric label="Latest Event" value={snapshot.metrics.latestEventAt ? shortDateTime(snapshot.metrics.latestEventAt) : 'None'} />
+
+          <article className="operatorPanel widePanel">
+            <h2>Launch Summary</h2>
+            <div className="launchSummaryGrid">
+              <div>
+                <span>Posture</span>
+                <strong>{snapshot.launchSummary.ready ? 'Ready' : 'Blocked'}</strong>
+              </div>
+              <div>
+                <span>Recent Errors</span>
+                <strong>{snapshot.launchSummary.queueCounts.recentExecutionErrors}</strong>
+              </div>
+              <div>
+                <span>Open Beta</span>
+                <strong>{snapshot.launchSummary.queueCounts.beta.new}</strong>
+              </div>
+              <div>
+                <span>Open Support</span>
+                <strong>{snapshot.launchSummary.queueCounts.support.new + snapshot.launchSummary.queueCounts.support.in_progress}</strong>
+              </div>
+            </div>
+          </article>
 
           <QueueSummaryPanel
             title="Beta Queue"

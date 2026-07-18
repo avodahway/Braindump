@@ -187,6 +187,24 @@ describe('App routes', () => {
           })
         );
       }
+      if (url === 'https://api.example.com/api/admin/launch-summary') {
+        return new Response(
+          JSON.stringify({
+            generatedAt: '2026-07-17T12:00:00.000Z',
+            ready: false,
+            totalEvents: 7,
+            uniqueUsers: 2,
+            totalErrors: 1,
+            latestEventAt: '2026-07-17T12:00:00.000Z',
+            queueCounts: {
+              beta: { new: 1, invited: 0, archived: 0 },
+              feedback: { new: 1, reviewed: 0, archived: 0 },
+              support: { new: 1, in_progress: 0, resolved: 0, archived: 0 },
+              recentExecutionErrors: 1
+            }
+          })
+        );
+      }
       if (url === 'https://api.example.com/api/admin/execution-errors') {
         return new Response(
           JSON.stringify({
@@ -327,6 +345,8 @@ describe('App routes', () => {
     expect(screen.getByText('Recent Execution Errors')).toBeInTheDocument();
     expect(screen.getByText('Lunch with Jack')).toBeInTheDocument();
     expect(screen.getByText('Calendar write failed')).toBeInTheDocument();
+    expect(screen.getByText('Launch Summary')).toBeInTheDocument();
+    expect(screen.getByText('Blocked')).toBeInTheDocument();
     expect(screen.getByText('Blocking Issues (1)')).toBeInTheDocument();
     expect(screen.getByText('Ready Checks (1)')).toBeInTheDocument();
     expect(screen.getByText('Privacy Handling')).toBeInTheDocument();
@@ -388,6 +408,9 @@ describe('App routes', () => {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/execution-errors', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/launch-summary', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-requests', {
