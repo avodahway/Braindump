@@ -33,6 +33,7 @@ Use this inventory when moving from local development to a real beta deployment.
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/press` | Press | Approved beta description, boundaries, assets, and contact |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/examples` | Examples | User-facing examples for tasks, calendar, projects, follow-ups, and review |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/pricing` | Pricing | Beta pricing expectations and future pricing hypotheses |
+| `[BRAIN_DUMP_FRONTEND_ORIGIN]/demo` | Demo | Walkthrough script for beta testing, advisors, and OAuth verification |
 | `[BRAIN_DUMP_FRONTEND_ORIGIN]/operator` | Protected operator dashboard | Admin token loads readiness, metrics, backup plan, beta requests, and recent errors |
 
 The frontend host must serve the same app entry point for every route above.

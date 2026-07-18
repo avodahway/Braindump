@@ -163,6 +163,15 @@ describe('App routes', () => {
     expect(screen.getByText(/will not charge you without a separate paid-plan sign-up/i)).toBeInTheDocument();
   });
 
+  it('renders the public demo page', () => {
+    renderAt('/demo');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Demo' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Show the workflow' })).toBeInTheDocument();
+    expect(screen.getByText(/Connect Google with a beta test account/i)).toBeInTheDocument();
+    expect(screen.getByText(/Brain Dump does not send email during beta/i)).toBeInTheDocument();
+  });
+
   it('keeps public launch pages accessible by heading and labeled controls', () => {
     const publicRoutes = [
       '/',
@@ -179,7 +188,8 @@ describe('App routes', () => {
       '/roadmap',
       '/press',
       '/examples',
-      '/pricing'
+      '/pricing',
+      '/demo'
     ];
 
     for (const route of publicRoutes) {

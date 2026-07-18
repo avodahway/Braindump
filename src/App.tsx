@@ -97,6 +97,7 @@ export function App() {
   if (route === '/press') return <PressPage />;
   if (route === '/examples') return <ExamplesPage />;
   if (route === '/pricing') return <PricingPage />;
+  if (route === '/demo') return <DemoPage />;
   if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
@@ -707,6 +708,10 @@ function HomePage() {
           <a href="/pricing">
             <CheckCircle2 size={20} />
             Pricing
+          </a>
+          <a href="/demo">
+            <Sparkles size={20} />
+            Demo
           </a>
           <a href="/feedback">
             <UserCheck size={20} />
@@ -1529,6 +1534,37 @@ function PricingPage() {
         <li>Paid connected Google execution.</li>
         <li>Monthly solo plan.</li>
         <li>Future small-team plan after individual use is proven.</li>
+      </ul>
+    </PublicDocument>
+  );
+}
+
+function DemoPage() {
+  return (
+    <PublicDocument
+      title="Demo"
+      subtitle="A short walkthrough script for beta testers, advisors, and OAuth verification."
+    >
+      <h2>Opening</h2>
+      <p>
+        Brain Dump helps you capture messy thoughts first, then review organized actions before anything is created in
+        Google.
+      </p>
+      <h2>Show the workflow</h2>
+      <ol>
+        <li>Open the app and show preview mode.</li>
+        <li>Paste a mixed brain dump with a task, calendar item, project, and follow-up.</li>
+        <li>Click Review and explain each routed group.</li>
+        <li>Remove one planned action to show user control.</li>
+        <li>Connect Google with a beta test account.</li>
+        <li>Create reviewed actions and confirm Tasks and Calendar results.</li>
+        <li>Show Disconnect Google and the stored account deletion path.</li>
+      </ol>
+      <h2>Safety points</h2>
+      <ul>
+        <li>Brain Dump does not send email during beta.</li>
+        <li>Ambiguous calendar items stay in review.</li>
+        <li>Each user connects their own Google account.</li>
       </ul>
     </PublicDocument>
   );
@@ -2417,6 +2453,7 @@ function PublicNav() {
         <a href="/press">Press</a>
         <a href="/examples">Examples</a>
         <a href="/pricing">Pricing</a>
+        <a href="/demo">Demo</a>
         <a href="/data-deletion">Data deletion</a>
         <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
@@ -2459,6 +2496,7 @@ function normalizedPath(path: string): string {
     path === '/press' ||
     path === '/examples' ||
     path === '/pricing' ||
+    path === '/demo' ||
     path === '/operator' ||
     path === '/app'
   ) return path;
