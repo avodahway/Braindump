@@ -99,3 +99,4 @@ Test these value propositions:
 - Founder beta invitation email.
 - 3-question post-run feedback form at `/feedback`.
 - Beta access request page at `/beta`.
+- Protected beta request list in `/operator`.

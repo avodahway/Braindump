@@ -22,9 +22,11 @@ import { trackEvent } from './api/analytics';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
 import {
   getPublicAdminBackupPlan,
+  getPublicAdminBetaRequests,
   getPublicAdminExecutionErrors,
   getPublicAdminMetrics,
-  getPublicAdminReadiness
+  getPublicAdminReadiness,
+  submitPublicBetaRequest
 } from './api/publicClient';
 import {
   connectPublicWorkspace,
@@ -38,7 +40,7 @@ import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
 import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
-import type { BetaAccessStatus } from './api/publicContract';
+import type { BetaAccessStatus, BetaRequestRecord } from './api/publicContract';
 import type { AnalyticsMetrics } from './server/analyticsStore';
 import type { BackupPlan } from './server/backupPlan';
 import type { ExecutionLogRecord } from './server/executionLogStore';
@@ -823,6 +825,41 @@ function FeedbackPage() {
 }
 
 function BetaPage() {
+  const [settings] = useState(() => loadSettings());
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    tools: '',
+    googleComfort: '',
+    notes: ''
+  });
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setSubmitting] = useState(false);
+  const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError('');
+    setStatus('');
+
+    if (!publicApiBaseUrl) {
+      setError('Beta request form is not connected yet. Use the email link below.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await submitPublicBetaRequest(publicApiBaseUrl, form);
+      setStatus("You're on the beta request list. We'll follow up when the next group opens.");
+      setForm({ name: '', email: '', tools: '', googleComfort: '', notes: '' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send beta request.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <PublicDocument
       title="Join The Beta"
@@ -843,9 +880,65 @@ function BetaPage() {
       </ul>
       <h2>Request access</h2>
       <p>
-        Email <a href={betaAccessMailto()}>{supportEmail}</a> with your name, the task/calendar tools you use now, and
-        whether you are comfortable connecting Google Tasks and Google Calendar during beta.
+        Send a request here, or email <a href={betaAccessMailto()}>{supportEmail}</a> if the form is unavailable.
       </p>
+      <form className="publicForm" onSubmit={handleSubmit}>
+        <label>
+          Name
+          <input
+            value={form.name}
+            onChange={(event) => setForm({ ...form, name: event.target.value })}
+            autoComplete="name"
+            required
+          />
+        </label>
+        <label>
+          Email
+          <input
+            value={form.email}
+            onChange={(event) => setForm({ ...form, email: event.target.value })}
+            autoComplete="email"
+            type="email"
+            required
+          />
+        </label>
+        <label>
+          Current task or calendar tools
+          <input
+            value={form.tools}
+            onChange={(event) => setForm({ ...form, tools: event.target.value })}
+            placeholder="Google Tasks, Calendar, paper list..."
+            required
+          />
+        </label>
+        <label>
+          Google connection comfort
+          <select
+            value={form.googleComfort}
+            onChange={(event) => setForm({ ...form, googleComfort: event.target.value })}
+            required
+          >
+            <option value="">Choose one</option>
+            <option value="comfortable">Comfortable connecting Google during beta</option>
+            <option value="preview_first">Want to preview first</option>
+            <option value="not_ready">Not ready to connect Google yet</option>
+          </select>
+        </label>
+        <label>
+          Notes
+          <textarea
+            value={form.notes}
+            onChange={(event) => setForm({ ...form, notes: event.target.value })}
+            placeholder="What would make Brain Dump useful for you?"
+          />
+        </label>
+        {error && <div className="errorCard">{error}</div>}
+        {status && <div className="successCard">{status}</div>}
+        <button className="processButton" type="submit" disabled={isSubmitting}>
+          <Sparkles size={18} />
+          {isSubmitting ? 'Sending' : 'Request beta access'}
+        </button>
+      </form>
     </PublicDocument>
   );
 }
@@ -855,6 +948,7 @@ type OperatorSnapshot = {
   readiness: ReadinessReport;
   backupPlan: BackupPlan;
   recentErrors: ExecutionLogRecord[];
+  betaRequests: BetaRequestRecord[];
 };
 
 function OperatorPage() {
@@ -880,15 +974,22 @@ function OperatorPage() {
     setLoading(true);
     setError('');
     try {
-      const [metrics, readiness, backupPlan, executionErrors] = await Promise.all([
+      const [metrics, readiness, backupPlan, executionErrors, betaRequests] = await Promise.all([
         getPublicAdminMetrics(publicApiBaseUrl, token),
         getPublicAdminReadiness(publicApiBaseUrl, token),
         getPublicAdminBackupPlan(publicApiBaseUrl, token),
-        getPublicAdminExecutionErrors(publicApiBaseUrl, token)
+        getPublicAdminExecutionErrors(publicApiBaseUrl, token),
+        getPublicAdminBetaRequests(publicApiBaseUrl, token)
       ]);
       localStorage.setItem('brain-dump-admin-token', token);
       saveSettings(settings);
-      setSnapshot({ metrics, readiness, backupPlan, recentErrors: executionErrors.recentErrors });
+      setSnapshot({
+        metrics,
+        readiness,
+        backupPlan,
+        recentErrors: executionErrors.recentErrors,
+        betaRequests: betaRequests.requests
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load operator dashboard.');
     } finally {
@@ -1027,6 +1128,39 @@ function OperatorPage() {
           </article>
 
           <article className="operatorPanel widePanel">
+            <h2>Beta Requests</h2>
+            {snapshot.betaRequests.length ? (
+              <div className="betaRequestList">
+                {snapshot.betaRequests.map((request) => (
+                  <div className="betaRequestItem" key={request.id}>
+                    <div>
+                      <strong>{request.name}</strong>
+                      <a href={`mailto:${request.email}`}>{request.email}</a>
+                    </div>
+                    <dl>
+                      <div>
+                        <dt>Tools</dt>
+                        <dd>{request.tools}</dd>
+                      </div>
+                      <div>
+                        <dt>Google</dt>
+                        <dd>{betaComfortLabel(request.googleComfort)}</dd>
+                      </div>
+                      <div>
+                        <dt>Requested</dt>
+                        <dd>{shortDateTime(request.createdAt)}</dd>
+                      </div>
+                    </dl>
+                    {request.notes && <p>{request.notes}</p>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No beta requests yet.</p>
+            )}
+          </article>
+
+          <article className="operatorPanel widePanel">
             <h2>Operator Checklist</h2>
             <ol>
               {snapshot.backupPlan.operatorChecklist.map((item) => (
@@ -1065,6 +1199,13 @@ function shortDateTime(value: string): string {
 
 function operatorEventLabel(name: string): string {
   return name.replaceAll('_', ' ');
+}
+
+function betaComfortLabel(value: string): string {
+  if (value === 'comfortable') return 'Comfortable';
+  if (value === 'preview_first') return 'Preview first';
+  if (value === 'not_ready') return 'Not ready yet';
+  return value;
 }
 
 function PublicDocument({

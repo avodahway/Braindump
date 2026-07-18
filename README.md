@@ -16,6 +16,7 @@ The app starts in mock preview mode. It parses and groups results locally withou
 Public launch pages are available at `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, and `/beta`. The product tool is available at `/app`.
 
 Set `VITE_SUPPORT_EMAIL` at build time to show the live beta support address in public pages and feedback links.
+Set `VITE_PUBLIC_API_BASE_URL` at build time so public pages can submit beta access requests to the backend.
 
 Production deployment scaffolding is included for Vercel, Render, and Supabase:
 
@@ -54,6 +55,7 @@ When a Public API URL is configured in Settings, public mode posts to:
 - `GET /api/auth/google/callback`
 - `POST /api/auth/google/disconnect`
 - `POST /api/account/delete`
+- `POST /api/beta/request`
 - `POST /api/brain-dump`
 
 With a Public API URL configured, the Connect button starts the backend OAuth flow and redirects the browser to the returned Google authorization URL. Without a Public API URL, public mode keeps using a local demo workspace.
@@ -110,6 +112,9 @@ Set `BRAIN_DUMP_STORAGE_SECRET` so durable values are encrypted before being wri
 `GET /api/admin/readiness` returns a protected launch-readiness report with boolean checks for OAuth config, frontend callback, admin protection, scopes, and durable storage.
 
 `GET /api/admin/execution-errors` returns recent protected provider write failures for the `/operator` dashboard.
+
+`POST /api/beta/request` records first-user beta interest without using the founder's Google Sheets. `/operator` reads
+those records from protected `GET /api/admin/beta-requests`.
 
 `src/server/idempotencyStore.ts` keeps processed request IDs from writing twice. When the backend is configured with durable storage, duplicate requests return the original response even after a backend restart.
 

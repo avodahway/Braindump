@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   deletePublicAccountData,
   getPublicAdminBackupPlan,
+  getPublicAdminBetaRequests,
   getPublicAdminExecutionErrors,
   getPublicAdminMetrics,
   getPublicAdminReadiness,
@@ -11,6 +12,7 @@ import {
   publicApiUrl,
   redeemPublicBetaAccessCode,
   startPublicGoogleConnection,
+  submitPublicBetaRequest,
   trackPublicEvent
 } from './publicClient';
 
@@ -85,6 +87,49 @@ describe('public API client', () => {
     });
   });
 
+  it('submits beta requests through the public backend', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          request: {
+            id: 'beta-1',
+            status: 'new',
+            name: 'Jay Cleveland',
+            email: 'jay@example.com',
+            tools: 'Google Tasks',
+            googleComfort: 'comfortable',
+            createdAt: '2026-07-17T12:00:00.000Z'
+          }
+        })
+      )
+    );
+
+    await submitPublicBetaRequest(
+      'https://api.example.com',
+      {
+        name: 'Jay Cleveland',
+        email: 'jay@example.com',
+        tools: 'Google Tasks',
+        googleComfort: 'comfortable'
+      },
+      fetcher
+    );
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/beta/request', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Jay Cleveland',
+        email: 'jay@example.com',
+        tools: 'Google Tasks',
+        googleComfort: 'comfortable'
+      })
+    });
+  });
+
+
   it('uses backend error messages when public requests fail', async () => {
     const fetcher = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ error: 'Google workspace is not connected.' }), {
@@ -133,12 +178,14 @@ describe('public API client', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ totalEvents: 0, uniqueUsers: 0, uniqueRequests: 0, totalActions: 0, totalErrors: 0, byName: {} })))
       .mockResolvedValueOnce(new Response(JSON.stringify({ ready: true, generatedAt: '2026-07-17T12:00:00.000Z', checks: [] })))
       .mockResolvedValueOnce(new Response(JSON.stringify({ generatedAt: '2026-07-17T12:00:00.000Z', storagePrefix: 'prod', sections: [], operatorChecklist: [] })))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ recentErrors: [] })));
+      .mockResolvedValueOnce(new Response(JSON.stringify({ recentErrors: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ requests: [] })));
 
     await getPublicAdminMetrics('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminReadiness('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminBackupPlan('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminExecutionErrors('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminBetaRequests('https://api.example.com', 'admin-token', fetcher);
 
     expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/metrics', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
@@ -150,6 +197,9 @@ describe('public API client', () => {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenNthCalledWith(4, 'https://api.example.com/api/admin/execution-errors', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(5, 'https://api.example.com/api/admin/beta-requests', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });

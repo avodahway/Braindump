@@ -1,9 +1,24 @@
 import type { BrainDumpRequest, BrainDumpResponse, UserWorkspace } from '../lib/types';
 
+export type BetaRequestInput = {
+  name: string;
+  email: string;
+  tools: string;
+  googleComfort: string;
+  notes?: string;
+};
+
+export type BetaRequestRecord = BetaRequestInput & {
+  id: string;
+  status: 'new';
+  createdAt: string;
+};
+
 export type PublicBackendContract = {
   getWorkspace(): Promise<UserWorkspace>;
   getBetaAccessStatus(): Promise<BetaAccessStatus>;
   redeemBetaAccessCode(code: string): Promise<{ ok: true; access: BetaAccessStatus }>;
+  submitBetaRequest(request: BetaRequestInput): Promise<{ ok: true; request: BetaRequestRecord }>;
   startGoogleConnection(): Promise<{ authorizationUrl: string }>;
   disconnectGoogle(): Promise<{ ok: true }>;
   deleteAccountData(): Promise<{ ok: true; deleted: string[] }>;
@@ -19,6 +34,7 @@ export const publicBackendRoutes = {
   health: '/api/health',
   betaStatus: '/api/beta/status',
   betaAccess: '/api/beta/access',
+  betaRequest: '/api/beta/request',
   workspace: '/api/workspace',
   googleConnect: '/api/auth/google/start',
   googleCallback: '/api/auth/google/callback',
@@ -29,5 +45,6 @@ export const publicBackendRoutes = {
   adminBackupPlan: '/api/admin/backup-plan',
   adminReadiness: '/api/admin/readiness',
   adminExecutionErrors: '/api/admin/execution-errors',
+  adminBetaRequests: '/api/admin/beta-requests',
   brainDump: '/api/brain-dump'
 } as const;

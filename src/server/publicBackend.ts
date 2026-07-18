@@ -1,6 +1,6 @@
 import { parseBrainDump } from '../lib/parser';
 import type { ActionType, BrainDumpRequest, BrainDumpResponse, ParsedAction, UserWorkspace } from '../lib/types';
-import { publicBackendRoutes } from '../api/publicContract';
+import { publicBackendRoutes, type BetaRequestInput } from '../api/publicContract';
 import { createDemoActionExecutor, type ActionExecutor } from './actionExecutor';
 import {
   completeOAuthSession,
@@ -20,6 +20,7 @@ import {
 import { createMemoryResponseStore, type ResponseStore } from './idempotencyStore';
 import { createMemoryExecutionLogStore, type ExecutionLogStore } from './executionLogStore';
 import { createMemoryAnalyticsStore, sanitizeAnalyticsEvent, summarizeAnalytics, type AnalyticsStore } from './analyticsStore';
+import { createMemoryBetaRequestStore, type BetaRequestStore } from './betaRequestStore';
 import { buildBackupPlan } from './backupPlan';
 import { buildReadinessReport } from './readinessReport';
 
@@ -41,6 +42,7 @@ export type PublicBackendOptions = {
   responseStore?: ResponseStore;
   executionLogStore?: ExecutionLogStore;
   analyticsStore?: AnalyticsStore;
+  betaRequestStore?: BetaRequestStore;
   adminToken?: string;
   storageKeyPrefix?: string;
   storageMode?: 'memory' | 'durable';
@@ -68,6 +70,7 @@ const defaultRateLimit = {
 
 const rateLimitedPaths = new Set<string>([
   publicBackendRoutes.betaAccess,
+  publicBackendRoutes.betaRequest,
   publicBackendRoutes.brainDump,
   publicBackendRoutes.events,
   publicBackendRoutes.googleConnect,
@@ -86,6 +89,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
   const responseStore = options.responseStore ?? createMemoryResponseStore();
   const executionLogStore = options.executionLogStore ?? createMemoryExecutionLogStore();
   const analyticsStore = options.analyticsStore ?? createMemoryAnalyticsStore();
+  const betaRequestStore = options.betaRequestStore ?? createMemoryBetaRequestStore();
   const now = options.now ?? (() => new Date());
   const maxJsonBodyBytes = options.requestLimits?.maxJsonBodyBytes ?? defaultMaxJsonBodyBytes;
   const rateLimiter = createRateLimiter(options.requestLimits?.rateLimit, now);
@@ -142,6 +146,23 @@ export function createPublicBackend(options: PublicBackendOptions) {
           200,
           { 'Set-Cookie': betaAccessCookie(await betaAccessCookieValue(betaAccessCode)) }
         );
+      }
+
+      if (request.method === 'POST' && url.pathname === publicBackendRoutes.betaRequest) {
+        const body = await readJsonBody(request, maxJsonBodyBytes);
+        if (!body.ok) return sendJson({ error: body.error }, body.status);
+
+        const parsedRequest = parseBetaRequest(body.value);
+        if (!parsedRequest.ok) return sendJson({ error: parsedRequest.error }, 400);
+
+        const record = {
+          ...parsedRequest.value,
+          id: crypto.randomUUID(),
+          status: 'new' as const,
+          createdAt: now().toISOString()
+        };
+        await betaRequestStore.append(record);
+        return sendJson({ ok: true, request: record });
       }
 
       const betaError = await requireBetaAccess(request, url.pathname, betaAccessCode);
@@ -280,6 +301,14 @@ export function createPublicBackend(options: PublicBackendOptions) {
         });
       }
 
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminBetaRequests) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin beta requests are not configured.');
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        return sendJson({
+          requests: await betaRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit')))
+        });
+      }
+
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.brainDump) {
         const requestWorkspace = await readRequestWorkspace(request, sessionStore, oauthStore);
         const workspace = requestWorkspace?.workspace ?? fallbackWorkspace ?? disconnectedWorkspace();
@@ -338,6 +367,32 @@ async function hasBetaAccess(request: Request, betaAccessCode: string): Promise<
 
 function parseBetaAccessCode(value: unknown): string | undefined {
   return isRecord(value) && isNonEmptyString(value.code) ? value.code.trim() : undefined;
+}
+
+function parseBetaRequest(value: unknown): { ok: true; value: BetaRequestInput } | { ok: false; error: string } {
+  if (!isRecord(value)) return { ok: false, error: 'Beta request must be an object.' };
+
+  const name = trimmedString(value.name);
+  const email = trimmedString(value.email);
+  const tools = trimmedString(value.tools);
+  const googleComfort = trimmedString(value.googleComfort);
+  const notes = trimmedString(value.notes);
+
+  if (!name) return { ok: false, error: 'Name is required.' };
+  if (!email || !email.includes('@')) return { ok: false, error: 'A valid email is required.' };
+  if (!tools) return { ok: false, error: 'Current task or calendar tools are required.' };
+  if (!googleComfort) return { ok: false, error: 'Google connection comfort is required.' };
+
+  return {
+    ok: true,
+    value: {
+      name,
+      email: email.toLowerCase(),
+      tools,
+      googleComfort,
+      ...(notes ? { notes } : {})
+    }
+  };
 }
 
 async function betaAccessCookieValue(betaAccessCode: string): Promise<string> {
@@ -533,6 +588,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+function trimmedString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
 
 function optionalString(value: unknown): string | undefined {

@@ -78,12 +78,14 @@ The frontend host must serve `index.html` for those routes.
 - `GET /api/auth/google/callback`
 - `POST /api/auth/google/disconnect`
 - `POST /api/account/delete`
+- `POST /api/beta/request`
 - `POST /api/brain-dump`
 - `POST /api/events`
 - `GET /api/admin/metrics`
 - `GET /api/admin/backup-plan`
 - `GET /api/admin/readiness`
 - `GET /api/admin/execution-errors`
+- `GET /api/admin/beta-requests`
 
 `GET /api/health` is anonymous and should return:
 
@@ -169,13 +171,14 @@ After deploy:
 23. Confirm stored OAuth tokens and workspace connection records are removed.
 24. Confirm `/api/workspace` returns not connected afterward.
 25. Confirm `/feedback` opens a three-question beta feedback email.
-26. Confirm `/beta` opens a beta access request email.
+26. Submit a beta access request from `/beta`.
 27. In Settings, type `DELETE`, click Delete account data, and confirm the session returns to not connected.
-28. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `/operator` loads readiness, metrics, recent errors, backup plan, and checklist.
+28. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `/operator` loads readiness, metrics, beta requests, recent errors, backup plan, and checklist.
 29. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
 30. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
 31. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/execution-errors` returns recent provider write failures only when `X-Brain-Dump-Admin-Token` is provided.
-32. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
+32. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests` returns beta requests only when `X-Brain-Dump-Admin-Token` is provided.
+33. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
 
 You can automate the public page, health, and readiness checks with:
 
@@ -194,7 +197,7 @@ Before inviting real beta users:
 2. Set `BRAIN_DUMP_STORAGE_PREFIX` to a stable production value.
 3. Set `BRAIN_DUMP_ADMIN_TOKEN` to a long random value.
 4. Call `GET /api/admin/backup-plan` with `X-Brain-Dump-Admin-Token`.
-5. Confirm the plan covers OAuth tokens, workspaces, sessions, idempotency responses, execution logs, and analytics events.
+5. Confirm the plan covers OAuth tokens, workspaces, sessions, beta requests, idempotency responses, execution logs, and analytics events.
 6. Take a provider-level encrypted snapshot before every backend deploy during beta.
 7. Test restore in staging with a non-production Google account.
 8. After restore, verify `/api/health`, `/api/workspace`, duplicate request behavior, `/api/admin/metrics`, and Disconnect Google.

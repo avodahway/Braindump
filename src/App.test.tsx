@@ -168,6 +168,24 @@ describe('App routes', () => {
           })
         );
       }
+      if (url === 'https://api.example.com/api/admin/beta-requests') {
+        return new Response(
+          JSON.stringify({
+            requests: [
+              {
+                id: 'beta-1',
+                status: 'new',
+                name: 'Jay Cleveland',
+                email: 'jay@example.com',
+                tools: 'Google Tasks',
+                googleComfort: 'comfortable',
+                notes: 'I want to test it.',
+                createdAt: '2026-07-17T12:00:00.000Z'
+              }
+            ]
+          })
+        );
+      }
       return new Response(JSON.stringify({ ok: true }));
     });
     vi.stubGlobal('fetch', fetcher);
@@ -182,12 +200,65 @@ describe('App routes', () => {
     expect(screen.getByText('Recent Execution Errors')).toBeInTheDocument();
     expect(screen.getByText('Lunch with Jack')).toBeInTheDocument();
     expect(screen.getByText('Calendar write failed')).toBeInTheDocument();
+    expect(screen.getByText('Beta Requests')).toBeInTheDocument();
+    expect(screen.getByText('jay@example.com')).toBeInTheDocument();
     expect(screen.getByText('Take a provider-level snapshot before deploy.')).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/metrics', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/execution-errors', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-requests', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
+  it('submits beta access requests from the public beta page', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === 'https://api.example.com/api/beta/request') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            request: {
+              id: 'beta-1',
+              status: 'new',
+              name: 'Jay Cleveland',
+              email: 'jay@example.com',
+              tools: 'Google Tasks',
+              googleComfort: 'comfortable',
+              createdAt: '2026-07-17T12:00:00.000Z'
+            }
+          })
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/beta');
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Jay Cleveland' } });
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'jay@example.com' } });
+    fireEvent.change(screen.getByLabelText('Current task or calendar tools'), { target: { value: 'Google Tasks' } });
+    fireEvent.change(screen.getByLabelText('Google connection comfort'), { target: { value: 'comfortable' } });
+    fireEvent.click(screen.getByRole('button', { name: /Request beta access/i }));
+
+    expect(await screen.findByText("You're on the beta request list. We'll follow up when the next group opens.")).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/beta/request', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Jay Cleveland',
+        email: 'jay@example.com',
+        tools: 'Google Tasks',
+        googleComfort: 'comfortable',
+        notes: ''
+      })
     });
   });
 

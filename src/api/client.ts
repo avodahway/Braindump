@@ -17,12 +17,12 @@ export function loadSettings(): BackendSettings {
     const parsed = JSON.parse(localStorage.getItem(settingsKey) ?? '{}') as Partial<BackendSettings>;
     return {
       backendMode: parsed.backendMode ?? (parsed.backendUrl ? 'private_apps_script' : 'mock'),
-      publicApiBaseUrl: parsed.publicApiBaseUrl ?? '',
+      publicApiBaseUrl: parsed.publicApiBaseUrl ?? defaultPublicApiBaseUrl(),
       backendUrl: parsed.backendUrl ?? '',
       sharedSecret: parsed.sharedSecret ?? ''
     };
   } catch {
-    return { backendMode: 'mock', publicApiBaseUrl: '', backendUrl: '', sharedSecret: '' };
+    return { backendMode: 'mock', publicApiBaseUrl: defaultPublicApiBaseUrl(), backendUrl: '', sharedSecret: '' };
   }
 }
 
@@ -120,4 +120,8 @@ function markCreated(response: BrainDumpResponse): BrainDumpResponse {
 
 function calendarNeedsReview(action: ParsedAction): boolean {
   return action.type === 'calendar' && (!action.calendarDate || !action.startTime || action.startTime === 'safe-default-required');
+}
+
+function defaultPublicApiBaseUrl(): string {
+  return import.meta.env.VITE_PUBLIC_API_BASE_URL ?? '';
 }

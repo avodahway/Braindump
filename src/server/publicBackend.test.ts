@@ -6,6 +6,7 @@ import { createMemorySessionStore, sessionCookieName } from './sessionStore';
 import { createMemoryResponseStore } from './idempotencyStore';
 import { createMemoryExecutionLogStore } from './executionLogStore';
 import { createMemoryAnalyticsStore } from './analyticsStore';
+import { createMemoryBetaRequestStore } from './betaRequestStore';
 
 const googleOAuth = {
   clientId: 'client-id',
@@ -159,6 +160,77 @@ describe('public backend scaffold', () => {
     expect(await blocked.json()).toEqual({ error: 'Beta access code is required.' });
     expect(allowed.status).toBe(200);
     expect((await allowed.json()).authorizationUrl).toContain('accounts.google.com');
+  });
+
+  it('accepts beta requests and protects the admin beta request list', async () => {
+    const betaRequestStore = createMemoryBetaRequestStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      betaRequestStore,
+      adminToken: 'admin-token',
+      now: () => new Date('2026-07-17T12:00:00.000Z')
+    });
+
+    const created = await backend.handle(
+      new Request('https://api.example.com/api/beta/request', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'Jay Cleveland',
+          email: 'JAY@EXAMPLE.COM',
+          tools: 'Google Tasks and Calendar',
+          googleComfort: 'comfortable',
+          notes: 'I want to test it.'
+        })
+      })
+    );
+    const blocked = await backend.handle(new Request('https://api.example.com/api/admin/beta-requests'));
+    const listed = await backend.handle(
+      new Request('https://api.example.com/api/admin/beta-requests', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+
+    expect(created.status).toBe(200);
+    expect(await created.json()).toMatchObject({
+      ok: true,
+      request: {
+        name: 'Jay Cleveland',
+        email: 'jay@example.com',
+        tools: 'Google Tasks and Calendar',
+        googleComfort: 'comfortable',
+        notes: 'I want to test it.',
+        status: 'new',
+        createdAt: '2026-07-17T12:00:00.000Z'
+      }
+    });
+    expect(blocked.status).toBe(401);
+    expect(await listed.json()).toMatchObject({
+      requests: [
+        {
+          name: 'Jay Cleveland',
+          email: 'jay@example.com'
+        }
+      ]
+    });
+  });
+
+  it('validates beta request fields', async () => {
+    const backend = createPublicBackend({ googleOAuth });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/beta/request', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'Jay Cleveland',
+          email: 'not-an-email',
+          tools: 'Google Tasks',
+          googleComfort: 'comfortable'
+        })
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'A valid email is required.' });
   });
 
   it('blocks public brain dump execution until beta access is granted', async () => {
