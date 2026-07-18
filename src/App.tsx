@@ -33,6 +33,7 @@ import {
   getPublicAdminMetrics,
   getPublicAdminReadiness,
   getPublicAdminSelfTest,
+  getPublicAdminSupportSla,
   submitPublicBetaRequest,
   submitPublicFeedback,
   submitPublicSupportRequest,
@@ -66,6 +67,7 @@ import type {
   FeedbackStatus,
   LaunchSummary,
   ProductionSelfTest,
+  SupportSlaReport,
   SupportRequestRecord,
   SupportRequestStatus
 } from './api/publicContract';
@@ -1654,6 +1656,7 @@ type OperatorSnapshot = {
   readiness: ReadinessReport;
   selfTest: ProductionSelfTest;
   duplicateWriteAudit: DuplicateWriteAudit;
+  supportSla: SupportSlaReport;
   backupPlan: BackupPlan;
   recentErrors: ExecutionLogRecord[];
   betaRequests: BetaRequestRecord[];
@@ -1689,11 +1692,12 @@ function OperatorPage() {
     setLoading(true);
     setError('');
     try {
-      const [metrics, readiness, selfTest, duplicateWriteAudit, backupPlan, launchSummary, executionErrors, betaRequests, feedback, supportRequests] = await Promise.all([
+      const [metrics, readiness, selfTest, duplicateWriteAudit, supportSla, backupPlan, launchSummary, executionErrors, betaRequests, feedback, supportRequests] = await Promise.all([
         getPublicAdminMetrics(publicApiBaseUrl, token),
         getPublicAdminReadiness(publicApiBaseUrl, token),
         getPublicAdminSelfTest(publicApiBaseUrl, token),
         getPublicAdminDuplicateWriteAudit(publicApiBaseUrl, token),
+        getPublicAdminSupportSla(publicApiBaseUrl, token),
         getPublicAdminBackupPlan(publicApiBaseUrl, token),
         getPublicAdminLaunchSummary(publicApiBaseUrl, token),
         getPublicAdminExecutionErrors(publicApiBaseUrl, token),
@@ -1709,6 +1713,7 @@ function OperatorPage() {
         readiness,
         selfTest,
         duplicateWriteAudit,
+        supportSla,
         backupPlan,
         recentErrors: executionErrors.recentErrors,
         betaRequests: betaRequests.requests,
@@ -2013,6 +2018,47 @@ function OperatorPage() {
               </div>
             ) : (
               <p>No likely duplicate writes in the recent audit window.</p>
+            )}
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <div className="operatorPanelHeader">
+              <h2>Support SLA</h2>
+              <span className={snapshot.supportSla.ok ? 'operatorBadge ready' : 'operatorBadge'}>
+                {snapshot.supportSla.ok ? 'On track' : 'Overdue'}
+              </span>
+            </div>
+            <div className="launchSummaryGrid">
+              <div>
+                <span>Open</span>
+                <strong>{snapshot.supportSla.openCount}</strong>
+              </div>
+              <div>
+                <span>Overdue</span>
+                <strong>{snapshot.supportSla.overdueCount}</strong>
+              </div>
+              <div>
+                <span>Threshold</span>
+                <strong>{snapshot.supportSla.thresholdHours}h</strong>
+              </div>
+              <div>
+                <span>Oldest</span>
+                <strong>{snapshot.supportSla.oldestOpenHours ?? 0}h</strong>
+              </div>
+            </div>
+            {snapshot.supportSla.overdueRequests.length ? (
+              <div className="duplicateAuditList">
+                {snapshot.supportSla.overdueRequests.map((request) => (
+                  <div className="duplicateAuditItem" key={request.id}>
+                    <div>
+                      <strong>{request.summary}</strong>
+                      <span>{request.ageHours} hours open from {request.email}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No overdue support requests.</p>
             )}
           </article>
 

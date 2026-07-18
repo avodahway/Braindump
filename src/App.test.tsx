@@ -338,6 +338,29 @@ describe('App routes', () => {
           })
         );
       }
+      if (url === 'https://api.example.com/api/admin/support-sla') {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            generatedAt: '2026-07-17T12:00:00.000Z',
+            thresholdHours: 24,
+            openCount: 1,
+            overdueCount: 1,
+            oldestOpenHours: 30,
+            overdueRequests: [
+              {
+                id: 'support-overdue',
+                email: 'late@example.com',
+                issueType: 'google_connection',
+                summary: 'Connection still failing',
+                status: 'new',
+                ageHours: 30,
+                createdAt: '2026-07-16T06:00:00.000Z'
+              }
+            ]
+          })
+        );
+      }
       if (url === 'https://api.example.com/api/admin/backup-plan') {
         return new Response(
           JSON.stringify({
@@ -524,6 +547,10 @@ describe('App routes', () => {
     expect(screen.getByText('Investigate')).toBeInTheDocument();
     expect(screen.getByText('pay invoice')).toBeInTheDocument();
     expect(screen.getByText('req-2, req-1')).toBeInTheDocument();
+    expect(screen.getByText('Support SLA')).toBeInTheDocument();
+    expect(screen.getAllByText('Overdue').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Connection still failing')).toBeInTheDocument();
+    expect(screen.getByText('30 hours open from late@example.com')).toBeInTheDocument();
     expect(screen.getByText('Cohort Review')).toBeInTheDocument();
     expect(screen.getByText(/Tag each invite note with Founder watched run/i)).toBeInTheDocument();
     expect(screen.getAllByLabelText('Status')).toHaveLength(3);
@@ -594,6 +621,9 @@ describe('App routes', () => {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/duplicate-write-audit', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/support-sla', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-requests', {
