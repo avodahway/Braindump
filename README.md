@@ -66,6 +66,7 @@ See `docs/PUBLIC_BACKEND_PLAN.md` for the product/backend path.
 
 Go-to-market planning lives in:
 
+- `CHANGELOG.md`
 - `docs/BETA_LAUNCH_PLAN.md`
 - `docs/DEPLOYMENT_RUNBOOK.md`
 - `docs/PRODUCTION_DEPLOYMENT.md`
