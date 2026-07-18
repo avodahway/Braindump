@@ -121,6 +121,9 @@ those records from protected `GET /api/admin/beta-requests`. Add `?format=csv` t
 `POST /api/feedback` records structured first-run feedback. `/operator` reads those records from protected
 `GET /api/admin/feedback`. Add `?format=csv` to export feedback for user interviews and launch notes.
 
+`POST /api/support/request` records structured support and data-deletion requests. `/operator` reads those records from
+protected `GET /api/admin/support-requests` and can mark beta, feedback, and support records through their lifecycle.
+
 `src/server/idempotencyStore.ts` keeps processed request IDs from writing twice. When the backend is configured with durable storage, duplicate requests return the original response even after a backend restart.
 
 `src/server/executionLogStore.ts` records each attempted action with request id, user id, status, provider id, and failure messages so the public backend has an audit trail.

@@ -34,6 +34,7 @@ describe('deployment verifier', () => {
       'Admin beta requests CSV rejects anonymous requests',
       'Admin feedback rejects anonymous requests',
       'Admin feedback CSV rejects anonymous requests',
+      'Admin support requests rejects anonymous requests',
       'Admin metrics accepts configured token',
       'Admin backup plan accepts configured token',
       'Admin readiness accepts configured token',
@@ -41,7 +42,8 @@ describe('deployment verifier', () => {
       'Admin beta requests accepts configured token',
       'Admin beta requests CSV accepts configured token',
       'Admin feedback accepts configured token',
-      'Admin feedback CSV accepts configured token'
+      'Admin feedback CSV accepts configured token',
+      'Admin support requests accepts configured token'
     ]);
   });
 

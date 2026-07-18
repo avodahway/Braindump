@@ -12,7 +12,8 @@ const adminRoutes = [
   { label: 'Admin beta requests', path: '/api/admin/beta-requests', kind: 'json' },
   { label: 'Admin beta requests CSV', path: '/api/admin/beta-requests?format=csv', kind: 'csv' },
   { label: 'Admin feedback', path: '/api/admin/feedback', kind: 'json' },
-  { label: 'Admin feedback CSV', path: '/api/admin/feedback?format=csv', kind: 'csv' }
+  { label: 'Admin feedback CSV', path: '/api/admin/feedback?format=csv', kind: 'csv' },
+  { label: 'Admin support requests', path: '/api/admin/support-requests', kind: 'json' }
 ];
 
 export function buildDeploymentChecks({

@@ -43,12 +43,14 @@ The frontend host must serve the same app entry point for every route above.
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/brain-dump` | Reviewed action execution | Requires connected user session |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/events` | Privacy-safe beta analytics | Stores event metadata only |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/feedback` | Public beta feedback | Records structured first-run feedback |
+| `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/support/request` | Public support and data requests | Records support issues and deletion requests |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/metrics` | Protected beta metrics | Requires `X-Brain-Dump-Admin-Token` |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/backup-plan` | Protected backup checklist | Requires `X-Brain-Dump-Admin-Token` |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/readiness` | Protected launch readiness | Returns `ready: true` only after real config |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/execution-errors` | Protected recent execution errors | Shows recent Google/provider write failures |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/beta-requests` | Protected beta request list | Shows first-user beta access requests and supports `?format=csv` |
 | `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/feedback` | Protected beta feedback list | Shows first-user feedback submissions and supports `?format=csv` |
+| `[BRAIN_DUMP_PUBLIC_API_ORIGIN]/api/admin/support-requests` | Protected support request list | Shows support and data-deletion requests |
 
 ## Verification Command
 

@@ -102,3 +102,5 @@ Test these value propositions:
 - Protected beta request list in `/operator`.
 - Protected beta feedback list in `/operator`.
 - CSV exports for beta requests and feedback.
+- Support and data-deletion request intake through `/support` and `/data-deletion`.
+- Operator lifecycle actions for beta requests, feedback, and support requests.
