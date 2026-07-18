@@ -383,7 +383,11 @@ export function createPublicBackend(options: PublicBackendOptions) {
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminBetaRequests) {
         const adminError = requireAdmin(request, options.adminToken, 'Admin beta requests are not configured.');
         if (adminError) return withCors(adminError, request, options.frontendAppUrl);
-        const requests = await betaRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit')));
+        const status = parseBetaRequestStatusFilter(url.searchParams.get('status'));
+        if (!status.ok) return sendJson({ error: status.error }, 400);
+        const requests = (await betaRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit')))).filter((request) =>
+          status.value ? request.status === status.value : true
+        );
         if (url.searchParams.get('format') === 'csv') {
           return withCors(csv(betaRequestsCsv(requests), 'brain-dump-beta-requests.csv'), request, options.frontendAppUrl);
         }
@@ -1065,6 +1069,12 @@ function parseAdminLimit(value: string | null): number {
   const limit = Number(value);
   if (!Number.isInteger(limit) || limit <= 0) return 20;
   return Math.min(limit, 100);
+}
+
+function parseBetaRequestStatusFilter(value: string | null): { ok: true; value?: BetaRequestStatus } | { ok: false; error: string } {
+  if (!value) return { ok: true };
+  if (value === 'new' || value === 'invited' || value === 'archived') return { ok: true, value };
+  return { ok: false, error: 'Invalid beta request status filter.' };
 }
 
 function betaRequestsCsv(requests: BetaRequestRecord[]): string {

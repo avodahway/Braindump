@@ -1475,6 +1475,7 @@ type OperatorSnapshot = {
 function OperatorPage() {
   const [settings, setSettings] = useState(() => loadSettings());
   const [adminToken, setAdminToken] = useState(() => localStorage.getItem('brain-dump-admin-token') ?? '');
+  const [betaRequestStatusFilter, setBetaRequestStatusFilter] = useState<BetaRequestStatus | 'all'>('all');
   const [snapshot, setSnapshot] = useState<OperatorSnapshot | null>(null);
   const [error, setError] = useState('');
   const [isLoading, setLoading] = useState(false);
@@ -1503,7 +1504,7 @@ function OperatorPage() {
         getPublicAdminBackupPlan(publicApiBaseUrl, token),
         getPublicAdminLaunchSummary(publicApiBaseUrl, token),
         getPublicAdminExecutionErrors(publicApiBaseUrl, token),
-        getPublicAdminBetaRequests(publicApiBaseUrl, token),
+        getPublicAdminBetaRequests(publicApiBaseUrl, token, betaRequestStatusFilter === 'all' ? undefined : betaRequestStatusFilter),
         getPublicAdminFeedback(publicApiBaseUrl, token),
         getPublicAdminSupportRequests(publicApiBaseUrl, token)
       ]);
@@ -1541,7 +1542,7 @@ function OperatorPage() {
         kind === 'execution-errors'
           ? await getPublicAdminExecutionErrorsCsv(publicApiBaseUrl, token)
           : kind === 'beta-requests'
-          ? await getPublicAdminBetaRequestsCsv(publicApiBaseUrl, token)
+          ? await getPublicAdminBetaRequestsCsv(publicApiBaseUrl, token, betaRequestStatusFilter === 'all' ? undefined : betaRequestStatusFilter)
           : kind === 'feedback'
             ? await getPublicAdminFeedbackCsv(publicApiBaseUrl, token)
             : await getPublicAdminSupportRequestsCsv(publicApiBaseUrl, token);
@@ -1848,14 +1849,28 @@ function OperatorPage() {
           <article className="operatorPanel widePanel">
             <div className="operatorPanelHeader">
               <h2>Beta Requests</h2>
-              <button
-                type="button"
-                className="smallButton exportButton"
-                disabled={isExporting === 'beta-requests'}
-                onClick={() => handleExport('beta-requests')}
-              >
-                {isExporting === 'beta-requests' ? 'Exporting' : 'Export CSV'}
-              </button>
+              <div className="operatorHeaderActions">
+                <label>
+                  Status
+                  <select
+                    value={betaRequestStatusFilter}
+                    onChange={(event) => setBetaRequestStatusFilter(event.target.value as BetaRequestStatus | 'all')}
+                  >
+                    <option value="all">All</option>
+                    <option value="new">New</option>
+                    <option value="invited">Invited</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="smallButton exportButton"
+                  disabled={isExporting === 'beta-requests'}
+                  onClick={() => handleExport('beta-requests')}
+                >
+                  {isExporting === 'beta-requests' ? 'Exporting' : 'Export CSV'}
+                </button>
+              </div>
             </div>
             {snapshot.betaRequests.length ? (
               <div className="betaRequestList">

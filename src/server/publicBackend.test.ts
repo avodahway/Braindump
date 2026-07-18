@@ -249,6 +249,58 @@ describe('public backend scaffold', () => {
     );
   });
 
+  it('filters protected beta request lists by status', async () => {
+    const betaRequestStore = createMemoryBetaRequestStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      betaRequestStore,
+      adminToken: 'admin-token',
+      now: () => new Date('2026-07-17T12:00:00.000Z')
+    });
+
+    await betaRequestStore.append({
+      id: 'beta-new',
+      status: 'new',
+      name: 'New Tester',
+      email: 'new@example.com',
+      tools: 'Google Tasks',
+      googleComfort: 'comfortable',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+    await betaRequestStore.append({
+      id: 'beta-invited',
+      status: 'invited',
+      name: 'Invited Tester',
+      email: 'invited@example.com',
+      tools: 'Google Calendar',
+      googleComfort: 'comfortable',
+      createdAt: '2026-07-17T12:01:00.000Z'
+    });
+
+    const listed = await backend.handle(
+      new Request('https://api.example.com/api/admin/beta-requests?status=new', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+    const csvResponse = await backend.handle(
+      new Request('https://api.example.com/api/admin/beta-requests?status=new&format=csv', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+    const invalid = await backend.handle(
+      new Request('https://api.example.com/api/admin/beta-requests?status=maybe', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+
+    expect(await listed.json()).toMatchObject({
+      requests: [{ id: 'beta-new', email: 'new@example.com' }]
+    });
+    expect(await csvResponse.text()).toContain('new@example.com');
+    expect(invalid.status).toBe(400);
+    expect(await invalid.json()).toEqual({ error: 'Invalid beta request status filter.' });
+  });
+
   it('updates protected beta request status', async () => {
     const betaRequestStore = createMemoryBetaRequestStore();
     const backend = createPublicBackend({

@@ -256,10 +256,12 @@ export async function getPublicAdminExecutionErrorsCsv(
 export async function getPublicAdminBetaRequests(
   baseUrl: string,
   adminToken: string,
+  statusOrFetcher?: BetaRequestStatus | JsonFetcher,
   fetcher: JsonFetcher = fetch
 ): Promise<{ requests: BetaRequestRecord[] }> {
+  const { status, fetcher: resolvedFetcher } = betaRequestArgs(statusOrFetcher, fetcher);
   return readJson<{ requests: BetaRequestRecord[] }>(
-    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminBetaRequests), {
+    await resolvedFetcher(publicApiUrl(baseUrl, adminBetaRequestsPath(status)), {
       headers: adminHeaders(adminToken)
     })
   );
@@ -268,10 +270,12 @@ export async function getPublicAdminBetaRequests(
 export async function getPublicAdminBetaRequestsCsv(
   baseUrl: string,
   adminToken: string,
+  statusOrFetcher?: BetaRequestStatus | JsonFetcher,
   fetcher: JsonFetcher = fetch
 ): Promise<string> {
+  const { status, fetcher: resolvedFetcher } = betaRequestArgs(statusOrFetcher, fetcher);
   return readText(
-    await fetcher(publicApiUrl(baseUrl, `${publicBackendRoutes.adminBetaRequests}?format=csv`), {
+    await resolvedFetcher(publicApiUrl(baseUrl, adminBetaRequestsPath(status, 'csv')), {
       headers: adminHeaders(adminToken)
     })
   );
@@ -386,6 +390,23 @@ function adminHeaders(adminToken: string): HeadersInit {
   return {
     'X-Brain-Dump-Admin-Token': adminToken
   };
+}
+
+function adminBetaRequestsPath(status?: BetaRequestStatus, format?: 'csv'): string {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (format) params.set('format', format);
+  const query = params.toString();
+  return query ? `${publicBackendRoutes.adminBetaRequests}?${query}` : publicBackendRoutes.adminBetaRequests;
+}
+
+function betaRequestArgs(
+  statusOrFetcher: BetaRequestStatus | JsonFetcher | undefined,
+  fetcher: JsonFetcher
+): { status?: BetaRequestStatus; fetcher: JsonFetcher } {
+  return typeof statusOrFetcher === 'function'
+    ? { fetcher: statusOrFetcher }
+    : { status: statusOrFetcher, fetcher };
 }
 
 async function readJson<T>(response: Response): Promise<T> {

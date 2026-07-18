@@ -336,6 +336,23 @@ describe('public API client', () => {
     });
   });
 
+  it('filters protected beta request lists and CSV exports by status', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ requests: [] })))
+      .mockResolvedValueOnce(new Response('createdAt,name,email,status\n2026-07-17T12:00:00.000Z,Jay,jay@example.com,new'));
+
+    await getPublicAdminBetaRequests('https://api.example.com', 'admin-token', 'new', fetcher);
+    await getPublicAdminBetaRequestsCsv('https://api.example.com', 'admin-token', 'new', fetcher);
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/beta-requests?status=new', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/admin/beta-requests?status=new&format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
   it('updates beta request status through the protected operator API', async () => {
     const fetcher = vi.fn().mockResolvedValue(
       new Response(
