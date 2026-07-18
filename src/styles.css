@@ -1229,6 +1229,30 @@ input:focus {
   margin-top: 16px;
 }
 
+.betaHelpLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(39, 89, 70, 0.12);
+}
+
+.betaHelpLinks a {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(39, 89, 70, 0.12);
+  border-radius: 8px;
+  padding: 0 11px;
+  color: var(--green);
+  background: #f8fbf7;
+  font-size: 13px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
 .secondaryButton,
 .processButton {
   min-height: 56px;
@@ -1697,6 +1721,11 @@ input:disabled {
 
   .actionRow {
     grid-template-columns: 1fr;
+  }
+
+  .betaHelpLinks a {
+    flex: 1 1 110px;
+    justify-content: center;
   }
 
   .setupPanelTop {

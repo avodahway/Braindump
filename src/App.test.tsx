@@ -230,6 +230,9 @@ describe('App routes', () => {
     expect(screen.getByPlaceholderText('Put everything here. Do not organize it.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Busy morning' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Review/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Support/i })).toHaveAttribute('href', '/support');
+    expect(screen.getByRole('link', { name: /Feedback/i })).toHaveAttribute('href', '/feedback');
+    expect(screen.getByRole('link', { name: /Status/i })).toHaveAttribute('href', '/status');
   });
 
   it('loads a first-run sample into the app', () => {

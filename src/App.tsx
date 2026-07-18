@@ -408,6 +408,7 @@ function ProductApp() {
             </button>
           )}
         </div>
+        <BetaHelpLinks />
       </section>
 
       {(error || preview || result) && (
@@ -2622,6 +2623,25 @@ function FeedbackPanel({ result }: { result: BrainDumpResponse }) {
       <a href={feedbackMailto(result)}>
         <MessageCircle size={17} />
         Send feedback
+      </a>
+    </div>
+  );
+}
+
+function BetaHelpLinks() {
+  return (
+    <div className="betaHelpLinks" aria-label="Beta help">
+      <a href="/support">
+        <MessageCircle size={16} />
+        Support
+      </a>
+      <a href="/feedback">
+        <UserCheck size={16} />
+        Feedback
+      </a>
+      <a href="/status">
+        <CheckCircle2 size={16} />
+        Status
       </a>
     </div>
   );
