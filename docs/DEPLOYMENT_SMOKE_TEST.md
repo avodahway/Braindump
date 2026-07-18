@@ -35,7 +35,17 @@ Use this worksheet after deploying staging or production. Automated deployment v
 | `/security` | Password, token, reviewed-write, and export guidance is present |  |  |
 | `/install` | PWA install guidance is present |  |  |
 | `/roadmap` | Beta scope, next work, later work, and out-of-scope features are present |  |  |
+| `/press` | Approved beta description, boundaries, assets, and contact are present |  |  |
+| `/examples` | Task, calendar, project, follow-up, and review examples are present |  |  |
 | `/operator` | Requires production API URL and admin token |  |  |
+
+## Search And Share
+
+| Asset | Expected | Result | Notes |
+| --- | --- | --- | --- |
+| `/` metadata | Description, Open Graph, Twitter card, and canonical tags are present |  |  |
+| `/robots.txt` | Allows public routes and disallows `/operator` |  |  |
+| `/sitemap.xml` | Includes public launch pages and excludes `/operator` |  |  |
 
 ## App Workflow
 
@@ -57,6 +67,7 @@ Use this worksheet after deploying staging or production. Automated deployment v
 - Confirm readiness grouping shows blockers and ready checks.
 - Confirm Launch Summary shows posture, recent errors, open beta, and open support.
 - Export launch notes Markdown.
+- Filter beta requests by status before exporting a waitlist batch.
 - Export execution errors CSV.
 - Export beta requests CSV.
 - Export feedback CSV.

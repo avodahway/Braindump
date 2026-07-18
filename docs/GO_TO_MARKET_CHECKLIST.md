@@ -9,7 +9,8 @@
 - Publish basic home page.
 - Publish privacy policy draft page.
 - Publish terms draft page.
-- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/faq`, `/security`, `/install`, `/roadmap`, `/operator`, and `/app` routes work on the deployed frontend.
+- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/faq`, `/security`, `/install`, `/roadmap`, `/press`, `/examples`, `/operator`, and `/app` routes work on the deployed frontend.
+- Confirm `/robots.txt`, `/sitemap.xml`, and public metadata checks pass in deployment verification.
 - Confirm `/app` explains setup progress, demo mode, Google connection, destinations, and disconnect.
 - Confirm `/app` first-run samples load and review successfully.
 - Confirm `/operator` loads readiness, launch summary, metrics, backup status, and checklist with the admin token.
@@ -107,12 +108,15 @@ Test these value propositions:
 - Public security page at `/security`.
 - Public install help at `/install`.
 - Public roadmap page at `/roadmap`.
+- Public press page at `/press`.
+- Public examples page at `/examples`.
 - Support email.
 - Founder beta invitation email.
 - Founder beta follow-up email.
 - 3-question post-run feedback form at `/feedback`.
 - Beta access request page at `/beta`.
 - Protected beta request list in `/operator`.
+- Protected beta request status filter in `/operator`.
 - Protected beta feedback list in `/operator`.
 - CSV exports for execution errors, beta requests, feedback, and support requests.
 - Support and data-deletion request intake through `/support` and `/data-deletion`.

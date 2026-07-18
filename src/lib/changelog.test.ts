@@ -9,5 +9,7 @@ describe('changelog', () => {
     expect(changelog).toContain('launch decision records');
     expect(changelog).toContain('security, install, and roadmap');
     expect(changelog).toContain('launch-notes export');
+    expect(changelog).toContain('press, and examples');
+    expect(changelog).toContain('accessibility smoke checks');
   });
 });

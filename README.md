@@ -32,8 +32,8 @@ pnpm build
 pnpm build:backend
 ```
 
-After a real frontend and backend are deployed, verify public pages, `/operator`, backend health, protected operator feeds,
-and CSV exports with:
+After a real frontend and backend are deployed, verify public pages, search/share metadata, `/operator`, backend health,
+protected operator feeds, and CSV exports with:
 
 ```sh
 pnpm verify:deployment
