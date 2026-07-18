@@ -1496,17 +1496,7 @@ function OperatorPage() {
 
           <article className="operatorPanel widePanel">
             <h2>Readiness</h2>
-            <div className="readinessList">
-              {snapshot.readiness.checks.map((check) => (
-                <div className={check.ready ? 'readyItem' : 'blockedItem'} key={check.key}>
-                  <CheckCircle2 size={17} />
-                  <div>
-                    <strong>{check.label}</strong>
-                    <span>{check.detail}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ReadinessGroups checks={snapshot.readiness.checks} />
           </article>
 
           <article className="operatorPanel">
@@ -1837,6 +1827,62 @@ function countStatuses(records: Array<{ status: string }>): Record<string, numbe
     counts[record.status] = (counts[record.status] ?? 0) + 1;
     return counts;
   }, {});
+}
+
+function ReadinessGroups({ checks }: { checks: ReadinessReport['checks'] }) {
+  const blocking = checks.filter((check) => !check.ready);
+  const ready = checks.filter((check) => check.ready);
+
+  return (
+    <div className="readinessGroups">
+      <ReadinessGroup
+        title={`Blocking Issues (${blocking.length})`}
+        emptyText="No launch blockers detected."
+        checks={blocking}
+        blocked
+      />
+      <ReadinessGroup
+        title={`Ready Checks (${ready.length})`}
+        emptyText="No completed checks yet."
+        checks={ready}
+      />
+    </div>
+  );
+}
+
+function ReadinessGroup({
+  title,
+  emptyText,
+  checks,
+  blocked = false
+}: {
+  title: string;
+  emptyText: string;
+  checks: ReadinessReport['checks'];
+  blocked?: boolean;
+}) {
+  const Icon = blocked ? AlertTriangle : CheckCircle2;
+
+  return (
+    <section className="readinessGroup">
+      <h3>{title}</h3>
+      <div className="readinessList">
+        {checks.length ? (
+          checks.map((check) => (
+            <div className={blocked ? 'blockedItem' : 'readyItem'} key={check.key}>
+              <Icon size={17} />
+              <div>
+                <strong>{check.label}</strong>
+                <span>{check.detail}</span>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p>{emptyText}</p>
+        )}
+      </div>
+    </section>
+  );
 }
 
 function shortDateTime(value: string): string {

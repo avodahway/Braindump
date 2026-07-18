@@ -314,10 +314,23 @@ a {
   cursor: not-allowed;
 }
 
+.readinessGroups,
 .readinessList,
 .eventMix {
   display: grid;
   gap: 8px;
+}
+
+.readinessGroups {
+  gap: 16px;
+}
+
+.readinessGroup h3 {
+  margin: 0 0 8px;
+  color: rgba(24, 50, 40, 0.72);
+  font-size: 13px;
+  font-weight: 950;
+  text-transform: uppercase;
 }
 
 .readyItem,
