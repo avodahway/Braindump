@@ -350,10 +350,12 @@ export async function updatePublicAdminFeedbackStatus(
 export async function getPublicAdminSupportRequests(
   baseUrl: string,
   adminToken: string,
+  statusOrFetcher?: SupportRequestStatus | JsonFetcher,
   fetcher: JsonFetcher = fetch
 ): Promise<{ supportRequests: SupportRequestRecord[] }> {
+  const { status, fetcher: resolvedFetcher } = supportRequestArgs(statusOrFetcher, fetcher);
   return readJson<{ supportRequests: SupportRequestRecord[] }>(
-    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminSupportRequests), {
+    await resolvedFetcher(publicApiUrl(baseUrl, adminSupportRequestsPath(status)), {
       headers: adminHeaders(adminToken)
     })
   );
@@ -362,10 +364,12 @@ export async function getPublicAdminSupportRequests(
 export async function getPublicAdminSupportRequestsCsv(
   baseUrl: string,
   adminToken: string,
+  statusOrFetcher?: SupportRequestStatus | JsonFetcher,
   fetcher: JsonFetcher = fetch
 ): Promise<string> {
+  const { status, fetcher: resolvedFetcher } = supportRequestArgs(statusOrFetcher, fetcher);
   return readText(
-    await fetcher(publicApiUrl(baseUrl, `${publicBackendRoutes.adminSupportRequests}?format=csv`), {
+    await resolvedFetcher(publicApiUrl(baseUrl, adminSupportRequestsPath(status, 'csv')), {
       headers: adminHeaders(adminToken)
     })
   );
@@ -425,6 +429,23 @@ function feedbackArgs(
   statusOrFetcher: FeedbackStatus | JsonFetcher | undefined,
   fetcher: JsonFetcher
 ): { status?: FeedbackStatus; fetcher: JsonFetcher } {
+  return typeof statusOrFetcher === 'function'
+    ? { fetcher: statusOrFetcher }
+    : { status: statusOrFetcher, fetcher };
+}
+
+function adminSupportRequestsPath(status?: SupportRequestStatus, format?: 'csv'): string {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (format) params.set('format', format);
+  const query = params.toString();
+  return query ? `${publicBackendRoutes.adminSupportRequests}?${query}` : publicBackendRoutes.adminSupportRequests;
+}
+
+function supportRequestArgs(
+  statusOrFetcher: SupportRequestStatus | JsonFetcher | undefined,
+  fetcher: JsonFetcher
+): { status?: SupportRequestStatus; fetcher: JsonFetcher } {
   return typeof statusOrFetcher === 'function'
     ? { fetcher: statusOrFetcher }
     : { status: statusOrFetcher, fetcher };

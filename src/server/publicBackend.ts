@@ -439,7 +439,11 @@ export function createPublicBackend(options: PublicBackendOptions) {
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminSupportRequests) {
         const adminError = requireAdmin(request, options.adminToken, 'Admin support requests are not configured.');
         if (adminError) return withCors(adminError, request, options.frontendAppUrl);
-        const supportRequests = await supportRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit')));
+        const status = parseSupportRequestStatusFilter(url.searchParams.get('status'));
+        if (!status.ok) return sendJson({ error: status.error }, 400);
+        const supportRequests = (await supportRequestStore.readRecent(parseAdminLimit(url.searchParams.get('limit')))).filter((request) =>
+          status.value ? request.status === status.value : true
+        );
         if (url.searchParams.get('format') === 'csv') {
           return withCors(csv(supportRequestsCsv(supportRequests), 'brain-dump-support-requests.csv'), request, options.frontendAppUrl);
         }
@@ -1085,6 +1089,12 @@ function parseFeedbackStatusFilter(value: string | null): { ok: true; value?: Fe
   if (!value) return { ok: true };
   if (value === 'new' || value === 'reviewed' || value === 'archived') return { ok: true, value };
   return { ok: false, error: 'Invalid feedback status filter.' };
+}
+
+function parseSupportRequestStatusFilter(value: string | null): { ok: true; value?: SupportRequestStatus } | { ok: false; error: string } {
+  if (!value) return { ok: true };
+  if (value === 'new' || value === 'in_progress' || value === 'resolved' || value === 'archived') return { ok: true, value };
+  return { ok: false, error: 'Invalid support request status filter.' };
 }
 
 function betaRequestsCsv(requests: BetaRequestRecord[]): string {

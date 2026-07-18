@@ -661,6 +661,56 @@ describe('public backend scaffold', () => {
     );
   });
 
+  it('filters protected support requests by status', async () => {
+    const supportRequestStore = createMemorySupportRequestStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      supportRequestStore,
+      adminToken: 'admin-token'
+    });
+    await supportRequestStore.append({
+      id: 'support-new',
+      status: 'new',
+      email: 'new@example.com',
+      issueType: 'google_connection',
+      summary: 'Connection failed',
+      details: 'OAuth callback showed an error.',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+    await supportRequestStore.append({
+      id: 'support-progress',
+      status: 'in_progress',
+      email: 'progress@example.com',
+      issueType: 'data_deletion',
+      summary: 'Deletion question',
+      details: 'Needs help.',
+      createdAt: '2026-07-17T12:01:00.000Z'
+    });
+
+    const listed = await backend.handle(
+      new Request('https://api.example.com/api/admin/support-requests?status=in_progress', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+    const csvResponse = await backend.handle(
+      new Request('https://api.example.com/api/admin/support-requests?status=in_progress&format=csv', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+    const invalid = await backend.handle(
+      new Request('https://api.example.com/api/admin/support-requests?status=maybe', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+
+    expect(await listed.json()).toMatchObject({
+      supportRequests: [{ id: 'support-progress', email: 'progress@example.com' }]
+    });
+    expect(await csvResponse.text()).toContain('progress@example.com');
+    expect(invalid.status).toBe(400);
+    expect(await invalid.json()).toEqual({ error: 'Invalid support request status filter.' });
+  });
+
   it('blocks public brain dump execution until beta access is granted', async () => {
     const backend = createPublicBackend({
       googleOAuth,

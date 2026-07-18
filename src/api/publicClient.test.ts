@@ -480,4 +480,21 @@ describe('public API client', () => {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });
+
+  it('filters protected support request lists and CSV exports by status', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ supportRequests: [] })))
+      .mockResolvedValueOnce(new Response('createdAt,email,status\n2026-07-17,user@example.com,in_progress'));
+
+    await getPublicAdminSupportRequests('https://api.example.com', 'admin-token', 'in_progress', fetcher);
+    await getPublicAdminSupportRequestsCsv('https://api.example.com', 'admin-token', 'in_progress', fetcher);
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/support-requests?status=in_progress', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/admin/support-requests?status=in_progress&format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
 });
