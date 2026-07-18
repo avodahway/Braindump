@@ -8,6 +8,7 @@ import {
   type FeedbackInput,
   type FeedbackRecord,
   type FeedbackStatus,
+  type LaunchSummary,
   type SupportRequestInput,
   type SupportRequestRecord,
   type SupportRequestStatus
@@ -342,6 +343,29 @@ export function createPublicBackend(options: PublicBackendOptions) {
             storageEncrypted: Boolean(options.storageEncrypted)
           })
         );
+      }
+
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminLaunchSummary) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin launch summary is not configured.');
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        return sendJson(await buildLaunchSummary({
+          generatedAt: now().toISOString(),
+          analyticsStore,
+          betaRequestStore,
+          feedbackStore,
+          supportRequestStore,
+          executionLogStore,
+          ready: buildReadinessReport({
+            generatedAt: now().toISOString(),
+            googleClientId: options.googleOAuth.clientId,
+            googleRedirectUri: options.googleOAuth.redirectUri,
+            googleScopes: options.googleOAuth.scopes,
+            frontendAppUrl: options.frontendAppUrl,
+            adminTokenConfigured: Boolean(options.adminToken),
+            storageMode: options.storageMode ?? 'memory',
+            storageEncrypted: Boolean(options.storageEncrypted)
+          }).ready
+        }));
       }
 
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminExecutionErrors) {
@@ -1103,6 +1127,53 @@ function executionErrorsCsv(errors: ExecutionLogRecord[]): string {
       status: error.status
     }))
   );
+}
+
+async function buildLaunchSummary({
+  generatedAt,
+  analyticsStore,
+  betaRequestStore,
+  feedbackStore,
+  supportRequestStore,
+  executionLogStore,
+  ready
+}: {
+  generatedAt: string;
+  analyticsStore: AnalyticsStore;
+  betaRequestStore: BetaRequestStore;
+  feedbackStore: FeedbackStore;
+  supportRequestStore: SupportRequestStore;
+  executionLogStore: ExecutionLogStore;
+  ready: boolean;
+}): Promise<LaunchSummary> {
+  const metrics = summarizeAnalytics(await analyticsStore.readAll());
+  const [betaRequests, feedback, supportRequests, recentErrors] = await Promise.all([
+    betaRequestStore.readRecent(100),
+    feedbackStore.readRecent(100),
+    supportRequestStore.readRecent(100),
+    executionLogStore.readRecentErrors(100)
+  ]);
+
+  return {
+    generatedAt,
+    ready,
+    totalEvents: metrics.totalEvents,
+    uniqueUsers: metrics.uniqueUsers,
+    totalErrors: metrics.totalErrors,
+    latestEventAt: metrics.latestEventAt,
+    queueCounts: {
+      beta: countByStatus(betaRequests, ['new', 'invited', 'archived']),
+      feedback: countByStatus(feedback, ['new', 'reviewed', 'archived']),
+      support: countByStatus(supportRequests, ['new', 'in_progress', 'resolved', 'archived']),
+      recentExecutionErrors: recentErrors.length
+    }
+  };
+}
+
+function countByStatus<T extends string>(records: Array<{ status: T }>, statuses: T[]): Record<T, number> {
+  const counts = Object.fromEntries(statuses.map((status) => [status, 0])) as Record<T, number>;
+  for (const record of records) counts[record.status] = (counts[record.status] ?? 0) + 1;
+  return counts;
 }
 
 function recordsToCsv(headers: string[], rows: Array<Record<string, string>>): string {

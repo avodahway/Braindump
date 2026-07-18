@@ -50,6 +50,21 @@ export type SupportRequestRecord = SupportRequestInput & {
 
 export type SupportRequestStatus = 'new' | 'in_progress' | 'resolved' | 'archived';
 
+export type LaunchSummary = {
+  generatedAt: string;
+  ready: boolean;
+  totalEvents: number;
+  uniqueUsers: number;
+  totalErrors: number;
+  latestEventAt?: string;
+  queueCounts: {
+    beta: Record<BetaRequestStatus, number>;
+    feedback: Record<FeedbackStatus, number>;
+    support: Record<SupportRequestStatus, number>;
+    recentExecutionErrors: number;
+  };
+};
+
 export type PublicBackendContract = {
   getWorkspace(): Promise<UserWorkspace>;
   getBetaAccessStatus(): Promise<BetaAccessStatus>;
@@ -84,6 +99,7 @@ export const publicBackendRoutes = {
   adminMetrics: '/api/admin/metrics',
   adminBackupPlan: '/api/admin/backup-plan',
   adminReadiness: '/api/admin/readiness',
+  adminLaunchSummary: '/api/admin/launch-summary',
   adminExecutionErrors: '/api/admin/execution-errors',
   adminBetaRequests: '/api/admin/beta-requests',
   adminBetaRequest: '/api/admin/beta-request',

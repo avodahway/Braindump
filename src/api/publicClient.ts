@@ -8,6 +8,7 @@ import {
   type FeedbackInput,
   type FeedbackRecord,
   type FeedbackStatus,
+  type LaunchSummary,
   type SupportRequestInput,
   type SupportRequestRecord,
   type SupportRequestStatus
@@ -211,6 +212,18 @@ export async function getPublicAdminReadiness(
 ): Promise<ReadinessReport> {
   return readJson<ReadinessReport>(
     await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminReadiness), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function getPublicAdminLaunchSummary(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<LaunchSummary> {
+  return readJson<LaunchSummary>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminLaunchSummary), {
       headers: adminHeaders(adminToken)
     })
   );

@@ -1381,6 +1381,89 @@ describe('public backend scaffold', () => {
     ]);
   });
 
+  it('returns protected launch summary counts', async () => {
+    const analyticsStore = createMemoryAnalyticsStore();
+    const betaRequestStore = createMemoryBetaRequestStore();
+    const feedbackStore = createMemoryFeedbackStore();
+    const supportRequestStore = createMemorySupportRequestStore();
+    const executionLogStore = createMemoryExecutionLogStore();
+    await analyticsStore.append({
+      name: 'create_failed',
+      requestId: 'req-1',
+      mode: 'public',
+      actionCount: 2,
+      errorCount: 1,
+      userId: 'user@example.com',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+    await betaRequestStore.append({
+      id: 'beta-1',
+      status: 'new',
+      name: 'Jay Cleveland',
+      email: 'jay@example.com',
+      tools: 'Google Tasks',
+      googleComfort: 'comfortable',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+    await feedbackStore.append({
+      id: 'feedback-1',
+      status: 'reviewed',
+      lookedRight: 'Tasks',
+      confusing: 'Calendar',
+      expected: 'Clearer review',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+    await supportRequestStore.append({
+      id: 'support-1',
+      status: 'in_progress',
+      email: 'user@example.com',
+      issueType: 'google_connection',
+      summary: 'Connection failed',
+      details: 'OAuth state mismatch',
+      createdAt: '2026-07-17T12:00:00.000Z'
+    });
+    await executionLogStore.append({
+      requestId: 'req-1',
+      actionType: 'calendar',
+      title: 'Lunch',
+      status: 'error',
+      message: 'Calendar failed',
+      createdAt: '2026-07-17T12:01:00.000Z'
+    });
+    const backend = createPublicBackend({
+      googleOAuth,
+      analyticsStore,
+      betaRequestStore,
+      feedbackStore,
+      supportRequestStore,
+      executionLogStore,
+      adminToken: 'admin-secret',
+      now: () => new Date('2026-07-17T12:05:00.000Z')
+    });
+
+    const unauthorized = await backend.handle(new Request('https://api.example.com/api/admin/launch-summary'));
+    const authorized = await backend.handle(
+      new Request('https://api.example.com/api/admin/launch-summary', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-secret' }
+      })
+    );
+
+    expect(unauthorized.status).toBe(401);
+    await expect(authorized.json()).resolves.toMatchObject({
+      generatedAt: '2026-07-17T12:05:00.000Z',
+      ready: false,
+      totalEvents: 1,
+      uniqueUsers: 1,
+      totalErrors: 1,
+      queueCounts: {
+        beta: { new: 1, invited: 0, archived: 0 },
+        feedback: { new: 0, reviewed: 1, archived: 0 },
+        support: { new: 0, in_progress: 1, resolved: 0, archived: 0 },
+        recentExecutionErrors: 1
+      }
+    });
+  });
+
   it('returns protected launch readiness without exposing secrets', async () => {
     const backend = createPublicBackend({
       googleOAuth: {
