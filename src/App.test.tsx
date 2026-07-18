@@ -284,6 +284,18 @@ describe('App routes', () => {
           })
         );
       }
+      if (url === 'https://api.example.com/api/admin/self-test') {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            generatedAt: '2026-07-17T12:00:00.000Z',
+            checks: [
+              { key: 'beta_access_gate', label: 'Beta access gate', ok: true, detail: 'Invite code configured' },
+              { key: 'storage_mode', label: 'Storage mode', ok: false, detail: 'Not ready for real users' }
+            ]
+          })
+        );
+      }
       if (url === 'https://api.example.com/api/admin/backup-plan') {
         return new Response(
           JSON.stringify({
@@ -453,7 +465,10 @@ describe('App routes', () => {
     expect(screen.getByText('Lunch with Jack')).toBeInTheDocument();
     expect(screen.getByText('Calendar write failed')).toBeInTheDocument();
     expect(screen.getByText('Launch Summary')).toBeInTheDocument();
-    expect(screen.getByText('Blocked')).toBeInTheDocument();
+    expect(screen.getByText('Production Launch Tracker')).toBeInTheDocument();
+    expect(screen.getByText('Beta access gate')).toBeInTheDocument();
+    expect(screen.getByText('Not ready for real users')).toBeInTheDocument();
+    expect(screen.getAllByText('Blocked').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Blocking Issues (1)')).toBeInTheDocument();
     expect(screen.getByText('Ready Checks (1)')).toBeInTheDocument();
     expect(screen.getByText('Privacy Handling')).toBeInTheDocument();
@@ -524,6 +539,9 @@ describe('App routes', () => {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/launch-summary', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/self-test', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-requests', {

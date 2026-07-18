@@ -31,6 +31,7 @@ import {
   getPublicAdminLaunchSummary,
   getPublicAdminMetrics,
   getPublicAdminReadiness,
+  getPublicAdminSelfTest,
   submitPublicBetaRequest,
   submitPublicFeedback,
   submitPublicSupportRequest,
@@ -62,6 +63,7 @@ import type {
   FeedbackRecord,
   FeedbackStatus,
   LaunchSummary,
+  ProductionSelfTest,
   SupportRequestRecord,
   SupportRequestStatus
 } from './api/publicContract';
@@ -1574,6 +1576,7 @@ type OperatorSnapshot = {
   metrics: AnalyticsMetrics;
   launchSummary: LaunchSummary;
   readiness: ReadinessReport;
+  selfTest: ProductionSelfTest;
   backupPlan: BackupPlan;
   recentErrors: ExecutionLogRecord[];
   betaRequests: BetaRequestRecord[];
@@ -1609,9 +1612,10 @@ function OperatorPage() {
     setLoading(true);
     setError('');
     try {
-      const [metrics, readiness, backupPlan, launchSummary, executionErrors, betaRequests, feedback, supportRequests] = await Promise.all([
+      const [metrics, readiness, selfTest, backupPlan, launchSummary, executionErrors, betaRequests, feedback, supportRequests] = await Promise.all([
         getPublicAdminMetrics(publicApiBaseUrl, token),
         getPublicAdminReadiness(publicApiBaseUrl, token),
+        getPublicAdminSelfTest(publicApiBaseUrl, token),
         getPublicAdminBackupPlan(publicApiBaseUrl, token),
         getPublicAdminLaunchSummary(publicApiBaseUrl, token),
         getPublicAdminExecutionErrors(publicApiBaseUrl, token),
@@ -1625,6 +1629,7 @@ function OperatorPage() {
         metrics,
         launchSummary,
         readiness,
+        selfTest,
         backupPlan,
         recentErrors: executionErrors.recentErrors,
         betaRequests: betaRequests.requests,
@@ -1843,6 +1848,26 @@ function OperatorPage() {
                 <span>Open Support</span>
                 <strong>{snapshot.launchSummary.queueCounts.support.new + snapshot.launchSummary.queueCounts.support.in_progress}</strong>
               </div>
+            </div>
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <div className="operatorPanelHeader">
+              <h2>Production Launch Tracker</h2>
+              <span className={snapshot.selfTest.ok ? 'operatorBadge ready' : 'operatorBadge'}>
+                {snapshot.selfTest.ok ? 'Pass' : 'Blocked'}
+              </span>
+            </div>
+            <div className="launchTrackerGrid">
+              {snapshot.selfTest.checks.map((check) => (
+                <div className={check.ok ? 'launchTrackerItem ready' : 'launchTrackerItem'} key={check.key}>
+                  {check.ok ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+                  <div>
+                    <strong>{check.label}</strong>
+                    <span>{check.detail}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </article>
 

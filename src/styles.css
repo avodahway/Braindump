@@ -267,6 +267,12 @@ a {
   gap: 8px;
 }
 
+.launchTrackerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .launchSummaryGrid div {
   display: grid;
   gap: 6px;
@@ -297,6 +303,47 @@ a {
   border: 1px solid rgba(39, 89, 70, 0.12);
   border-radius: 8px;
   background: #f5f8f4;
+}
+
+.launchTrackerItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-height: 72px;
+  border: 1px solid #e7b7ab;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff1ee;
+}
+
+.launchTrackerItem.ready {
+  border-color: rgba(39, 89, 70, 0.12);
+  background: #f5f8f4;
+}
+
+.launchTrackerItem svg {
+  flex: 0 0 auto;
+  color: #9c4f3d;
+}
+
+.launchTrackerItem.ready svg {
+  color: var(--green);
+}
+
+.launchTrackerItem div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.launchTrackerItem strong {
+  color: var(--green);
+}
+
+.launchTrackerItem span {
+  color: rgba(24, 50, 40, 0.68);
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .queueSummaryGrid span {
