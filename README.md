@@ -58,6 +58,8 @@ When a Public API URL is configured in Settings, public mode posts to:
 - `POST /api/account/delete`
 - `POST /api/beta/request`
 - `POST /api/feedback`
+- `POST /api/support/request`
+- `GET /api/admin/launch-summary`
 - `POST /api/brain-dump`
 
 With a Public API URL configured, the Connect button starts the backend OAuth flow and redirects the browser to the returned Google authorization URL. Without a Public API URL, public mode keeps using a local demo workspace.
@@ -120,6 +122,8 @@ Set `BRAIN_DUMP_STORAGE_SECRET` so durable values are encrypted before being wri
 
 `GET /api/admin/readiness` returns a protected launch-readiness report with boolean checks for OAuth config, frontend callback, admin protection, scopes, and durable storage.
 
+`GET /api/admin/launch-summary` returns a protected launch posture summary with event counts, queue counts, and recent error counts for `/operator`.
+
 `GET /api/admin/execution-errors` returns recent protected provider write failures for the `/operator` dashboard.
 Add `?format=csv` to export recent failures for support triage.
 
@@ -132,6 +136,8 @@ those records from protected `GET /api/admin/beta-requests`. Add `?format=csv` t
 `POST /api/support/request` records structured support and data-deletion requests. `/operator` reads those records from
 protected `GET /api/admin/support-requests`, supports `?format=csv`, and can mark beta, feedback, and support records
 through their lifecycle.
+
+CSV exports prefix spreadsheet formula-like cells before download so operator review files do not execute formulas when opened in spreadsheet software.
 
 `src/server/idempotencyStore.ts` keeps processed request IDs from writing twice. When the backend is configured with durable storage, duplicate requests return the original response even after a backend restart.
 

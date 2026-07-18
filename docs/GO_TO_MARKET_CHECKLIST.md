@@ -9,10 +9,10 @@
 - Publish basic home page.
 - Publish privacy policy draft page.
 - Publish terms draft page.
-- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/operator`, and `/app` routes work on the deployed frontend.
+- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, `/status`, `/faq`, `/security`, `/install`, `/roadmap`, `/operator`, and `/app` routes work on the deployed frontend.
 - Confirm `/app` explains setup progress, demo mode, Google connection, destinations, and disconnect.
 - Confirm `/app` first-run samples load and review successfully.
-- Confirm `/operator` loads readiness, metrics, backup status, and checklist with the admin token.
+- Confirm `/operator` loads readiness, launch summary, metrics, backup status, and checklist with the admin token.
 - Pick frontend host.
 - Pick backend host.
 - Pick durable encrypted storage.
@@ -73,6 +73,7 @@
 - Protect `/api/admin/backup-plan` with `BRAIN_DUMP_ADMIN_TOKEN`.
 - Test encrypted storage snapshot restore in staging.
 - Confirm `/api/admin/readiness` returns `ready: true`.
+- Confirm `/api/admin/launch-summary` returns protected launch posture and queue counts.
 - Announce public beta to a narrow audience.
 
 ## Pricing Hypotheses
@@ -102,6 +103,9 @@ Test these value propositions:
 - Privacy policy.
 - Terms of service.
 - Public FAQ at `/faq`.
+- Public security page at `/security`.
+- Public install help at `/install`.
+- Public roadmap page at `/roadmap`.
 - Support email.
 - Founder beta invitation email.
 - Founder beta follow-up email.
@@ -112,6 +116,7 @@ Test these value propositions:
 - CSV exports for execution errors, beta requests, feedback, and support requests.
 - Support and data-deletion request intake through `/support` and `/data-deletion`.
 - Operator lifecycle actions for beta requests, feedback, and support requests.
+- Operator launch summary and launch-notes export.
 - Operator privacy and triage guides.
 - Beta cohort plan.
 - Deployment smoke-test worksheet.

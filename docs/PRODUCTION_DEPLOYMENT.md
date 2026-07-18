@@ -85,7 +85,7 @@ pnpm build:backend
 ```
 
 Then verify the deployed stack. With an admin token, this checks public pages, `/operator`, backend health, protected
-operator feeds, and CSV exports:
+operator feeds, launch summary, and CSV exports:
 
 ```sh
 BRAIN_DUMP_FRONTEND_ORIGIN=https://braindump.app \
@@ -94,8 +94,8 @@ BRAIN_DUMP_ADMIN_TOKEN=replace-with-admin-token \
 pnpm verify:deployment
 ```
 
-Open `/operator` on the deployed frontend and confirm readiness, metrics, backup status, beta requests, feedback, recent
-errors, CSV exports, and the checklist load with the admin token.
+Open `/operator` on the deployed frontend and confirm readiness, launch summary, metrics, backup status, beta requests,
+feedback, recent errors, launch-notes export, CSV exports, and the checklist load with the admin token.
 
 ## 7. First Invite
 

@@ -31,6 +31,10 @@ Use this worksheet after deploying staging or production. Automated deployment v
 | `/feedback` | Three-question feedback form is available |  |  |
 | `/beta` | Beta access form is available |  |  |
 | `/status` | Current launch phase and limits are accurate |  |  |
+| `/faq` | Google access, review-before-create, email limits, and disconnect answers are present |  |  |
+| `/security` | Password, token, reviewed-write, and export guidance is present |  |  |
+| `/install` | PWA install guidance is present |  |  |
+| `/roadmap` | Beta scope, next work, later work, and out-of-scope features are present |  |  |
 | `/operator` | Requires production API URL and admin token |  |  |
 
 ## App Workflow
@@ -51,6 +55,8 @@ Use this worksheet after deploying staging or production. Automated deployment v
 
 - Load `/operator` with admin token.
 - Confirm readiness grouping shows blockers and ready checks.
+- Confirm Launch Summary shows posture, recent errors, open beta, and open support.
+- Export launch notes Markdown.
 - Export execution errors CSV.
 - Export beta requests CSV.
 - Export feedback CSV.

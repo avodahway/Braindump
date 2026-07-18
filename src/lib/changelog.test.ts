@@ -7,5 +7,7 @@ describe('changelog', () => {
     expect(changelog).toContain('review-before-create');
     expect(changelog).toContain('protected operator dashboard');
     expect(changelog).toContain('launch decision records');
+    expect(changelog).toContain('security, install, and roadmap');
+    expect(changelog).toContain('launch-notes export');
   });
 });
