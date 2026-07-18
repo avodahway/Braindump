@@ -4,6 +4,7 @@ import {
   getPublicAdminBackupPlan,
   getPublicAdminBetaRequests,
   getPublicAdminExecutionErrors,
+  getPublicAdminFeedback,
   getPublicAdminMetrics,
   getPublicAdminReadiness,
   getPublicBetaAccessStatus,
@@ -13,6 +14,7 @@ import {
   redeemPublicBetaAccessCode,
   startPublicGoogleConnection,
   submitPublicBetaRequest,
+  submitPublicFeedback,
   trackPublicEvent
 } from './publicClient';
 
@@ -129,6 +131,49 @@ describe('public API client', () => {
     });
   });
 
+  it('submits feedback through the public backend', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          feedback: {
+            id: 'feedback-1',
+            status: 'new',
+            email: 'jay@example.com',
+            lookedRight: 'Tasks were right.',
+            confusing: 'Calendar felt unclear.',
+            expected: 'More review guidance.',
+            createdAt: '2026-07-17T12:00:00.000Z'
+          }
+        })
+      )
+    );
+
+    await submitPublicFeedback(
+      'https://api.example.com',
+      {
+        email: 'jay@example.com',
+        lookedRight: 'Tasks were right.',
+        confusing: 'Calendar felt unclear.',
+        expected: 'More review guidance.'
+      },
+      fetcher
+    );
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/feedback', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'jay@example.com',
+        lookedRight: 'Tasks were right.',
+        confusing: 'Calendar felt unclear.',
+        expected: 'More review guidance.'
+      })
+    });
+  });
+
+
 
   it('uses backend error messages when public requests fail', async () => {
     const fetcher = vi.fn().mockResolvedValue(
@@ -179,13 +224,15 @@ describe('public API client', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ ready: true, generatedAt: '2026-07-17T12:00:00.000Z', checks: [] })))
       .mockResolvedValueOnce(new Response(JSON.stringify({ generatedAt: '2026-07-17T12:00:00.000Z', storagePrefix: 'prod', sections: [], operatorChecklist: [] })))
       .mockResolvedValueOnce(new Response(JSON.stringify({ recentErrors: [] })))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ requests: [] })));
+      .mockResolvedValueOnce(new Response(JSON.stringify({ requests: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ feedback: [] })));
 
     await getPublicAdminMetrics('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminReadiness('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminBackupPlan('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminExecutionErrors('https://api.example.com', 'admin-token', fetcher);
     await getPublicAdminBetaRequests('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminFeedback('https://api.example.com', 'admin-token', fetcher);
 
     expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/metrics', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
@@ -200,6 +247,9 @@ describe('public API client', () => {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenNthCalledWith(5, 'https://api.example.com/api/admin/beta-requests', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(6, 'https://api.example.com/api/admin/feedback', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });

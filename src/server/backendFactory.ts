@@ -27,6 +27,7 @@ import {
 } from './executionLogStore';
 import { createDurableAnalyticsStore, createMemoryAnalyticsStore, type AnalyticsStore } from './analyticsStore';
 import { createDurableBetaRequestStore, createMemoryBetaRequestStore, type BetaRequestStore } from './betaRequestStore';
+import { createDurableFeedbackStore, createMemoryFeedbackStore, type FeedbackStore } from './feedbackStore';
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -49,6 +50,7 @@ export type BrainDumpBackendConfig = {
   executionLogStore?: ExecutionLogStore;
   analyticsStore?: AnalyticsStore;
   betaRequestStore?: BetaRequestStore;
+  feedbackStore?: FeedbackStore;
   adminToken?: string;
   betaAccessCode?: string;
   requestLimits?: PublicRequestLimits;
@@ -105,6 +107,14 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
           codec: config.storageCodec
         })
       : createMemoryBetaRequestStore());
+  const feedbackStore =
+    config.feedbackStore ??
+    (config.storage
+      ? createDurableFeedbackStore(config.storage, {
+          keyPrefix: config.storageKeyPrefix,
+          codec: config.storageCodec
+        })
+      : createMemoryFeedbackStore());
   const tokenClient =
     config.tokenClient ??
     createGoogleOAuthClient(
@@ -140,6 +150,7 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
     executionLogStore,
     analyticsStore,
     betaRequestStore,
+    feedbackStore,
     adminToken: config.adminToken,
     betaAccessCode: config.betaAccessCode,
     storageKeyPrefix: config.storageKeyPrefix,

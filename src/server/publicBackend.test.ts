@@ -7,6 +7,7 @@ import { createMemoryResponseStore } from './idempotencyStore';
 import { createMemoryExecutionLogStore } from './executionLogStore';
 import { createMemoryAnalyticsStore } from './analyticsStore';
 import { createMemoryBetaRequestStore } from './betaRequestStore';
+import { createMemoryFeedbackStore } from './feedbackStore';
 
 const googleOAuth = {
   clientId: 'client-id',
@@ -231,6 +232,76 @@ describe('public backend scaffold', () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'A valid email is required.' });
+  });
+
+  it('accepts feedback and protects the admin feedback list', async () => {
+    const feedbackStore = createMemoryFeedbackStore();
+    const backend = createPublicBackend({
+      googleOAuth,
+      feedbackStore,
+      adminToken: 'admin-token',
+      now: () => new Date('2026-07-17T12:00:00.000Z')
+    });
+
+    const created = await backend.handle(
+      new Request('https://api.example.com/api/feedback', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'USER@EXAMPLE.COM',
+          requestId: 'req-1',
+          lookedRight: 'The task preview was clear.',
+          confusing: 'The calendar wording was confusing.',
+          expected: 'I expected a safer default.'
+        })
+      })
+    );
+    const blocked = await backend.handle(new Request('https://api.example.com/api/admin/feedback'));
+    const listed = await backend.handle(
+      new Request('https://api.example.com/api/admin/feedback', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+      })
+    );
+
+    expect(created.status).toBe(200);
+    expect(await created.json()).toMatchObject({
+      ok: true,
+      feedback: {
+        email: 'user@example.com',
+        requestId: 'req-1',
+        lookedRight: 'The task preview was clear.',
+        confusing: 'The calendar wording was confusing.',
+        expected: 'I expected a safer default.',
+        status: 'new',
+        createdAt: '2026-07-17T12:00:00.000Z'
+      }
+    });
+    expect(blocked.status).toBe(401);
+    expect(await listed.json()).toMatchObject({
+      feedback: [
+        {
+          email: 'user@example.com',
+          requestId: 'req-1'
+        }
+      ]
+    });
+  });
+
+  it('validates feedback fields', async () => {
+    const backend = createPublicBackend({ googleOAuth });
+
+    const response = await backend.handle(
+      new Request('https://api.example.com/api/feedback', {
+        method: 'POST',
+        body: JSON.stringify({
+          lookedRight: '',
+          confusing: 'The calendar wording was confusing.',
+          expected: 'I expected a safer default.'
+        })
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'What looked right is required.' });
   });
 
   it('blocks public brain dump execution until beta access is granted', async () => {

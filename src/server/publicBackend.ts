@@ -1,6 +1,6 @@
 import { parseBrainDump } from '../lib/parser';
 import type { ActionType, BrainDumpRequest, BrainDumpResponse, ParsedAction, UserWorkspace } from '../lib/types';
-import { publicBackendRoutes, type BetaRequestInput } from '../api/publicContract';
+import { publicBackendRoutes, type BetaRequestInput, type FeedbackInput } from '../api/publicContract';
 import { createDemoActionExecutor, type ActionExecutor } from './actionExecutor';
 import {
   completeOAuthSession,
@@ -21,6 +21,7 @@ import { createMemoryResponseStore, type ResponseStore } from './idempotencyStor
 import { createMemoryExecutionLogStore, type ExecutionLogStore } from './executionLogStore';
 import { createMemoryAnalyticsStore, sanitizeAnalyticsEvent, summarizeAnalytics, type AnalyticsStore } from './analyticsStore';
 import { createMemoryBetaRequestStore, type BetaRequestStore } from './betaRequestStore';
+import { createMemoryFeedbackStore, type FeedbackStore } from './feedbackStore';
 import { buildBackupPlan } from './backupPlan';
 import { buildReadinessReport } from './readinessReport';
 
@@ -43,6 +44,7 @@ export type PublicBackendOptions = {
   executionLogStore?: ExecutionLogStore;
   analyticsStore?: AnalyticsStore;
   betaRequestStore?: BetaRequestStore;
+  feedbackStore?: FeedbackStore;
   adminToken?: string;
   storageKeyPrefix?: string;
   storageMode?: 'memory' | 'durable';
@@ -73,6 +75,7 @@ const rateLimitedPaths = new Set<string>([
   publicBackendRoutes.betaRequest,
   publicBackendRoutes.brainDump,
   publicBackendRoutes.events,
+  publicBackendRoutes.feedback,
   publicBackendRoutes.googleConnect,
   publicBackendRoutes.googleDisconnect,
   publicBackendRoutes.accountDelete
@@ -90,6 +93,7 @@ export function createPublicBackend(options: PublicBackendOptions) {
   const executionLogStore = options.executionLogStore ?? createMemoryExecutionLogStore();
   const analyticsStore = options.analyticsStore ?? createMemoryAnalyticsStore();
   const betaRequestStore = options.betaRequestStore ?? createMemoryBetaRequestStore();
+  const feedbackStore = options.feedbackStore ?? createMemoryFeedbackStore();
   const now = options.now ?? (() => new Date());
   const maxJsonBodyBytes = options.requestLimits?.maxJsonBodyBytes ?? defaultMaxJsonBodyBytes;
   const rateLimiter = createRateLimiter(options.requestLimits?.rateLimit, now);
@@ -163,6 +167,23 @@ export function createPublicBackend(options: PublicBackendOptions) {
         };
         await betaRequestStore.append(record);
         return sendJson({ ok: true, request: record });
+      }
+
+      if (request.method === 'POST' && url.pathname === publicBackendRoutes.feedback) {
+        const body = await readJsonBody(request, maxJsonBodyBytes);
+        if (!body.ok) return sendJson({ error: body.error }, body.status);
+
+        const parsedFeedback = parseFeedback(body.value);
+        if (!parsedFeedback.ok) return sendJson({ error: parsedFeedback.error }, 400);
+
+        const record = {
+          ...parsedFeedback.value,
+          id: crypto.randomUUID(),
+          status: 'new' as const,
+          createdAt: now().toISOString()
+        };
+        await feedbackStore.append(record);
+        return sendJson({ ok: true, feedback: record });
       }
 
       const betaError = await requireBetaAccess(request, url.pathname, betaAccessCode);
@@ -309,6 +330,14 @@ export function createPublicBackend(options: PublicBackendOptions) {
         });
       }
 
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminFeedback) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin feedback is not configured.');
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        return sendJson({
+          feedback: await feedbackStore.readRecent(parseAdminLimit(url.searchParams.get('limit')))
+        });
+      }
+
       if (request.method === 'POST' && url.pathname === publicBackendRoutes.brainDump) {
         const requestWorkspace = await readRequestWorkspace(request, sessionStore, oauthStore);
         const workspace = requestWorkspace?.workspace ?? fallbackWorkspace ?? disconnectedWorkspace();
@@ -391,6 +420,32 @@ function parseBetaRequest(value: unknown): { ok: true; value: BetaRequestInput }
       tools,
       googleComfort,
       ...(notes ? { notes } : {})
+    }
+  };
+}
+
+function parseFeedback(value: unknown): { ok: true; value: FeedbackInput } | { ok: false; error: string } {
+  if (!isRecord(value)) return { ok: false, error: 'Feedback must be an object.' };
+
+  const email = trimmedString(value.email);
+  const requestId = trimmedString(value.requestId);
+  const lookedRight = trimmedString(value.lookedRight);
+  const confusing = trimmedString(value.confusing);
+  const expected = trimmedString(value.expected);
+
+  if (email && !email.includes('@')) return { ok: false, error: 'Feedback email must be valid.' };
+  if (!lookedRight) return { ok: false, error: 'What looked right is required.' };
+  if (!confusing) return { ok: false, error: 'What looked wrong or confusing is required.' };
+  if (!expected) return { ok: false, error: 'What you expected is required.' };
+
+  return {
+    ok: true,
+    value: {
+      ...(email ? { email: email.toLowerCase() } : {}),
+      ...(requestId ? { requestId } : {}),
+      lookedRight,
+      confusing,
+      expected
     }
   };
 }

@@ -330,6 +330,11 @@ a {
   gap: 10px;
 }
 
+.feedbackRecordList {
+  display: grid;
+  gap: 10px;
+}
+
 .executionErrorItem {
   display: grid;
   gap: 10px;
@@ -342,6 +347,15 @@ a {
 .betaRequestItem {
   display: grid;
   gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(39, 89, 70, 0.16);
+  border-radius: 8px;
+  background: #f5f8f4;
+}
+
+.feedbackRecordItem {
+  display: grid;
+  gap: 12px;
   padding: 12px;
   border: 1px solid rgba(39, 89, 70, 0.16);
   border-radius: 8px;
@@ -384,19 +398,22 @@ a {
 }
 
 .executionErrorItem dl,
-.betaRequestItem dl {
+.betaRequestItem dl,
+.feedbackRecordItem dl {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin: 0;
 }
 
-.betaRequestItem dl {
+.betaRequestItem dl,
+.feedbackRecordItem dl {
   grid-template-columns: 1.2fr 1fr 1fr;
 }
 
 .executionErrorItem dt,
-.betaRequestItem dt {
+.betaRequestItem dt,
+.feedbackRecordItem dt {
   color: rgba(80, 42, 35, 0.62);
   font-size: 10px;
   font-weight: 900;
@@ -404,7 +421,8 @@ a {
 }
 
 .executionErrorItem dd,
-.betaRequestItem dd {
+.betaRequestItem dd,
+.feedbackRecordItem dd {
   margin: 2px 0 0;
   overflow-wrap: anywhere;
   color: rgba(80, 42, 35, 0.88);
@@ -416,6 +434,19 @@ a {
   margin: 0;
   color: rgba(24, 50, 40, 0.72);
   font-size: 13px;
+}
+
+.feedbackRecordItem strong {
+  color: var(--green);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.feedbackRecordItem p {
+  margin: 3px 0 0;
+  color: rgba(24, 50, 40, 0.72);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .operatorEmpty {
@@ -1339,7 +1370,8 @@ input:disabled {
   }
 
   .executionErrorItem dl,
-  .betaRequestItem dl {
+  .betaRequestItem dl,
+  .feedbackRecordItem dl {
     grid-template-columns: 1fr;
   }
 

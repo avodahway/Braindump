@@ -100,3 +100,4 @@ Test these value propositions:
 - 3-question post-run feedback form at `/feedback`.
 - Beta access request page at `/beta`.
 - Protected beta request list in `/operator`.
+- Protected beta feedback list in `/operator`.

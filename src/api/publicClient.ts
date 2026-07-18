@@ -1,5 +1,12 @@
 import type { AnalyticsEvent, BrainDumpRequest, BrainDumpResponse, UserWorkspace } from '../lib/types';
-import { publicBackendRoutes, type BetaAccessStatus, type BetaRequestInput, type BetaRequestRecord } from './publicContract';
+import {
+  publicBackendRoutes,
+  type BetaAccessStatus,
+  type BetaRequestInput,
+  type BetaRequestRecord,
+  type FeedbackInput,
+  type FeedbackRecord
+} from './publicContract';
 import type { AnalyticsMetrics } from '../server/analyticsStore';
 import type { BackupPlan } from '../server/backupPlan';
 import type { ExecutionLogRecord } from '../server/executionLogStore';
@@ -63,6 +70,23 @@ export async function submitPublicBetaRequest(
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(request)
+    })
+  );
+}
+
+export async function submitPublicFeedback(
+  baseUrl: string,
+  feedback: FeedbackInput,
+  fetcher: JsonFetcher = fetch
+): Promise<{ ok: true; feedback: FeedbackRecord }> {
+  return readJson<{ ok: true; feedback: FeedbackRecord }>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.feedback), {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(feedback)
     })
   );
 }
@@ -189,6 +213,18 @@ export async function getPublicAdminBetaRequests(
 ): Promise<{ requests: BetaRequestRecord[] }> {
   return readJson<{ requests: BetaRequestRecord[] }>(
     await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminBetaRequests), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function getPublicAdminFeedback(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<{ feedback: FeedbackRecord[] }> {
+  return readJson<{ feedback: FeedbackRecord[] }>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminFeedback), {
       headers: adminHeaders(adminToken)
     })
   );

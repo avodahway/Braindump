@@ -24,9 +24,11 @@ import {
   getPublicAdminBackupPlan,
   getPublicAdminBetaRequests,
   getPublicAdminExecutionErrors,
+  getPublicAdminFeedback,
   getPublicAdminMetrics,
   getPublicAdminReadiness,
-  submitPublicBetaRequest
+  submitPublicBetaRequest,
+  submitPublicFeedback
 } from './api/publicClient';
 import {
   connectPublicWorkspace,
@@ -40,7 +42,7 @@ import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
 import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
-import type { BetaAccessStatus, BetaRequestRecord } from './api/publicContract';
+import type { BetaAccessStatus, BetaRequestRecord, FeedbackRecord } from './api/publicContract';
 import type { AnalyticsMetrics } from './server/analyticsStore';
 import type { BackupPlan } from './server/backupPlan';
 import type { ExecutionLogRecord } from './server/executionLogStore';
@@ -799,6 +801,47 @@ function DataDeletionPage() {
 }
 
 function FeedbackPage() {
+  const [settings] = useState(() => loadSettings());
+  const [form, setForm] = useState({
+    email: '',
+    requestId: '',
+    lookedRight: '',
+    confusing: '',
+    expected: ''
+  });
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setSubmitting] = useState(false);
+  const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError('');
+    setStatus('');
+
+    if (!publicApiBaseUrl) {
+      setError('Feedback form is not connected yet. Use the email link below.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await submitPublicFeedback(publicApiBaseUrl, {
+        email: form.email,
+        requestId: form.requestId,
+        lookedRight: form.lookedRight,
+        confusing: form.confusing,
+        expected: form.expected
+      });
+      setStatus('Feedback sent. Thank you for helping shape the beta.');
+      setForm({ email: '', requestId: '', lookedRight: '', confusing: '', expected: '' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send feedback.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <PublicDocument
       title="Beta Feedback"
@@ -817,9 +860,58 @@ function FeedbackPage() {
       </p>
       <h2>Send feedback</h2>
       <p>
-        Email <a href={betaFeedbackMailto()}>{supportEmail}</a> with your answers. The app also adds a feedback link
+        Send it here, or email <a href={betaFeedbackMailto()}>{supportEmail}</a>. The app also adds a feedback link
         after each completed run with the request ID and action summary already filled in.
       </p>
+      <form className="publicForm" onSubmit={handleSubmit}>
+        <label>
+          Email
+          <input
+            value={form.email}
+            onChange={(event) => setForm({ ...form, email: event.target.value })}
+            autoComplete="email"
+            type="email"
+          />
+        </label>
+        <label>
+          Request ID
+          <input
+            value={form.requestId}
+            onChange={(event) => setForm({ ...form, requestId: event.target.value })}
+            placeholder="Optional"
+          />
+        </label>
+        <label>
+          What looked right?
+          <textarea
+            value={form.lookedRight}
+            onChange={(event) => setForm({ ...form, lookedRight: event.target.value })}
+            required
+          />
+        </label>
+        <label>
+          What looked wrong or confusing?
+          <textarea
+            value={form.confusing}
+            onChange={(event) => setForm({ ...form, confusing: event.target.value })}
+            required
+          />
+        </label>
+        <label>
+          What did you expect Brain Dump to do instead?
+          <textarea
+            value={form.expected}
+            onChange={(event) => setForm({ ...form, expected: event.target.value })}
+            required
+          />
+        </label>
+        {error && <div className="errorCard">{error}</div>}
+        {status && <div className="successCard">{status}</div>}
+        <button className="processButton" type="submit" disabled={isSubmitting}>
+          <MessageCircle size={18} />
+          {isSubmitting ? 'Sending' : 'Send feedback'}
+        </button>
+      </form>
     </PublicDocument>
   );
 }
@@ -949,6 +1041,7 @@ type OperatorSnapshot = {
   backupPlan: BackupPlan;
   recentErrors: ExecutionLogRecord[];
   betaRequests: BetaRequestRecord[];
+  feedback: FeedbackRecord[];
 };
 
 function OperatorPage() {
@@ -974,12 +1067,13 @@ function OperatorPage() {
     setLoading(true);
     setError('');
     try {
-      const [metrics, readiness, backupPlan, executionErrors, betaRequests] = await Promise.all([
+      const [metrics, readiness, backupPlan, executionErrors, betaRequests, feedback] = await Promise.all([
         getPublicAdminMetrics(publicApiBaseUrl, token),
         getPublicAdminReadiness(publicApiBaseUrl, token),
         getPublicAdminBackupPlan(publicApiBaseUrl, token),
         getPublicAdminExecutionErrors(publicApiBaseUrl, token),
-        getPublicAdminBetaRequests(publicApiBaseUrl, token)
+        getPublicAdminBetaRequests(publicApiBaseUrl, token),
+        getPublicAdminFeedback(publicApiBaseUrl, token)
       ]);
       localStorage.setItem('brain-dump-admin-token', token);
       saveSettings(settings);
@@ -988,7 +1082,8 @@ function OperatorPage() {
         readiness,
         backupPlan,
         recentErrors: executionErrors.recentErrors,
-        betaRequests: betaRequests.requests
+        betaRequests: betaRequests.requests,
+        feedback: feedback.feedback
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load operator dashboard.');
@@ -1157,6 +1252,46 @@ function OperatorPage() {
               </div>
             ) : (
               <p>No beta requests yet.</p>
+            )}
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <h2>Beta Feedback</h2>
+            {snapshot.feedback.length ? (
+              <div className="feedbackRecordList">
+                {snapshot.feedback.map((record) => (
+                  <div className="feedbackRecordItem" key={record.id}>
+                    <dl>
+                      <div>
+                        <dt>Email</dt>
+                        <dd>{record.email ?? 'Not provided'}</dd>
+                      </div>
+                      <div>
+                        <dt>Request</dt>
+                        <dd>{record.requestId ?? 'Not provided'}</dd>
+                      </div>
+                      <div>
+                        <dt>Sent</dt>
+                        <dd>{shortDateTime(record.createdAt)}</dd>
+                      </div>
+                    </dl>
+                    <div>
+                      <strong>Right</strong>
+                      <p>{record.lookedRight}</p>
+                    </div>
+                    <div>
+                      <strong>Confusing</strong>
+                      <p>{record.confusing}</p>
+                    </div>
+                    <div>
+                      <strong>Expected</strong>
+                      <p>{record.expected}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No beta feedback yet.</p>
             )}
           </article>
 

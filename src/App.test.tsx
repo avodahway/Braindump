@@ -69,9 +69,9 @@ describe('App routes', () => {
     renderAt('/feedback');
 
     expect(screen.getByRole('heading', { level: 1, name: 'Beta Feedback' })).toBeInTheDocument();
-    expect(screen.getByText('What looked right?')).toBeInTheDocument();
-    expect(screen.getByText('What looked wrong or confusing?')).toBeInTheDocument();
-    expect(screen.getByText('What did you expect Brain Dump to do instead?')).toBeInTheDocument();
+    expect(screen.getByLabelText('What looked right?')).toBeInTheDocument();
+    expect(screen.getByLabelText('What looked wrong or confusing?')).toBeInTheDocument();
+    expect(screen.getByLabelText('What did you expect Brain Dump to do instead?')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /support@braindump.app/i })).toHaveAttribute(
       'href',
       expect.stringContaining('Brain%20Dump%20beta%20feedback')
@@ -186,6 +186,24 @@ describe('App routes', () => {
           })
         );
       }
+      if (url === 'https://api.example.com/api/admin/feedback') {
+        return new Response(
+          JSON.stringify({
+            feedback: [
+              {
+                id: 'feedback-1',
+                status: 'new',
+                email: 'user@example.com',
+                requestId: 'req-1',
+                lookedRight: 'Tasks were right.',
+                confusing: 'Calendar felt unclear.',
+                expected: 'More review guidance.',
+                createdAt: '2026-07-17T12:00:00.000Z'
+              }
+            ]
+          })
+        );
+      }
       return new Response(JSON.stringify({ ok: true }));
     });
     vi.stubGlobal('fetch', fetcher);
@@ -202,6 +220,8 @@ describe('App routes', () => {
     expect(screen.getByText('Calendar write failed')).toBeInTheDocument();
     expect(screen.getByText('Beta Requests')).toBeInTheDocument();
     expect(screen.getByText('jay@example.com')).toBeInTheDocument();
+    expect(screen.getByText('Beta Feedback')).toBeInTheDocument();
+    expect(screen.getByText('Tasks were right.')).toBeInTheDocument();
     expect(screen.getByText('Take a provider-level snapshot before deploy.')).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/metrics', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
@@ -211,6 +231,59 @@ describe('App routes', () => {
     });
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-requests', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/feedback', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
+  it('submits feedback from the public feedback page', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === 'https://api.example.com/api/feedback') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            feedback: {
+              id: 'feedback-1',
+              status: 'new',
+              email: 'user@example.com',
+              lookedRight: 'Tasks were right.',
+              confusing: 'Calendar felt unclear.',
+              expected: 'More review guidance.',
+              createdAt: '2026-07-17T12:00:00.000Z'
+            }
+          })
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/feedback');
+
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'user@example.com' } });
+    fireEvent.change(screen.getByLabelText('What looked right?'), { target: { value: 'Tasks were right.' } });
+    fireEvent.change(screen.getByLabelText('What looked wrong or confusing?'), { target: { value: 'Calendar felt unclear.' } });
+    fireEvent.change(screen.getByLabelText('What did you expect Brain Dump to do instead?'), {
+      target: { value: 'More review guidance.' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Send feedback/i }));
+
+    expect(await screen.findByText('Feedback sent. Thank you for helping shape the beta.')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/feedback', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'user@example.com',
+        requestId: '',
+        lookedRight: 'Tasks were right.',
+        confusing: 'Calendar felt unclear.',
+        expected: 'More review guidance.'
+      })
     });
   });
 

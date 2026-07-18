@@ -56,6 +56,7 @@ When a Public API URL is configured in Settings, public mode posts to:
 - `POST /api/auth/google/disconnect`
 - `POST /api/account/delete`
 - `POST /api/beta/request`
+- `POST /api/feedback`
 - `POST /api/brain-dump`
 
 With a Public API URL configured, the Connect button starts the backend OAuth flow and redirects the browser to the returned Google authorization URL. Without a Public API URL, public mode keeps using a local demo workspace.
@@ -115,6 +116,9 @@ Set `BRAIN_DUMP_STORAGE_SECRET` so durable values are encrypted before being wri
 
 `POST /api/beta/request` records first-user beta interest without using the founder's Google Sheets. `/operator` reads
 those records from protected `GET /api/admin/beta-requests`.
+
+`POST /api/feedback` records structured first-run feedback. `/operator` reads those records from protected
+`GET /api/admin/feedback`.
 
 `src/server/idempotencyStore.ts` keeps processed request IDs from writing twice. When the backend is configured with durable storage, duplicate requests return the original response even after a backend restart.
 
