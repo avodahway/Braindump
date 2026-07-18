@@ -40,6 +40,7 @@ describe('deployment verifier', () => {
       'Backend /api/health',
       'Admin metrics rejects anonymous requests',
       'Admin backup plan rejects anonymous requests',
+      'Admin self-test rejects anonymous requests',
       'Admin readiness rejects anonymous requests',
       'Admin launch summary rejects anonymous requests',
       'Admin execution errors rejects anonymous requests',
@@ -52,6 +53,7 @@ describe('deployment verifier', () => {
       'Admin support requests CSV rejects anonymous requests',
       'Admin metrics accepts configured token',
       'Admin backup plan accepts configured token',
+      'Admin self-test accepts configured token',
       'Admin readiness accepts configured token',
       'Admin launch summary accepts configured token',
       'Admin execution errors accepts configured token',
@@ -102,6 +104,7 @@ describe('deployment verifier', () => {
   it('runs tokened JSON and CSV admin checks with the admin header', async () => {
     const fetchImpl = vi.fn(async (url, init) => {
       if (String(url).endsWith('/api/admin/readiness')) return jsonResponse({ ready: false, checks: [] });
+      if (String(url).endsWith('/api/admin/self-test')) return jsonResponse({ ok: false, checks: [] });
       if (String(url).includes('format=csv')) return csvResponse('createdAt,email\n2026-07-17,user@example.com');
       return jsonResponse({ ok: true, calls: [], requests: [], feedback: [] });
     });
@@ -113,10 +116,14 @@ describe('deployment verifier', () => {
     });
 
     await checks.find((check) => check.label === 'Admin readiness accepts configured token')?.run();
+    await checks.find((check) => check.label === 'Admin self-test accepts configured token')?.run();
     await checks.find((check) => check.label === 'Admin feedback CSV accepts configured token')?.run();
     await checks.find((check) => check.label === 'Admin support requests CSV accepts configured token')?.run();
 
     expect(fetchImpl).toHaveBeenCalledWith('https://api.braindump.app/api/admin/readiness', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetchImpl).toHaveBeenCalledWith('https://api.braindump.app/api/admin/self-test', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetchImpl).toHaveBeenCalledWith('https://api.braindump.app/api/admin/feedback?format=csv', {

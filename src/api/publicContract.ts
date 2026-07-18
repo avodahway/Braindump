@@ -65,6 +65,17 @@ export type LaunchSummary = {
   };
 };
 
+export type ProductionSelfTest = {
+  generatedAt: string;
+  ok: boolean;
+  checks: {
+    key: string;
+    label: string;
+    ok: boolean;
+    detail: string;
+  }[];
+};
+
 export type PublicBackendContract = {
   getWorkspace(): Promise<UserWorkspace>;
   getBetaAccessStatus(): Promise<BetaAccessStatus>;
@@ -98,6 +109,7 @@ export const publicBackendRoutes = {
   supportRequest: '/api/support/request',
   adminMetrics: '/api/admin/metrics',
   adminBackupPlan: '/api/admin/backup-plan',
+  adminSelfTest: '/api/admin/self-test',
   adminReadiness: '/api/admin/readiness',
   adminLaunchSummary: '/api/admin/launch-summary',
   adminExecutionErrors: '/api/admin/execution-errors',

@@ -37,6 +37,7 @@ import { createMemoryFeedbackStore, type FeedbackStore } from './feedbackStore';
 import { createMemorySupportRequestStore, type SupportRequestStore } from './supportRequestStore';
 import { buildBackupPlan } from './backupPlan';
 import { buildReadinessReport } from './readinessReport';
+import { buildProductionSelfTest } from './productionSelfTest';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -112,6 +113,8 @@ export function createPublicBackend(options: PublicBackendOptions) {
   const supportRequestStore = options.supportRequestStore ?? createMemorySupportRequestStore();
   const now = options.now ?? (() => new Date());
   const maxJsonBodyBytes = options.requestLimits?.maxJsonBodyBytes ?? defaultMaxJsonBodyBytes;
+  const rateLimitMaxRequests =
+    options.requestLimits?.rateLimit === false ? undefined : options.requestLimits?.rateLimit?.maxRequests ?? defaultRateLimit.maxRequests;
   const rateLimiter = createRateLimiter(options.requestLimits?.rateLimit, now);
   const betaAccessCode = options.betaAccessCode?.trim();
 
@@ -324,6 +327,33 @@ export function createPublicBackend(options: PublicBackendOptions) {
           buildBackupPlan({
             storagePrefix: options.storageKeyPrefix,
             generatedAt: now().toISOString()
+          })
+        );
+      }
+
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminSelfTest) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin self-test is not configured.');
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        const readiness = buildReadinessReport({
+          generatedAt: now().toISOString(),
+          googleClientId: options.googleOAuth.clientId,
+          googleRedirectUri: options.googleOAuth.redirectUri,
+          googleScopes: options.googleOAuth.scopes,
+          frontendAppUrl: options.frontendAppUrl,
+          adminTokenConfigured: Boolean(options.adminToken),
+          storageMode: options.storageMode ?? 'memory',
+          storageEncrypted: Boolean(options.storageEncrypted)
+        });
+        return sendJson(
+          buildProductionSelfTest({
+            generatedAt: readiness.generatedAt,
+            readiness,
+            frontendAppUrl: options.frontendAppUrl,
+            storageMode: options.storageMode ?? 'memory',
+            storageEncrypted: Boolean(options.storageEncrypted),
+            betaAccessConfigured: Boolean(options.betaAccessCode),
+            maxJsonBodyBytes,
+            rateLimitMaxRequests
           })
         );
       }

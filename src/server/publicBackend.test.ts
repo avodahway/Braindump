@@ -1642,6 +1642,38 @@ describe('public backend scaffold', () => {
     expect(report.ready).toBe(true);
     expect(JSON.stringify(report)).not.toContain('client-secret');
   });
+
+  it('returns a protected production self-test report', async () => {
+    const backend = createPublicBackend({
+      googleOAuth: {
+        ...googleOAuth,
+        scopes: [...googleOAuth.scopes, 'https://www.googleapis.com/auth/calendar.events']
+      },
+      frontendAppUrl: 'https://app.example.com/app',
+      adminToken: 'admin-secret',
+      storageMode: 'durable',
+      storageEncrypted: true,
+      betaAccessCode: 'founder-beta',
+      requestLimits: { maxJsonBodyBytes: 65536, rateLimit: { maxRequests: 60 } },
+      now: () => new Date('2026-07-18T12:00:00.000Z')
+    });
+
+    const unauthorized = await backend.handle(new Request('https://api.example.com/api/admin/self-test'));
+    const authorized = await backend.handle(
+      new Request('https://api.example.com/api/admin/self-test', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-secret' }
+      })
+    );
+    const report = await authorized.json();
+
+    expect(unauthorized.status).toBe(401);
+    expect(report).toMatchObject({
+      generatedAt: '2026-07-18T12:00:00.000Z',
+      ok: true
+    });
+    expect(report.checks.map((check: { key: string }) => check.key)).toContain('beta_access_gate');
+    expect(JSON.stringify(report)).not.toContain('founder-beta');
+  });
 });
 
 function connectedWorkspace() {

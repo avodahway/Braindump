@@ -9,6 +9,7 @@ import {
   type FeedbackRecord,
   type FeedbackStatus,
   type LaunchSummary,
+  type ProductionSelfTest,
   type SupportRequestInput,
   type SupportRequestRecord,
   type SupportRequestStatus
@@ -200,6 +201,18 @@ export async function getPublicAdminBackupPlan(
 ): Promise<BackupPlan> {
   return readJson<BackupPlan>(
     await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminBackupPlan), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function getPublicAdminSelfTest(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<ProductionSelfTest> {
+  return readJson<ProductionSelfTest>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminSelfTest), {
       headers: adminHeaders(adminToken)
     })
   );
