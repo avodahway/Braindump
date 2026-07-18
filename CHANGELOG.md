@@ -10,7 +10,7 @@ All notable Brain Dump launch milestones are tracked here.
 
 - Built the React, TypeScript, and Vite PWA with Brain Dump branding.
 - Added mock preview mode, parser routing, review-before-create, and first-run samples.
-- Added public pages for home, app, privacy, terms, support, data deletion, feedback, beta access, and launch status.
+- Added public pages for home, app, privacy, terms, support, data deletion, feedback, beta access, launch status, and FAQ.
 - Added a public backend scaffold for per-user Google OAuth, Tasks, Calendar, analytics, beta requests, feedback, and support requests.
 - Added protected operator dashboard for readiness, metrics, backup posture, execution errors, beta requests, feedback, support queues, lifecycle actions, and CSV exports.
-- Added production launch docs, deployment verification, operator privacy guidance, and launch decision records.
+- Added production launch docs, deployment verification, smoke testing, operator privacy and triage guidance, OAuth verification assets, and launch decision records.

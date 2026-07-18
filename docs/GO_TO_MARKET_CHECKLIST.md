@@ -100,15 +100,19 @@ Test these value propositions:
 - OAuth verification demo video.
 - Privacy policy.
 - Terms of service.
+- Public FAQ at `/faq`.
 - Support email.
 - Founder beta invitation email.
+- Founder beta follow-up email.
 - 3-question post-run feedback form at `/feedback`.
 - Beta access request page at `/beta`.
 - Protected beta request list in `/operator`.
 - Protected beta feedback list in `/operator`.
-- CSV exports for beta requests and feedback.
-- CSV exports for beta requests, feedback, and support requests.
+- CSV exports for execution errors, beta requests, feedback, and support requests.
 - Support and data-deletion request intake through `/support` and `/data-deletion`.
 - Operator lifecycle actions for beta requests, feedback, and support requests.
+- Operator privacy and triage guides.
+- Deployment smoke-test worksheet.
+- OAuth verification assets worksheet.
 - Public launch status page at `/status`.
 - Launch decision record.

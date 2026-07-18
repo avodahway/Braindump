@@ -9,6 +9,7 @@ Use `docs/BETA_LAUNCH_WORKSHEET.md` for deployment-specific URLs, support email,
 - Deploy the frontend and backend to staging or beta production.
 - Set `VITE_SUPPORT_EMAIL`, `BRAIN_DUMP_FRONTEND_ORIGIN`, `BRAIN_DUMP_PUBLIC_API_ORIGIN`, and `BRAIN_DUMP_ADMIN_TOKEN`.
 - Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, and `/app` load on the beta domain.
+- Confirm `/status` and `/faq` match the current beta posture.
 - Confirm Google OAuth works with one test account.
 - Confirm `GET /api/admin/metrics` and `GET /api/admin/backup-plan` require `X-Brain-Dump-Admin-Token`.
 - Confirm backup snapshot or point-in-time recovery is available before inviting testers.
