@@ -253,9 +253,14 @@ describe('App routes', () => {
     expect(screen.getByRole('heading', { name: "What's on your mind?" })).toBeInTheDocument();
     expect(screen.getByText('Setup progress')).toBeInTheDocument();
     expect(screen.getByText('Safe preview only. No Google account is connected.')).toBeInTheDocument();
-    expect(screen.getByText('Capture messy thoughts')).toBeInTheDocument();
-    expect(screen.getAllByText('Review before creating').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Connect Google when ready')).toBeInTheDocument();
+    expect(screen.getByText('Capture')).toBeInTheDocument();
+    expect(screen.getByText('Add a messy note or use a sample.')).toBeInTheDocument();
+    expect(screen.getAllByText('Review').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Check routed actions before anything is created.')).toBeInTheDocument();
+    expect(screen.getByText('Connect')).toBeInTheDocument();
+    expect(screen.getByText('Switch to public mode when ready for Google.')).toBeInTheDocument();
+    expect(screen.getByText('Create')).toBeInTheDocument();
+    expect(screen.getByText('Use support or feedback after the first run.')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Put everything here. Do not organize it.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Busy morning' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Review/i })).toBeInTheDocument();

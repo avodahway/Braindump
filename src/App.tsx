@@ -363,6 +363,7 @@ function ProductApp() {
           workspace={workspace}
           hasDraft={Boolean(text.trim())}
           hasPreview={Boolean(preview)}
+          hasResult={Boolean(result)}
           onConnect={handleConnectPublic}
           onDisconnect={handleDisconnectPublic}
           onOpenSettings={() => setShowSettings(true)}
@@ -2997,6 +2998,7 @@ function SetupPanel({
   workspace,
   hasDraft,
   hasPreview,
+  hasResult,
   onConnect,
   onDisconnect,
   onOpenSettings
@@ -3007,13 +3009,14 @@ function SetupPanel({
   workspace: UserWorkspace;
   hasDraft: boolean;
   hasPreview: boolean;
+  hasResult: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
   onOpenSettings: () => void;
 }) {
   const isConnected = workspace.status === 'connected';
   const statusLabel = setupStatusLabel(mode, hasPublicApi, workspace, betaAccess);
-  const steps = setupSteps(mode, hasPublicApi, workspace, betaAccess, hasDraft, hasPreview);
+  const steps = setupSteps(mode, hasPublicApi, workspace, betaAccess, hasDraft, hasPreview, hasResult);
   const needsBetaAccess = mode === 'public' && hasPublicApi && betaAccess.required && !betaAccess.granted;
 
   if (mode === 'mock') {
@@ -3135,7 +3138,7 @@ function OnboardingPanel({
   title: string;
   description: string;
   statusLabel: string;
-  steps: Array<{ label: string; complete: boolean }>;
+  steps: Array<{ label: string; detail: string; complete: boolean }>;
   destinations?: string[];
   action?: ReactNode;
 }) {
@@ -3153,7 +3156,10 @@ function OnboardingPanel({
         {steps.map((step) => (
           <li className={step.complete ? 'complete' : ''} key={step.label}>
             <CheckCircle2 size={15} />
-            <span>{step.label}</span>
+            <span>
+              <strong>{step.label}</strong>
+              <small>{step.detail}</small>
+            </span>
           </li>
         ))}
       </ol>
@@ -3193,33 +3199,40 @@ function setupSteps(
   workspace: UserWorkspace,
   betaAccess: BetaAccessStatus,
   hasDraft: boolean,
-  hasPreview: boolean
+  hasPreview: boolean,
+  hasResult: boolean
 ) {
   if (mode === 'mock') {
     return [
-      { label: 'Capture messy thoughts', complete: hasDraft },
-      { label: 'Review before creating', complete: hasPreview },
-      { label: 'Connect Google when ready', complete: false }
+      { label: 'Capture', detail: 'Add a messy note or use a sample.', complete: hasDraft },
+      { label: 'Review', detail: 'Check routed actions before anything is created.', complete: hasPreview || hasResult },
+      { label: 'Connect', detail: 'Switch to public mode when ready for Google.', complete: false },
+      { label: 'Create', detail: 'Create only after review in connected mode.', complete: hasResult },
+      { label: 'Help', detail: 'Use support or feedback after the first run.', complete: false }
     ];
   }
 
   if (mode === 'private_apps_script') {
     return [
-      { label: 'Private bridge selected', complete: true },
-      { label: 'Public user account setup', complete: false },
-      { label: 'Per-user Google workspace', complete: false }
+      { label: 'Mode', detail: 'Private CSOS bridge selected.', complete: true },
+      { label: 'Capture', detail: 'Add a messy note for founder testing.', complete: hasDraft },
+      { label: 'Review', detail: 'Confirm routed actions before bridge writes.', complete: hasPreview || hasResult },
+      { label: 'Public users', detail: 'Use public mode for anyone beyond founder testing.', complete: false },
+      { label: 'Help', detail: 'Use support or feedback for launch issues.', complete: false }
     ];
   }
 
   const connected = workspace.status === 'connected';
   return [
-    { label: hasPublicApi ? 'Public backend configured' : 'Public backend configured', complete: hasPublicApi },
-    { label: 'Review before creating', complete: hasPreview },
+    { label: 'Backend', detail: hasPublicApi ? 'Public API URL is configured.' : 'Add the public API URL in Settings.', complete: hasPublicApi },
     {
-      label: betaAccess.required ? 'Beta access confirmed' : 'Beta gate open',
+      label: 'Beta',
+      detail: betaAccess.required ? 'Confirm invite access before sign-in.' : 'Beta gate is open.',
       complete: !hasPublicApi || !betaAccess.required || betaAccess.granted
     },
-    { label: connected ? 'Google account connected' : 'Connect Google account', complete: connected },
-    { label: connected ? 'Workspace destinations ready' : 'Workspace destinations created after sign-in', complete: connected }
+    { label: 'Connect', detail: connected ? 'Google account is connected.' : 'Connect your own Google account.', complete: connected },
+    { label: 'Review', detail: 'Check routed actions before creating them.', complete: hasPreview || hasResult },
+    { label: 'Create', detail: 'Send reviewed actions to your workspace.', complete: hasResult },
+    { label: 'Help', detail: 'Use support or feedback after the first run.', complete: false }
   ];
 }

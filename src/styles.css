@@ -1061,7 +1061,7 @@ a {
 
 .setupSteps {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
   gap: 7px;
   margin: 0;
   padding: 0;
@@ -1069,7 +1069,7 @@ a {
 }
 
 .setupSteps li {
-  min-height: 44px;
+  min-height: 62px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1081,6 +1081,24 @@ a {
   font-size: 11px;
   font-weight: 800;
   line-height: 1.25;
+}
+
+.setupSteps li span {
+  display: grid;
+  gap: 2px;
+}
+
+.setupSteps li strong {
+  color: inherit;
+  font-size: 11px;
+  line-height: 1.15;
+}
+
+.setupSteps li small {
+  color: rgba(24, 50, 40, 0.58);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .setupSteps li svg {
@@ -1095,6 +1113,10 @@ a {
 
 .setupSteps li.complete svg {
   color: var(--green-2);
+}
+
+.setupSteps li.complete small {
+  color: rgba(24, 50, 40, 0.68);
 }
 
 .setupStatus {
