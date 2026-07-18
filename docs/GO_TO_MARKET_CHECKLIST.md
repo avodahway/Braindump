@@ -38,6 +38,7 @@
 - Review `docs/OPERATOR_PRIVACY_GUIDE.md` before exporting beta, feedback, or support CSVs.
 - Use `docs/OPERATOR_TRIAGE.md` to classify support, feedback, and execution-error reports.
 - Use `docs/BETA_COHORT_PLAN.md` to select testers, track cohort fit, and decide when to expand.
+- Review `docs/LAUNCH_RISK_REGISTER.md` before each invite batch.
 - Complete `docs/LAUNCH_DECISION_RECORD.md` before expanding beyond the current beta batch.
 - Watch every first-run session if possible.
 - Record where onboarding confuses them.
@@ -119,6 +120,7 @@ Test these value propositions:
 - Operator launch summary and launch-notes export.
 - Operator privacy and triage guides.
 - Beta cohort plan.
+- Launch risk register.
 - Deployment smoke-test worksheet.
 - OAuth verification assets worksheet.
 - Public launch status page at `/status`.
