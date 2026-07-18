@@ -33,6 +33,7 @@
 - Run end-to-end Google OAuth smoke test.
 - Prepare first-user beta packet.
 - Prepare launch announcement copy from `docs/LAUNCH_ANNOUNCEMENT_KIT.md`.
+- Prepare screenshots and demo clips from `docs/LAUNCH_ASSET_CHECKLIST.md`.
 - Prepare beta launch worksheet with URL, support email, OAuth test users, and admin-token checks.
 
 ## Phase 2: First Five Users
@@ -119,6 +120,7 @@ Test these value propositions:
 - Support email.
 - Founder beta invitation email.
 - Launch announcement kit.
+- Launch asset checklist.
 - Founder beta follow-up email.
 - Beta user interview guide.
 - 3-question post-run feedback form at `/feedback`.

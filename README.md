@@ -96,6 +96,7 @@ Go-to-market planning lives in:
 - `docs/BETA_LAUNCH_WORKSHEET.md`
 - `docs/BETA_COHORT_PLAN.md`
 - `docs/LAUNCH_ANNOUNCEMENT_KIT.md`
+- `docs/LAUNCH_ASSET_CHECKLIST.md`
 - `docs/BETA_USER_INTERVIEW_GUIDE.md`
 - `docs/LAUNCH_RISK_REGISTER.md`
 - `docs/OPERATOR_PRIVACY_GUIDE.md`
