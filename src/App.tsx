@@ -1536,6 +1536,15 @@ function OperatorPage() {
             </ul>
           </article>
 
+          <article className="operatorPanel">
+            <h2>Privacy Handling</h2>
+            <ul>
+              <li>Use the minimum record needed for support or beta follow-up.</li>
+              <li>Do not request passwords, OAuth tokens, or unredacted private screenshots.</li>
+              <li>Keep CSV exports local to the launch workflow.</li>
+            </ul>
+          </article>
+
           <article className="operatorPanel widePanel">
             <h2>Recent Execution Errors</h2>
             {snapshot.recentErrors.length ? (

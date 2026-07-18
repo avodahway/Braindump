@@ -315,6 +315,8 @@ describe('App routes', () => {
     expect(screen.getByText('Calendar write failed')).toBeInTheDocument();
     expect(screen.getByText('Blocking Issues (1)')).toBeInTheDocument();
     expect(screen.getByText('Ready Checks (1)')).toBeInTheDocument();
+    expect(screen.getByText('Privacy Handling')).toBeInTheDocument();
+    expect(screen.getByText(/Keep CSV exports local/i)).toBeInTheDocument();
     expect(screen.getByText('Beta Queue')).toBeInTheDocument();
     expect(screen.getByText('Feedback Queue')).toBeInTheDocument();
     expect(screen.getByText('Support Queue')).toBeInTheDocument();

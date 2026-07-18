@@ -34,6 +34,7 @@
 
 - Invite 5 known users.
 - Send first-user beta packet invite.
+- Review `docs/OPERATOR_PRIVACY_GUIDE.md` before exporting beta, feedback, or support CSVs.
 - Watch every first-run session if possible.
 - Record where onboarding confuses them.
 - Track parser mistakes.
