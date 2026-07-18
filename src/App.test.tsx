@@ -465,6 +465,7 @@ describe('App routes', () => {
     expect(screen.getByText('Support Queue')).toBeInTheDocument();
     expect(screen.getByText('Cohort Review')).toBeInTheDocument();
     expect(screen.getByText(/Tag each invite note with Founder watched run/i)).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Status')).toHaveLength(3);
     expect(screen.getByText('in progress')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Export Notes/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Export Notes/i }));
@@ -544,10 +545,18 @@ describe('App routes', () => {
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-requests?format=csv', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
+    fireEvent.change(screen.getAllByLabelText('Status')[1], { target: { value: 'reviewed' } });
+    fetcher.mockResolvedValueOnce(new Response('createdAt,email,status\n2026-07-17,user@example.com,reviewed'));
+    fireEvent.click(screen.getAllByRole('button', { name: /Export CSV/i })[2]);
+    expect(await screen.findByText('Beta Feedback')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/feedback?status=reviewed&format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    fireEvent.change(screen.getAllByLabelText('Status')[2], { target: { value: 'resolved' } });
     fetcher.mockResolvedValueOnce(new Response('createdAt,email\n2026-07-17,user@example.com'));
     fireEvent.click(screen.getAllByRole('button', { name: /Export CSV/i })[3]);
     expect(await screen.findByText('Support Requests')).toBeInTheDocument();
-    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/support-requests?format=csv', {
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/support-requests?status=resolved&format=csv', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });

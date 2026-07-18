@@ -1585,6 +1585,8 @@ function OperatorPage() {
   const [settings, setSettings] = useState(() => loadSettings());
   const [adminToken, setAdminToken] = useState(() => localStorage.getItem('brain-dump-admin-token') ?? '');
   const [betaRequestStatusFilter, setBetaRequestStatusFilter] = useState<BetaRequestStatus | 'all'>('all');
+  const [feedbackStatusFilter, setFeedbackStatusFilter] = useState<FeedbackStatus | 'all'>('all');
+  const [supportRequestStatusFilter, setSupportRequestStatusFilter] = useState<SupportRequestStatus | 'all'>('all');
   const [snapshot, setSnapshot] = useState<OperatorSnapshot | null>(null);
   const [error, setError] = useState('');
   const [isLoading, setLoading] = useState(false);
@@ -1614,8 +1616,8 @@ function OperatorPage() {
         getPublicAdminLaunchSummary(publicApiBaseUrl, token),
         getPublicAdminExecutionErrors(publicApiBaseUrl, token),
         getPublicAdminBetaRequests(publicApiBaseUrl, token, betaRequestStatusFilter === 'all' ? undefined : betaRequestStatusFilter),
-        getPublicAdminFeedback(publicApiBaseUrl, token),
-        getPublicAdminSupportRequests(publicApiBaseUrl, token)
+        getPublicAdminFeedback(publicApiBaseUrl, token, feedbackStatusFilter === 'all' ? undefined : feedbackStatusFilter),
+        getPublicAdminSupportRequests(publicApiBaseUrl, token, supportRequestStatusFilter === 'all' ? undefined : supportRequestStatusFilter)
       ]);
       localStorage.setItem('brain-dump-admin-token', token);
       saveSettings(settings);
@@ -1653,8 +1655,8 @@ function OperatorPage() {
           : kind === 'beta-requests'
           ? await getPublicAdminBetaRequestsCsv(publicApiBaseUrl, token, betaRequestStatusFilter === 'all' ? undefined : betaRequestStatusFilter)
           : kind === 'feedback'
-            ? await getPublicAdminFeedbackCsv(publicApiBaseUrl, token)
-            : await getPublicAdminSupportRequestsCsv(publicApiBaseUrl, token);
+            ? await getPublicAdminFeedbackCsv(publicApiBaseUrl, token, feedbackStatusFilter === 'all' ? undefined : feedbackStatusFilter)
+            : await getPublicAdminSupportRequestsCsv(publicApiBaseUrl, token, supportRequestStatusFilter === 'all' ? undefined : supportRequestStatusFilter);
       const filename =
         kind === 'execution-errors'
           ? 'brain-dump-execution-errors.csv'
@@ -2058,14 +2060,28 @@ function OperatorPage() {
           <article className="operatorPanel widePanel">
             <div className="operatorPanelHeader">
               <h2>Beta Feedback</h2>
-              <button
-                type="button"
-                className="smallButton exportButton"
-                disabled={isExporting === 'feedback'}
-                onClick={() => handleExport('feedback')}
-              >
-                {isExporting === 'feedback' ? 'Exporting' : 'Export CSV'}
-              </button>
+              <div className="operatorHeaderActions">
+                <label>
+                  Status
+                  <select
+                    value={feedbackStatusFilter}
+                    onChange={(event) => setFeedbackStatusFilter(event.target.value as FeedbackStatus | 'all')}
+                  >
+                    <option value="all">All</option>
+                    <option value="new">New</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="smallButton exportButton"
+                  disabled={isExporting === 'feedback'}
+                  onClick={() => handleExport('feedback')}
+                >
+                  {isExporting === 'feedback' ? 'Exporting' : 'Export CSV'}
+                </button>
+              </div>
             </div>
             {snapshot.feedback.length ? (
               <div className="feedbackRecordList">
@@ -2130,14 +2146,29 @@ function OperatorPage() {
           <article className="operatorPanel widePanel">
             <div className="operatorPanelHeader">
               <h2>Support Requests</h2>
-              <button
-                type="button"
-                className="smallButton exportButton"
-                disabled={isExporting === 'support-requests'}
-                onClick={() => handleExport('support-requests')}
-              >
-                {isExporting === 'support-requests' ? 'Exporting' : 'Export CSV'}
-              </button>
+              <div className="operatorHeaderActions">
+                <label>
+                  Status
+                  <select
+                    value={supportRequestStatusFilter}
+                    onChange={(event) => setSupportRequestStatusFilter(event.target.value as SupportRequestStatus | 'all')}
+                  >
+                    <option value="all">All</option>
+                    <option value="new">New</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="smallButton exportButton"
+                  disabled={isExporting === 'support-requests'}
+                  onClick={() => handleExport('support-requests')}
+                >
+                  {isExporting === 'support-requests' ? 'Exporting' : 'Export CSV'}
+                </button>
+              </div>
             </div>
             {snapshot.supportRequests.length ? (
               <div className="feedbackRecordList">
