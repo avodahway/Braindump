@@ -76,6 +76,22 @@ export type ProductionSelfTest = {
   }[];
 };
 
+export type DuplicateWriteAudit = {
+  generatedAt: string;
+  ok: boolean;
+  totalCreated: number;
+  duplicateGroups: {
+    key: string;
+    userId?: string;
+    actionType: string;
+    title: string;
+    count: number;
+    requestIds: string[];
+    providerIds: string[];
+    latestCreatedAt: string;
+  }[];
+};
+
 export type PublicBackendContract = {
   getWorkspace(): Promise<UserWorkspace>;
   getBetaAccessStatus(): Promise<BetaAccessStatus>;
@@ -110,6 +126,7 @@ export const publicBackendRoutes = {
   adminMetrics: '/api/admin/metrics',
   adminBackupPlan: '/api/admin/backup-plan',
   adminSelfTest: '/api/admin/self-test',
+  adminDuplicateWriteAudit: '/api/admin/duplicate-write-audit',
   adminReadiness: '/api/admin/readiness',
   adminLaunchSummary: '/api/admin/launch-summary',
   adminExecutionErrors: '/api/admin/execution-errors',

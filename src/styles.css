@@ -500,7 +500,8 @@ a {
   margin-top: 6px;
 }
 
-.executionErrorList {
+.executionErrorList,
+.duplicateAuditList {
   display: grid;
   gap: 10px;
 }
@@ -515,7 +516,8 @@ a {
   gap: 10px;
 }
 
-.executionErrorItem {
+.executionErrorItem,
+.duplicateAuditItem {
   display: grid;
   gap: 10px;
   padding: 12px;
@@ -542,7 +544,8 @@ a {
   background: #f5f8f4;
 }
 
-.executionErrorItem > div {
+.executionErrorItem > div,
+.duplicateAuditItem > div {
   display: grid;
   gap: 4px;
 }
@@ -554,7 +557,8 @@ a {
   gap: 10px;
 }
 
-.executionErrorItem strong {
+.executionErrorItem strong,
+.duplicateAuditItem strong {
   color: #893225;
   font-size: 14px;
 }
@@ -571,13 +575,15 @@ a {
   font-weight: 800;
 }
 
-.executionErrorItem span {
+.executionErrorItem span,
+.duplicateAuditItem span {
   color: rgba(80, 42, 35, 0.78);
   font-size: 13px;
   line-height: 1.4;
 }
 
 .executionErrorItem dl,
+.duplicateAuditItem dl,
 .betaRequestItem dl,
 .feedbackRecordItem dl {
   display: grid;
@@ -592,6 +598,7 @@ a {
 }
 
 .executionErrorItem dt,
+.duplicateAuditItem dt,
 .betaRequestItem dt,
 .feedbackRecordItem dt {
   color: rgba(80, 42, 35, 0.62);
@@ -601,6 +608,7 @@ a {
 }
 
 .executionErrorItem dd,
+.duplicateAuditItem dd,
 .betaRequestItem dd,
 .feedbackRecordItem dd {
   margin: 2px 0 0;

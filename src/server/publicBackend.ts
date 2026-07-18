@@ -38,6 +38,7 @@ import { createMemorySupportRequestStore, type SupportRequestStore } from './sup
 import { buildBackupPlan } from './backupPlan';
 import { buildReadinessReport } from './readinessReport';
 import { buildProductionSelfTest } from './productionSelfTest';
+import { buildDuplicateWriteAudit } from './duplicateWriteAudit';
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -354,6 +355,17 @@ export function createPublicBackend(options: PublicBackendOptions) {
             betaAccessConfigured: Boolean(options.betaAccessCode),
             maxJsonBodyBytes,
             rateLimitMaxRequests
+          })
+        );
+      }
+
+      if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminDuplicateWriteAudit) {
+        const adminError = requireAdmin(request, options.adminToken, 'Admin duplicate-write audit is not configured.');
+        if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        return sendJson(
+          buildDuplicateWriteAudit({
+            generatedAt: now().toISOString(),
+            records: await executionLogStore.readRecent(parseAdminLimit(url.searchParams.get('limit'), 200, 200))
           })
         );
       }
@@ -1102,11 +1114,11 @@ function requireAdmin(request: Request, adminToken: string | undefined, missingM
   return undefined;
 }
 
-function parseAdminLimit(value: string | null): number {
-  if (!value) return 20;
+function parseAdminLimit(value: string | null, fallback = 20, max = 100): number {
+  if (!value) return fallback;
   const limit = Number(value);
-  if (!Number.isInteger(limit) || limit <= 0) return 20;
-  return Math.min(limit, 100);
+  if (!Number.isInteger(limit) || limit <= 0) return fallback;
+  return Math.min(limit, max);
 }
 
 function parseBetaRequestStatusFilter(value: string | null): { ok: true; value?: BetaRequestStatus } | { ok: false; error: string } {

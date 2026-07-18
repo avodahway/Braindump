@@ -11,6 +11,7 @@ Use this before promoting a build to beta testers.
 - `pnpm verify:deployment` passes against the deployed frontend and backend.
 - `docs/DEPLOYMENT_SMOKE_TEST.md` is completed for the target environment.
 - `/api/admin/readiness` returns `ready: true` with the admin token, durable storage, and storage encryption configured.
+- `/api/admin/duplicate-write-audit` returns no duplicate groups before expanding the beta cohort.
 
 ## What CI Covers
 
@@ -45,3 +46,4 @@ Do not invite the next tester batch unless:
 - Operator privacy guidance has been reviewed for this batch.
 - A launch decision record exists for the current tester batch or release.
 - The last tester batch has no unresolved duplicate-write, disconnect, OAuth, or wrong-calendar issues.
+- The duplicate-write audit is clear or every group has been manually explained and recorded in the launch decision record.

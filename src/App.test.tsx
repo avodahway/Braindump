@@ -296,6 +296,27 @@ describe('App routes', () => {
           })
         );
       }
+      if (url === 'https://api.example.com/api/admin/duplicate-write-audit') {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            generatedAt: '2026-07-17T12:00:00.000Z',
+            totalCreated: 2,
+            duplicateGroups: [
+              {
+                key: 'user@example.com|work_task|pay invoice',
+                userId: 'user@example.com',
+                actionType: 'work_task',
+                title: 'pay invoice',
+                count: 2,
+                requestIds: ['req-2', 'req-1'],
+                providerIds: ['task-2', 'task-1'],
+                latestCreatedAt: '2026-07-17T12:02:00.000Z'
+              }
+            ]
+          })
+        );
+      }
       if (url === 'https://api.example.com/api/admin/backup-plan') {
         return new Response(
           JSON.stringify({
@@ -478,6 +499,10 @@ describe('App routes', () => {
     expect(screen.getByText('Beta Queue')).toBeInTheDocument();
     expect(screen.getByText('Feedback Queue')).toBeInTheDocument();
     expect(screen.getByText('Support Queue')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate Write Audit')).toBeInTheDocument();
+    expect(screen.getByText('Investigate')).toBeInTheDocument();
+    expect(screen.getByText('pay invoice')).toBeInTheDocument();
+    expect(screen.getByText('req-2, req-1')).toBeInTheDocument();
     expect(screen.getByText('Cohort Review')).toBeInTheDocument();
     expect(screen.getByText(/Tag each invite note with Founder watched run/i)).toBeInTheDocument();
     expect(screen.getAllByLabelText('Status')).toHaveLength(3);
@@ -542,6 +567,9 @@ describe('App routes', () => {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/self-test', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/duplicate-write-audit', {
       headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-requests', {

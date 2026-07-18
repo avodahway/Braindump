@@ -1674,6 +1674,51 @@ describe('public backend scaffold', () => {
     expect(report.checks.map((check: { key: string }) => check.key)).toContain('beta_access_gate');
     expect(JSON.stringify(report)).not.toContain('founder-beta');
   });
+
+  it('returns a protected duplicate-write audit report', async () => {
+    const executionLogStore = createMemoryExecutionLogStore();
+    await executionLogStore.append({
+      requestId: 'req-1',
+      userId: 'user@example.com',
+      actionType: 'work_task',
+      title: 'Pay invoice',
+      status: 'created',
+      message: 'Created',
+      providerId: 'task-1',
+      createdAt: '2026-07-18T12:01:00.000Z'
+    });
+    await executionLogStore.append({
+      requestId: 'req-2',
+      userId: 'user@example.com',
+      actionType: 'work_task',
+      title: 'pay invoice',
+      status: 'created',
+      message: 'Created',
+      providerId: 'task-2',
+      createdAt: '2026-07-18T12:02:00.000Z'
+    });
+    const backend = createPublicBackend({
+      googleOAuth,
+      executionLogStore,
+      adminToken: 'admin-secret',
+      now: () => new Date('2026-07-18T12:05:00.000Z')
+    });
+
+    const unauthorized = await backend.handle(new Request('https://api.example.com/api/admin/duplicate-write-audit'));
+    const authorized = await backend.handle(
+      new Request('https://api.example.com/api/admin/duplicate-write-audit', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-secret' }
+      })
+    );
+
+    expect(unauthorized.status).toBe(401);
+    await expect(authorized.json()).resolves.toMatchObject({
+      generatedAt: '2026-07-18T12:05:00.000Z',
+      ok: false,
+      totalCreated: 2,
+      duplicateGroups: [{ count: 2, requestIds: ['req-2', 'req-1'] }]
+    });
+  });
 });
 
 function connectedWorkspace() {

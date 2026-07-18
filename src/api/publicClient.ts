@@ -5,6 +5,7 @@ import {
   type BetaRequestInput,
   type BetaRequestRecord,
   type BetaRequestStatus,
+  type DuplicateWriteAudit,
   type FeedbackInput,
   type FeedbackRecord,
   type FeedbackStatus,
@@ -213,6 +214,18 @@ export async function getPublicAdminSelfTest(
 ): Promise<ProductionSelfTest> {
   return readJson<ProductionSelfTest>(
     await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminSelfTest), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
+export async function getPublicAdminDuplicateWriteAudit(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<DuplicateWriteAudit> {
+  return readJson<DuplicateWriteAudit>(
+    await fetcher(publicApiUrl(baseUrl, publicBackendRoutes.adminDuplicateWriteAudit), {
       headers: adminHeaders(adminToken)
     })
   );

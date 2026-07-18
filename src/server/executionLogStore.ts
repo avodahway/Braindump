@@ -18,6 +18,7 @@ export type ExecutionLogRecord = {
 
 export type ExecutionLogStore = {
   append(record: ExecutionLogRecord): Promise<void>;
+  readRecent(limit?: number): Promise<ExecutionLogRecord[]>;
   readByRequest(requestId: string): Promise<ExecutionLogRecord[]>;
   readRecentErrors(limit?: number): Promise<ExecutionLogRecord[]>;
   deleteByUser(userId: string): Promise<void>;
@@ -38,6 +39,9 @@ export function createMemoryExecutionLogStore(): ExecutionLogStore & {
     records,
     async append(record) {
       records.push(record);
+    },
+    async readRecent(limit = 100) {
+      return [...records].sort((left, right) => right.createdAt.localeCompare(left.createdAt)).slice(0, limit);
     },
     async readByRequest(requestId) {
       return records.filter((record) => record.requestId === requestId);
@@ -73,6 +77,10 @@ export function createDurableExecutionLogStore(
       const records = await readRecords(store, codec, logKey);
       records.push(record);
       await store.set(logKey, await codec.encode(JSON.stringify(records)));
+      const recent = await readRecords(store, codec, recentIndexKey(prefix));
+      recent.push(record);
+      recent.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+      await store.set(recentIndexKey(prefix), await codec.encode(JSON.stringify(recent.slice(0, 500))));
       if (record.status === 'error') {
         const errors = await readRecords(store, codec, errorIndexKey(prefix));
         errors.push(record);
@@ -91,6 +99,10 @@ export function createDurableExecutionLogStore(
     async readByRequest(requestId) {
       return readRecords(store, codec, key(prefix, requestId));
     },
+    async readRecent(limit = 100) {
+      const records = await readRecords(store, codec, recentIndexKey(prefix));
+      return records.slice(0, limit);
+    },
     async readRecentErrors(limit = 20) {
       const records = await readRecords(store, codec, errorIndexKey(prefix));
       return records.slice(0, limit);
@@ -106,6 +118,13 @@ export function createDurableExecutionLogStore(
         await store.set(errorIndexKey(prefix), await codec.encode(JSON.stringify(remainingErrors)));
       } else {
         await store.delete(errorIndexKey(prefix));
+      }
+      const recent = await readRecords(store, codec, recentIndexKey(prefix));
+      const remainingRecent = recent.filter((record) => record.userId?.toLowerCase() !== normalizedUserId);
+      if (remainingRecent.length) {
+        await store.set(recentIndexKey(prefix), await codec.encode(JSON.stringify(remainingRecent)));
+      } else {
+        await store.delete(recentIndexKey(prefix));
       }
       await store.delete(indexKey);
     },
@@ -141,6 +160,10 @@ function userIndexKey(prefix: string, userId: string): string {
 
 function errorIndexKey(prefix: string): string {
   return `${prefix}:execution-log-errors`;
+}
+
+function recentIndexKey(prefix: string): string {
+  return `${prefix}:execution-log-recent`;
 }
 
 function normalizedId(value: string): string {

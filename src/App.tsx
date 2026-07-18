@@ -24,6 +24,7 @@ import {
   getPublicAdminBackupPlan,
   getPublicAdminBetaRequests,
   getPublicAdminBetaRequestsCsv,
+  getPublicAdminDuplicateWriteAudit,
   getPublicAdminExecutionErrors,
   getPublicAdminExecutionErrorsCsv,
   getPublicAdminFeedback,
@@ -60,6 +61,7 @@ import type {
   BetaAccessStatus,
   BetaRequestRecord,
   BetaRequestStatus,
+  DuplicateWriteAudit,
   FeedbackRecord,
   FeedbackStatus,
   LaunchSummary,
@@ -1577,6 +1579,7 @@ type OperatorSnapshot = {
   launchSummary: LaunchSummary;
   readiness: ReadinessReport;
   selfTest: ProductionSelfTest;
+  duplicateWriteAudit: DuplicateWriteAudit;
   backupPlan: BackupPlan;
   recentErrors: ExecutionLogRecord[];
   betaRequests: BetaRequestRecord[];
@@ -1612,10 +1615,11 @@ function OperatorPage() {
     setLoading(true);
     setError('');
     try {
-      const [metrics, readiness, selfTest, backupPlan, launchSummary, executionErrors, betaRequests, feedback, supportRequests] = await Promise.all([
+      const [metrics, readiness, selfTest, duplicateWriteAudit, backupPlan, launchSummary, executionErrors, betaRequests, feedback, supportRequests] = await Promise.all([
         getPublicAdminMetrics(publicApiBaseUrl, token),
         getPublicAdminReadiness(publicApiBaseUrl, token),
         getPublicAdminSelfTest(publicApiBaseUrl, token),
+        getPublicAdminDuplicateWriteAudit(publicApiBaseUrl, token),
         getPublicAdminBackupPlan(publicApiBaseUrl, token),
         getPublicAdminLaunchSummary(publicApiBaseUrl, token),
         getPublicAdminExecutionErrors(publicApiBaseUrl, token),
@@ -1630,6 +1634,7 @@ function OperatorPage() {
         launchSummary,
         readiness,
         selfTest,
+        duplicateWriteAudit,
         backupPlan,
         recentErrors: executionErrors.recentErrors,
         betaRequests: betaRequests.requests,
@@ -1886,6 +1891,43 @@ function OperatorPage() {
             counts={countStatuses(snapshot.supportRequests)}
             labels={['new', 'in_progress', 'resolved', 'archived']}
           />
+
+          <article className="operatorPanel widePanel">
+            <div className="operatorPanelHeader">
+              <h2>Duplicate Write Audit</h2>
+              <span className={snapshot.duplicateWriteAudit.ok ? 'operatorBadge ready' : 'operatorBadge'}>
+                {snapshot.duplicateWriteAudit.ok ? 'Clear' : 'Investigate'}
+              </span>
+            </div>
+            {snapshot.duplicateWriteAudit.duplicateGroups.length ? (
+              <div className="duplicateAuditList">
+                {snapshot.duplicateWriteAudit.duplicateGroups.map((group) => (
+                  <div className="duplicateAuditItem" key={group.key}>
+                    <div>
+                      <strong>{group.title}</strong>
+                      <span>{operatorEventLabel(group.actionType)} repeated {group.count} times</span>
+                    </div>
+                    <dl>
+                      <div>
+                        <dt>User</dt>
+                        <dd>{group.userId ?? 'Unknown'}</dd>
+                      </div>
+                      <div>
+                        <dt>Requests</dt>
+                        <dd>{group.requestIds.join(', ')}</dd>
+                      </div>
+                      <div>
+                        <dt>Provider IDs</dt>
+                        <dd>{group.providerIds.join(', ') || 'Not recorded'}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No likely duplicate writes in the recent audit window.</p>
+            )}
+          </article>
 
           <article className="operatorPanel">
             <h2>Cohort Review</h2>

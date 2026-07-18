@@ -28,6 +28,7 @@ const adminRoutes = [
   { label: 'Admin metrics', path: '/api/admin/metrics', kind: 'json' },
   { label: 'Admin backup plan', path: '/api/admin/backup-plan', kind: 'json' },
   { label: 'Admin self-test', path: '/api/admin/self-test', kind: 'self-test' },
+  { label: 'Admin duplicate-write audit', path: '/api/admin/duplicate-write-audit', kind: 'duplicate-audit' },
   { label: 'Admin readiness', path: '/api/admin/readiness', kind: 'readiness' },
   { label: 'Admin launch summary', path: '/api/admin/launch-summary', kind: 'json' },
   { label: 'Admin execution errors', path: '/api/admin/execution-errors', kind: 'json' },
@@ -187,6 +188,13 @@ async function expectAdminResponse(fetchImpl, url, adminToken, kind) {
   if (kind === 'self-test') {
     if (typeof body.ok !== 'boolean' || !Array.isArray(body.checks)) {
       throw new Error(`Unexpected self-test response: ${response.status} ${JSON.stringify(body)}`);
+    }
+    return;
+  }
+
+  if (kind === 'duplicate-audit') {
+    if (typeof body.ok !== 'boolean' || !Array.isArray(body.duplicateGroups)) {
+      throw new Error(`Unexpected duplicate-write audit response: ${response.status} ${JSON.stringify(body)}`);
     }
     return;
   }

@@ -57,6 +57,31 @@ describe('execution log store', () => {
     expect(kv.values.has('test:execution-log-errors')).toBe(true);
   });
 
+  it('reads recent created and error logs newest first', async () => {
+    const kv = createMemoryKeyValueStore();
+    const store = createDurableExecutionLogStore(kv, { keyPrefix: 'test' });
+
+    await store.append({ ...logRecord('req-1'), createdAt: '2026-07-12T12:00:00.000Z' });
+    await store.append({ ...logRecord('req-2'), status: 'error', message: 'Failure', createdAt: '2026-07-12T12:02:00.000Z' });
+
+    expect(await store.readRecent()).toMatchObject([
+      { requestId: 'req-2', message: 'Failure' },
+      { requestId: 'req-1', message: 'Created' }
+    ]);
+    expect(kv.values.has('test:execution-log-recent')).toBe(true);
+  });
+
+  it('removes durable user logs from the recent index', async () => {
+    const kv = createMemoryKeyValueStore();
+    const store = createDurableExecutionLogStore(kv, { keyPrefix: 'test' });
+
+    await store.append(logRecord('req-1'));
+    await store.append({ ...logRecord('req-2'), userId: 'other@example.com' });
+    await store.deleteByUser('user@example.com');
+
+    expect(await store.readRecent()).toMatchObject([{ requestId: 'req-2' }]);
+  });
+
   it('uses the supplied codec before writing logs', async () => {
     const kv = createMemoryKeyValueStore();
     const codec: SecretCodec = {
