@@ -7,6 +7,7 @@ Use this guide to deploy the first controlled public beta with Vercel, Render, a
 Recommended hosts:
 
 - Frontend PWA: Vercel, using `vercel.json`.
+- Frontend security headers: Vercel headers in `vercel.json`.
 - Public API: Render Web Service, using `render.yaml`.
 - Durable storage: Supabase, using `docs/SUPABASE_STORAGE.md`.
 
