@@ -2,7 +2,7 @@
 
 import { pathToFileURL } from 'node:url';
 
-const frontendRoutes = ['/', '/privacy', '/terms', '/support', '/data-deletion', '/feedback', '/beta', '/operator', '/app'];
+const frontendRoutes = ['/', '/privacy', '/terms', '/support', '/data-deletion', '/feedback', '/beta', '/status', '/operator', '/app'];
 
 const adminRoutes = [
   { label: 'Admin metrics', path: '/api/admin/metrics', kind: 'json' },

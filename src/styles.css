@@ -733,6 +733,36 @@ a {
   padding-left: 22px;
 }
 
+.statusOverview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 22px 0 30px;
+}
+
+.statusOverview div {
+  min-height: 96px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid rgba(255, 253, 248, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.08);
+}
+
+.statusOverview span {
+  color: rgba(255, 253, 248, 0.68);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.statusOverview strong {
+  color: var(--paper);
+  font-size: 20px;
+}
+
 .publicForm {
   display: grid;
   gap: 14px;
@@ -1408,6 +1438,10 @@ input:disabled {
   }
 
   .publicBand {
+    grid-template-columns: 1fr;
+  }
+
+  .statusOverview {
     grid-template-columns: 1fr;
   }
 

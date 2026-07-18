@@ -83,6 +83,7 @@ export function App() {
   if (route === '/data-deletion') return <DataDeletionPage />;
   if (route === '/feedback') return <FeedbackPage />;
   if (route === '/beta') return <BetaPage />;
+  if (route === '/status') return <StatusPage />;
   if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
@@ -588,9 +589,12 @@ function HomePage() {
             <a className="secondaryButton linkButton" href="/beta">
               Join beta
             </a>
-            <a className="secondaryButton linkButton" href="/privacy">
-              Privacy
-            </a>
+          <a className="secondaryButton linkButton" href="/privacy">
+            Privacy
+          </a>
+          <a className="secondaryButton linkButton" href="/status">
+            Status
+          </a>
           </div>
         </div>
         <div className="productPreview" aria-label="Brain Dump preview">
@@ -647,6 +651,10 @@ function HomePage() {
           <a href="/support">
             <MessageCircle size={20} />
             Beta support
+          </a>
+          <a href="/status">
+            <CheckCircle2 size={20} />
+            Launch status
           </a>
           <a href="/feedback">
             <UserCheck size={20} />
@@ -1194,6 +1202,49 @@ function BetaPage() {
           {isSubmitting ? 'Sending' : 'Request beta access'}
         </button>
       </form>
+    </PublicDocument>
+  );
+}
+
+function StatusPage() {
+  return (
+    <PublicDocument
+      title="Launch Status"
+      subtitle="Current public beta posture for Brain Dump users and reviewers."
+    >
+      <section className="statusOverview" aria-label="Launch status summary">
+        <div>
+          <span>Current phase</span>
+          <strong>Private beta setup</strong>
+        </div>
+        <div>
+          <span>Google writes</span>
+          <strong>Reviewed only</strong>
+        </div>
+        <div>
+          <span>Email sending</span>
+          <strong>Not enabled</strong>
+        </div>
+      </section>
+      <h2>Available now</h2>
+      <ul>
+        <li>Preview mode for turning free-form notes into reviewed actions.</li>
+        <li>Per-user Google connection for Tasks and Calendar during beta.</li>
+        <li>Support, feedback, beta access, and data deletion request forms.</li>
+        <li>Operator readiness checks before any broader launch push.</li>
+      </ul>
+      <h2>Launch limits</h2>
+      <ul>
+        <li>Brain Dump is not a public self-serve production launch yet.</li>
+        <li>Ambiguous actions stay in review instead of being created automatically.</li>
+        <li>Email-like requests are captured for review and are not sent.</li>
+        <li>Calendar and task writes depend on each user's own Google authorization.</li>
+      </ul>
+      <h2>Need help?</h2>
+      <p>
+        If something fails during setup or a test run, use <a href="/support">support</a> or email{' '}
+        <a href={supportRequestMailto('Launch status')}>{supportEmail}</a>.
+      </p>
     </PublicDocument>
   );
 }
@@ -1857,6 +1908,7 @@ function PublicNav() {
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
         <a href="/beta">Beta</a>
+        <a href="/status">Status</a>
         <a href="/data-deletion">Data deletion</a>
         <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
@@ -1891,6 +1943,7 @@ function normalizedPath(path: string): string {
     path === '/data-deletion' ||
     path === '/feedback' ||
     path === '/beta' ||
+    path === '/status' ||
     path === '/operator' ||
     path === '/app'
   ) return path;

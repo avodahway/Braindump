@@ -23,6 +23,7 @@ describe('deployment verifier', () => {
       'Frontend /data-deletion',
       'Frontend /feedback',
       'Frontend /beta',
+      'Frontend /status',
       'Frontend /operator',
       'Frontend /app',
       'Backend /api/health',

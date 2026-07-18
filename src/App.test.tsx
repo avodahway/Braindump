@@ -91,6 +91,16 @@ describe('App routes', () => {
     );
   });
 
+  it('renders the public launch status page', () => {
+    renderAt('/status');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Launch Status' })).toBeInTheDocument();
+    expect(screen.getByText('Private beta setup')).toBeInTheDocument();
+    expect(screen.getByText('Reviewed only')).toBeInTheDocument();
+    expect(screen.getByText('Not enabled')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /^support$/i })[0]).toHaveAttribute('href', '/support');
+  });
+
   it('renders the product tool at the app route', () => {
     renderAt('/app');
 
