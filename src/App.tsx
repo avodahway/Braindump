@@ -1427,6 +1427,22 @@ function OperatorPage() {
           <OperatorMetric label="Errors" value={snapshot.metrics.totalErrors} warning={snapshot.metrics.totalErrors > 0} />
           <OperatorMetric label="Latest Event" value={snapshot.metrics.latestEventAt ? shortDateTime(snapshot.metrics.latestEventAt) : 'None'} />
 
+          <QueueSummaryPanel
+            title="Beta Queue"
+            counts={countStatuses(snapshot.betaRequests)}
+            labels={['new', 'invited', 'archived']}
+          />
+          <QueueSummaryPanel
+            title="Feedback Queue"
+            counts={countStatuses(snapshot.feedback)}
+            labels={['new', 'reviewed', 'archived']}
+          />
+          <QueueSummaryPanel
+            title="Support Queue"
+            counts={countStatuses(snapshot.supportRequests)}
+            labels={['new', 'in_progress', 'resolved', 'archived']}
+          />
+
           <article className="operatorPanel widePanel">
             <h2>Readiness</h2>
             <div className="readinessList">
@@ -1739,6 +1755,37 @@ function OperatorMetric({ label, value, warning = false }: { label: string; valu
       <strong>{value}</strong>
     </article>
   );
+}
+
+function QueueSummaryPanel({
+  title,
+  counts,
+  labels
+}: {
+  title: string;
+  counts: Record<string, number>;
+  labels: string[];
+}) {
+  return (
+    <article className="operatorPanel queueSummaryPanel">
+      <h2>{title}</h2>
+      <div className="queueSummaryGrid">
+        {labels.map((label) => (
+          <div key={label}>
+            <span>{operatorStatusLabel(label)}</span>
+            <strong>{counts[label] ?? 0}</strong>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function countStatuses(records: Array<{ status: string }>): Record<string, number> {
+  return records.reduce<Record<string, number>>((counts, record) => {
+    counts[record.status] = (counts[record.status] ?? 0) + 1;
+    return counts;
+  }, {});
 }
 
 function shortDateTime(value: string): string {

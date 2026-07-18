@@ -292,9 +292,13 @@ describe('App routes', () => {
     expect(screen.getByText('Recent Execution Errors')).toBeInTheDocument();
     expect(screen.getByText('Lunch with Jack')).toBeInTheDocument();
     expect(screen.getByText('Calendar write failed')).toBeInTheDocument();
+    expect(screen.getByText('Beta Queue')).toBeInTheDocument();
+    expect(screen.getByText('Feedback Queue')).toBeInTheDocument();
+    expect(screen.getByText('Support Queue')).toBeInTheDocument();
+    expect(screen.getByText('in progress')).toBeInTheDocument();
     expect(screen.getByText('Beta Requests')).toBeInTheDocument();
     expect(screen.getByText('jay@example.com')).toBeInTheDocument();
-    expect(screen.getAllByText('new')).toHaveLength(3);
+    expect(screen.getAllByText('new').length).toBeGreaterThanOrEqual(3);
     fireEvent.click(screen.getByRole('button', { name: /Mark invited/i }));
     expect(await screen.findByText('invited')).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-request', {

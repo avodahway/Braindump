@@ -251,6 +251,38 @@ a {
   font-size: 18px;
 }
 
+.queueSummaryPanel {
+  grid-column: span 2;
+}
+
+.queueSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.queueSummaryGrid div {
+  min-height: 54px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(39, 89, 70, 0.12);
+  border-radius: 8px;
+  background: #f5f8f4;
+}
+
+.queueSummaryGrid span {
+  color: rgba(24, 50, 40, 0.62);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.queueSummaryGrid strong {
+  color: var(--green);
+  font-size: 22px;
+  line-height: 1;
+}
+
 .operatorPanelHeader {
   display: flex;
   align-items: center;
