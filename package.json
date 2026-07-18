@@ -15,6 +15,7 @@
     "start:backend": "node dist-server/nodeServer.js",
     "test": "vitest run",
     "validate:env": "node scripts/validate-production-env.mjs",
+    "smoke:oauth": "node scripts/oauth-smoke-test.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs"
   },
   "dependencies": {

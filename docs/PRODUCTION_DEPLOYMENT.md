@@ -84,7 +84,10 @@ pnpm test
 pnpm build
 pnpm build:backend
 pnpm validate:env
+pnpm smoke:oauth
 ```
+
+`pnpm smoke:oauth` uses `BRAIN_DUMP_PUBLIC_API_ORIGIN`; include `BRAIN_DUMP_BETA_ACCESS_CODE` when the deployed backend is invite-only.
 
 Then verify the deployed stack. With an admin token, this checks public pages, search/share metadata, `/operator`,
 backend health, protected operator feeds, launch summary, and CSV exports:

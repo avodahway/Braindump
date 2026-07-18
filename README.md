@@ -41,6 +41,14 @@ protected operator feeds, and CSV exports with:
 pnpm verify:deployment
 ```
 
+After deployment verification, run the OAuth start smoke test against the deployed backend:
+
+```sh
+pnpm smoke:oauth
+```
+
+It uses `BRAIN_DUMP_PUBLIC_API_ORIGIN`; if invite-only beta is enabled, also provide `BRAIN_DUMP_BETA_ACCESS_CODE`.
+
 ## Backend Direction
 
 Brain Dump is moving toward a public multi-user model:
