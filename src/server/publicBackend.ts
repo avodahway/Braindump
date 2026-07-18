@@ -29,7 +29,7 @@ import {
   type SessionStore
 } from './sessionStore';
 import { createMemoryResponseStore, type ResponseStore } from './idempotencyStore';
-import { createMemoryExecutionLogStore, type ExecutionLogStore } from './executionLogStore';
+import { createMemoryExecutionLogStore, type ExecutionLogRecord, type ExecutionLogStore } from './executionLogStore';
 import { createMemoryAnalyticsStore, sanitizeAnalyticsEvent, summarizeAnalytics, type AnalyticsStore } from './analyticsStore';
 import { createMemoryBetaRequestStore, type BetaRequestStore } from './betaRequestStore';
 import { createMemoryFeedbackStore, type FeedbackStore } from './feedbackStore';
@@ -347,8 +347,12 @@ export function createPublicBackend(options: PublicBackendOptions) {
       if (request.method === 'GET' && url.pathname === publicBackendRoutes.adminExecutionErrors) {
         const adminError = requireAdmin(request, options.adminToken, 'Admin execution errors are not configured.');
         if (adminError) return withCors(adminError, request, options.frontendAppUrl);
+        const recentErrors = await executionLogStore.readRecentErrors(parseAdminLimit(url.searchParams.get('limit')));
+        if (url.searchParams.get('format') === 'csv') {
+          return withCors(csv(executionErrorsCsv(recentErrors), 'brain-dump-execution-errors.csv'), request, options.frontendAppUrl);
+        }
         return sendJson({
-          recentErrors: await executionLogStore.readRecentErrors(parseAdminLimit(url.searchParams.get('limit')))
+          recentErrors
         });
       }
 
@@ -1082,6 +1086,21 @@ function supportRequestsCsv(requests: SupportRequestRecord[]): string {
       details: request.details,
       status: request.status,
       id: request.id
+    }))
+  );
+}
+
+function executionErrorsCsv(errors: ExecutionLogRecord[]): string {
+  return recordsToCsv(
+    ['createdAt', 'requestId', 'userId', 'actionType', 'title', 'message', 'status'],
+    errors.map((error) => ({
+      createdAt: error.createdAt,
+      requestId: error.requestId,
+      userId: error.userId ?? '',
+      actionType: error.actionType,
+      title: error.title,
+      message: error.message ?? '',
+      status: error.status
     }))
   );
 }

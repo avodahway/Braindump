@@ -117,6 +117,7 @@ Set `BRAIN_DUMP_STORAGE_SECRET` so durable values are encrypted before being wri
 `GET /api/admin/readiness` returns a protected launch-readiness report with boolean checks for OAuth config, frontend callback, admin protection, scopes, and durable storage.
 
 `GET /api/admin/execution-errors` returns recent protected provider write failures for the `/operator` dashboard.
+Add `?format=csv` to export recent failures for support triage.
 
 `POST /api/beta/request` records first-user beta interest without using the founder's Google Sheets. `/operator` reads
 those records from protected `GET /api/admin/beta-requests`. Add `?format=csv` to export a follow-up list.

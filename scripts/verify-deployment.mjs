@@ -9,6 +9,7 @@ const adminRoutes = [
   { label: 'Admin backup plan', path: '/api/admin/backup-plan', kind: 'json' },
   { label: 'Admin readiness', path: '/api/admin/readiness', kind: 'readiness' },
   { label: 'Admin execution errors', path: '/api/admin/execution-errors', kind: 'json' },
+  { label: 'Admin execution errors CSV', path: '/api/admin/execution-errors?format=csv', kind: 'csv' },
   { label: 'Admin beta requests', path: '/api/admin/beta-requests', kind: 'json' },
   { label: 'Admin beta requests CSV', path: '/api/admin/beta-requests?format=csv', kind: 'csv' },
   { label: 'Admin feedback', path: '/api/admin/feedback', kind: 'json' },

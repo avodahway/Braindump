@@ -182,15 +182,16 @@ After deploy:
 32. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
 33. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
 34. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/execution-errors` returns recent provider write failures only when `X-Brain-Dump-Admin-Token` is provided.
-35. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests` returns beta requests only when `X-Brain-Dump-Admin-Token` is provided.
-36. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests?format=csv` downloads the beta request CSV from `/operator`.
-37. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback` returns feedback only when `X-Brain-Dump-Admin-Token` is provided.
-38. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback?format=csv` downloads the feedback CSV from `/operator`.
-39. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/support-requests` returns support requests only when `X-Brain-Dump-Admin-Token` is provided.
-40. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/support-requests?format=csv` downloads the support request CSV from `/operator`.
-41. Confirm `/status` reflects the current beta phase before inviting or expanding testers.
-42. Complete `docs/LAUNCH_DECISION_RECORD.md` for the release or tester batch.
-40. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
+35. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/execution-errors?format=csv` downloads the execution error CSV from `/operator`.
+36. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests` returns beta requests only when `X-Brain-Dump-Admin-Token` is provided.
+37. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests?format=csv` downloads the beta request CSV from `/operator`.
+38. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback` returns feedback only when `X-Brain-Dump-Admin-Token` is provided.
+39. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback?format=csv` downloads the feedback CSV from `/operator`.
+40. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/support-requests` returns support requests only when `X-Brain-Dump-Admin-Token` is provided.
+41. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/support-requests?format=csv` downloads the support request CSV from `/operator`.
+42. Confirm `/status` reflects the current beta phase before inviting or expanding testers.
+43. Complete `docs/LAUNCH_DECISION_RECORD.md` for the release or tester batch.
+44. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
 
 You can automate the public page, `/operator`, health, protected operator endpoint, and CSV export checks with:
 

@@ -25,6 +25,7 @@ import {
   getPublicAdminBetaRequests,
   getPublicAdminBetaRequestsCsv,
   getPublicAdminExecutionErrors,
+  getPublicAdminExecutionErrorsCsv,
   getPublicAdminFeedback,
   getPublicAdminFeedbackCsv,
   getPublicAdminMetrics,
@@ -1322,7 +1323,7 @@ function OperatorPage() {
     }
   }
 
-  async function handleExport(kind: 'beta-requests' | 'feedback' | 'support-requests') {
+  async function handleExport(kind: 'execution-errors' | 'beta-requests' | 'feedback' | 'support-requests') {
     const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
     const token = adminToken.trim();
     if (!publicApiBaseUrl || !token) {
@@ -1334,13 +1335,17 @@ function OperatorPage() {
     setError('');
     try {
       const csv =
-        kind === 'beta-requests'
+        kind === 'execution-errors'
+          ? await getPublicAdminExecutionErrorsCsv(publicApiBaseUrl, token)
+          : kind === 'beta-requests'
           ? await getPublicAdminBetaRequestsCsv(publicApiBaseUrl, token)
           : kind === 'feedback'
             ? await getPublicAdminFeedbackCsv(publicApiBaseUrl, token)
             : await getPublicAdminSupportRequestsCsv(publicApiBaseUrl, token);
       const filename =
-        kind === 'beta-requests'
+        kind === 'execution-errors'
+          ? 'brain-dump-execution-errors.csv'
+          : kind === 'beta-requests'
           ? 'brain-dump-beta-requests.csv'
           : kind === 'feedback'
             ? 'brain-dump-feedback.csv'
@@ -1546,7 +1551,17 @@ function OperatorPage() {
           </article>
 
           <article className="operatorPanel widePanel">
-            <h2>Recent Execution Errors</h2>
+            <div className="operatorPanelHeader">
+              <h2>Recent Execution Errors</h2>
+              <button
+                type="button"
+                className="smallButton exportButton"
+                disabled={isExporting === 'execution-errors'}
+                onClick={() => handleExport('execution-errors')}
+              >
+                {isExporting === 'execution-errors' ? 'Exporting' : 'Export CSV'}
+              </button>
+            </div>
             {snapshot.recentErrors.length ? (
               <div className="executionErrorList">
                 {snapshot.recentErrors.map((record) => (

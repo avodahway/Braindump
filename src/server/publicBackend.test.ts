@@ -1358,9 +1358,16 @@ describe('public backend scaffold', () => {
         headers: { 'X-Brain-Dump-Admin-Token': 'admin-secret' }
       })
     );
+    const csv = await backend.handle(
+      new Request('https://api.example.com/api/admin/execution-errors?format=csv', {
+        headers: { 'X-Brain-Dump-Admin-Token': 'admin-secret' }
+      })
+    );
     const body = await authorized.json();
 
     expect(unauthorized.status).toBe(401);
+    expect(csv.headers.get('Content-Disposition')).toContain('brain-dump-execution-errors.csv');
+    expect(await csv.text()).toContain('Calendar write failed');
     expect(body.recentErrors).toEqual([
       {
         requestId: 'req-error',

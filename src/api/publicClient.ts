@@ -228,6 +228,18 @@ export async function getPublicAdminExecutionErrors(
   );
 }
 
+export async function getPublicAdminExecutionErrorsCsv(
+  baseUrl: string,
+  adminToken: string,
+  fetcher: JsonFetcher = fetch
+): Promise<string> {
+  return readText(
+    await fetcher(publicApiUrl(baseUrl, `${publicBackendRoutes.adminExecutionErrors}?format=csv`), {
+      headers: adminHeaders(adminToken)
+    })
+  );
+}
+
 export async function getPublicAdminBetaRequests(
   baseUrl: string,
   adminToken: string,
