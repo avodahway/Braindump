@@ -95,6 +95,7 @@ export function App() {
   if (route === '/install') return <InstallPage />;
   if (route === '/roadmap') return <RoadmapPage />;
   if (route === '/press') return <PressPage />;
+  if (route === '/examples') return <ExamplesPage />;
   if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
@@ -697,6 +698,10 @@ function HomePage() {
           <a href="/press">
             <FileText size={20} />
             Press
+          </a>
+          <a href="/examples">
+            <ClipboardList size={20} />
+            Examples
           </a>
           <a href="/feedback">
             <UserCheck size={20} />
@@ -1456,6 +1461,41 @@ function PressPage() {
       <h2>Contact</h2>
       <p>
         Send beta coverage, interview, and partnership questions to <a href={`mailto:${email}`}>{email}</a>.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function ExamplesPage() {
+  return (
+    <PublicDocument
+      title="Examples"
+      subtitle="Natural brain-dump wording Brain Dump can turn into reviewed actions."
+    >
+      <h2>Tasks</h2>
+      <ul>
+        <li>Pay employees tomorrow.</li>
+        <li>Buy printer paper.</li>
+      </ul>
+      <h2>Calendar</h2>
+      <ul>
+        <li>Lunch with Jack Thursday at noon; put on calendar.</li>
+        <li>Call Sarah Friday at 2pm; put on calendar.</li>
+      </ul>
+      <h2>Projects</h2>
+      <ul>
+        <li>Spend 4 hours this week on the porch replacement project.</li>
+        <li>Set up project: beta tester onboarding.</li>
+      </ul>
+      <h2>Follow-ups</h2>
+      <ul>
+        <li>Waiting for Chris to confirm numbers.</li>
+        <li>Follow-up with Sarah about the invoice.</li>
+      </ul>
+      <h2>Review first</h2>
+      <p>
+        Brain Dump keeps ambiguous calendar requests and email-like instructions in review so you can decide what should
+        happen next.
       </p>
     </PublicDocument>
   );
@@ -2342,6 +2382,7 @@ function PublicNav() {
         <a href="/install">Install</a>
         <a href="/roadmap">Roadmap</a>
         <a href="/press">Press</a>
+        <a href="/examples">Examples</a>
         <a href="/data-deletion">Data deletion</a>
         <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
@@ -2382,6 +2423,7 @@ function normalizedPath(path: string): string {
     path === '/install' ||
     path === '/roadmap' ||
     path === '/press' ||
+    path === '/examples' ||
     path === '/operator' ||
     path === '/app'
   ) return path;

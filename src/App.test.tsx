@@ -146,6 +146,15 @@ describe('App routes', () => {
     expect(screen.getByRole('link', { name: 'App icon 512' })).toHaveAttribute('href', '/icons/brain-dump-icon-512.png');
   });
 
+  it('renders the public examples page', () => {
+    renderAt('/examples');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Examples' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Follow-ups' })).toBeInTheDocument();
+    expect(screen.getByText('Waiting for Chris to confirm numbers.')).toBeInTheDocument();
+    expect(screen.getByText(/keeps ambiguous calendar requests and email-like instructions in review/i)).toBeInTheDocument();
+  });
+
   it('renders the product tool at the app route', () => {
     renderAt('/app');
 
