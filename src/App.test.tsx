@@ -139,7 +139,9 @@ describe('App routes', () => {
     renderAt('/operator');
 
     expect(screen.getByRole('heading', { level: 1, name: 'Operator Dashboard' })).toBeInTheDocument();
+    expect(screen.getByText('Load launch readiness')).toBeInTheDocument();
     expect(screen.getByText('Enter the production API URL and admin token to load launch readiness.')).toBeInTheDocument();
+    expect(screen.getByText(/Run deployment verification/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Refresh/i })).toBeInTheDocument();
   });
 

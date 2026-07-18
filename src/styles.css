@@ -526,14 +526,34 @@ a {
 }
 
 .operatorEmpty {
+  color: rgba(24, 50, 40, 0.72);
+}
+
+.operatorEmpty > div {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: rgba(24, 50, 40, 0.72);
+}
+
+.operatorEmpty strong {
+  display: block;
+  color: var(--green);
+  font-size: 15px;
 }
 
 .operatorEmpty p {
   margin: 0;
+}
+
+.operatorEmpty ol {
+  margin: 12px 0 0;
+  padding-left: 22px;
+}
+
+.operatorEmpty li {
+  margin-top: 5px;
+  color: rgba(24, 50, 40, 0.72);
+  font-size: 13px;
 }
 
 .homeHero {

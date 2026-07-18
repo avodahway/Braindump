@@ -1877,8 +1877,19 @@ function OperatorPage() {
         </section>
       ) : (
         <section className="operatorEmpty">
-          <Lock size={24} />
-          <p>Enter the production API URL and admin token to load launch readiness.</p>
+          <div>
+            <Lock size={24} />
+            <div>
+              <strong>Load launch readiness</strong>
+              <p>Enter the production API URL and admin token to load launch readiness.</p>
+            </div>
+          </div>
+          <ol>
+            <li>Confirm `BRAIN_DUMP_PUBLIC_API_ORIGIN` points to the deployed backend.</li>
+            <li>Use `BRAIN_DUMP_ADMIN_TOKEN` from the backend host secret settings.</li>
+            <li>Run deployment verification before inviting testers.</li>
+            <li>Readiness should be green before expanding beta access.</li>
+          </ol>
         </section>
       )}
     </main>
