@@ -101,6 +101,15 @@ describe('App routes', () => {
     expect(screen.getAllByRole('link', { name: /^support$/i })[0]).toHaveAttribute('href', '/support');
   });
 
+  it('renders the public FAQ page', () => {
+    renderAt('/faq');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'FAQ' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Does Brain Dump send email?' })).toBeInTheDocument();
+    expect(screen.getByText(/Preview mode does not touch Google/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '/data-deletion' })).toHaveAttribute('href', '/data-deletion');
+  });
+
   it('renders the product tool at the app route', () => {
     renderAt('/app');
 

@@ -88,6 +88,7 @@ export function App() {
   if (route === '/feedback') return <FeedbackPage />;
   if (route === '/beta') return <BetaPage />;
   if (route === '/status') return <StatusPage />;
+  if (route === '/faq') return <FaqPage />;
   if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
@@ -670,6 +671,10 @@ function HomePage() {
           <a href="/status">
             <CheckCircle2 size={20} />
             Launch status
+          </a>
+          <a href="/faq">
+            <MessageCircle size={20} />
+            FAQ
           </a>
           <a href="/feedback">
             <UserCheck size={20} />
@@ -1259,6 +1264,38 @@ function StatusPage() {
       <p>
         If something fails during setup or a test run, use <a href="/support">support</a> or email{' '}
         <a href={supportRequestMailto('Launch status')}>{supportEmail}</a>.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function FaqPage() {
+  return (
+    <PublicDocument
+      title="FAQ"
+      subtitle="Plain answers for beta users before connecting Google."
+    >
+      <h2>Does Brain Dump send email?</h2>
+      <p>No. Email-like requests are captured for review during beta. Brain Dump does not send emails automatically.</p>
+      <h2>When does Brain Dump touch Google?</h2>
+      <p>
+        Preview mode does not touch Google. In public mode, Brain Dump connects only after you approve Google access, and
+        reviewed actions are created only after you click Create.
+      </p>
+      <h2>What Google data does it use?</h2>
+      <p>
+        Brain Dump uses your Google sign-in identity to keep your session connected, Google Tasks access to create
+        reviewed tasks, and Google Calendar event access to create reviewed events.
+      </p>
+      <h2>Can I disconnect?</h2>
+      <p>
+        Yes. Open the app setup panel and choose Disconnect. You can also request stored record deletion from{' '}
+        <a href="/data-deletion">/data-deletion</a>.
+      </p>
+      <h2>What if Brain Dump gets something wrong?</h2>
+      <p>
+        Remove wrong preview actions before creating. If something fails after creation, send feedback or open a support
+        request from <a href="/support">/support</a>.
       </p>
     </PublicDocument>
   );
@@ -2014,6 +2051,7 @@ function PublicNav() {
         <a href="/terms">Terms</a>
         <a href="/beta">Beta</a>
         <a href="/status">Status</a>
+        <a href="/faq">FAQ</a>
         <a href="/data-deletion">Data deletion</a>
         <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
@@ -2049,6 +2087,7 @@ function normalizedPath(path: string): string {
     path === '/feedback' ||
     path === '/beta' ||
     path === '/status' ||
+    path === '/faq' ||
     path === '/operator' ||
     path === '/app'
   ) return path;
