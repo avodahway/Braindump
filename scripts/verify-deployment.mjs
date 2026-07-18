@@ -3,6 +3,26 @@
 import { pathToFileURL } from 'node:url';
 
 const frontendRoutes = ['/', '/privacy', '/terms', '/support', '/data-deletion', '/feedback', '/beta', '/status', '/faq', '/security', '/install', '/roadmap', '/operator', '/app'];
+const frontendAssets = [
+  {
+    label: 'Frontend metadata',
+    path: '/',
+    kind: 'html-markers',
+    markers: ['name="description"', 'property="og:title" content="Brain Dump"', 'name="twitter:card" content="summary"']
+  },
+  {
+    label: 'Frontend robots',
+    path: '/robots.txt',
+    kind: 'text-markers',
+    markers: ['Disallow: /operator', 'Sitemap:']
+  },
+  {
+    label: 'Frontend sitemap',
+    path: '/sitemap.xml',
+    kind: 'xml-markers',
+    markers: ['<urlset', '<loc>https://braindump.app/</loc>', '<loc>https://braindump.app/roadmap</loc>']
+  }
+];
 
 const adminRoutes = [
   { label: 'Admin metrics', path: '/api/admin/metrics', kind: 'json' },
@@ -31,6 +51,13 @@ export function buildDeploymentChecks({
     checks.push({
       label: `Frontend ${route}`,
       run: () => expectOk(fetchImpl, `${frontendOrigin}${route}`, { expectHtml: true })
+    });
+  }
+
+  for (const asset of frontendAssets) {
+    checks.push({
+      label: asset.label,
+      run: () => expectAssetResponse(fetchImpl, `${frontendOrigin}${asset.path}`, asset.kind, asset.markers)
     });
   }
 
@@ -104,6 +131,29 @@ async function expectOk(fetchImpl, url, { expectHtml = false } = {}) {
   }
   if (expectHtml && !contentType.includes('text/html')) {
     throw new Error(`Expected HTML from ${url}, got ${contentType || 'no content type'}`);
+  }
+}
+
+async function expectAssetResponse(fetchImpl, url, kind, markers) {
+  const response = await fetchImpl(url);
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!response.ok) {
+    throw new Error(`Expected 2xx from ${url}, got ${response.status}`);
+  }
+  if (kind === 'html-markers' && !contentType.includes('text/html')) {
+    throw new Error(`Expected HTML from ${url}, got ${contentType || 'no content type'}`);
+  }
+  if (kind === 'xml-markers' && !contentType.includes('xml')) {
+    throw new Error(`Expected XML from ${url}, got ${contentType || 'no content type'}`);
+  }
+  if (kind === 'text-markers' && !contentType.includes('text/plain')) {
+    throw new Error(`Expected plain text from ${url}, got ${contentType || 'no content type'}`);
+  }
+  const body = await response.text();
+  for (const marker of markers) {
+    if (!body.includes(marker)) {
+      throw new Error(`Expected ${url} to include ${marker}`);
+    }
   }
 }
 

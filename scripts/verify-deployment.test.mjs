@@ -30,6 +30,9 @@ describe('deployment verifier', () => {
       'Frontend /roadmap',
       'Frontend /operator',
       'Frontend /app',
+      'Frontend metadata',
+      'Frontend robots',
+      'Frontend sitemap',
       'Backend /api/health',
       'Admin metrics rejects anonymous requests',
       'Admin backup plan rejects anonymous requests',
@@ -70,6 +73,26 @@ describe('deployment verifier', () => {
     });
 
     await expect(checks.find((check) => check.label === 'Admin metrics rejects anonymous requests')?.run()).resolves.toBeUndefined();
+  });
+
+  it('checks public metadata and search index files', async () => {
+    const fetchImpl = vi.fn(async (url) => {
+      if (String(url).endsWith('/robots.txt')) return textResponse('User-agent: *\nDisallow: /operator\nSitemap: https://braindump.app/sitemap.xml');
+      if (String(url).endsWith('/sitemap.xml')) return xmlResponse('<urlset><url><loc>https://braindump.app/</loc></url><url><loc>https://braindump.app/roadmap</loc></url></urlset>');
+      return htmlResponse('<!doctype html><meta name="description"><meta property="og:title" content="Brain Dump"><meta name="twitter:card" content="summary">');
+    });
+    const checks = buildDeploymentChecks({
+      frontendOrigin: 'https://braindump.app',
+      publicApiOrigin: 'https://api.braindump.app',
+      fetchImpl
+    });
+
+    await checks.find((check) => check.label === 'Frontend metadata')?.run();
+    await checks.find((check) => check.label === 'Frontend robots')?.run();
+    await checks.find((check) => check.label === 'Frontend sitemap')?.run();
+
+    expect(fetchImpl).toHaveBeenCalledWith('https://braindump.app/robots.txt');
+    expect(fetchImpl).toHaveBeenCalledWith('https://braindump.app/sitemap.xml');
   });
 
   it('runs tokened JSON and CSV admin checks with the admin header', async () => {
@@ -127,9 +150,21 @@ function jsonResponse(value, status = 200) {
   });
 }
 
-function htmlResponse() {
-  return new Response('<!doctype html>', {
+function htmlResponse(value = '<!doctype html>') {
+  return new Response(value, {
     headers: { 'Content-Type': 'text/html' }
+  });
+}
+
+function textResponse(value) {
+  return new Response(value, {
+    headers: { 'Content-Type': 'text/plain' }
+  });
+}
+
+function xmlResponse(value) {
+  return new Response(value, {
+    headers: { 'Content-Type': 'application/xml' }
   });
 }
 
