@@ -520,8 +520,11 @@ describe('App routes', () => {
     expect(screen.getAllByLabelText('Status')).toHaveLength(3);
     expect(screen.getByText('in progress')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Export Notes/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Export Go\/No-Go/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Export Notes/i }));
     expect(URL.createObjectURL).toHaveBeenCalledWith(expect.objectContaining({ type: 'text/markdown' }));
+    fireEvent.click(screen.getByRole('button', { name: /Export Go\/No-Go/i }));
+    expect(URL.createObjectURL).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'text/markdown' }));
     expect(screen.getByText('Beta Requests')).toBeInTheDocument();
     expect(screen.getByText('jay@example.com')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Draft invite/i })).toHaveAttribute(

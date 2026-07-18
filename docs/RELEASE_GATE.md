@@ -46,5 +46,6 @@ Do not invite the next tester batch unless:
 - Deployment verification is green.
 - Operator privacy guidance has been reviewed for this batch.
 - A launch decision record exists for the current tester batch or release.
+- `/operator` go/no-go summary has been exported and attached to the launch decision record.
 - The last tester batch has no unresolved duplicate-write, disconnect, OAuth, or wrong-calendar issues.
 - The duplicate-write audit is clear or every group has been manually explained and recorded in the launch decision record.

@@ -1728,6 +1728,11 @@ function OperatorPage() {
     downloadTextFile(buildLaunchNotes(snapshot), 'brain-dump-launch-notes.md', 'text/markdown');
   }
 
+  function handleGoNoGoExport() {
+    if (!snapshot) return;
+    downloadTextFile(buildGoNoGoSummary(snapshot), 'brain-dump-go-no-go-summary.md', 'text/markdown');
+  }
+
   async function handleBetaRequestStatus(id: string, status: BetaRequestStatus) {
     const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
     const token = adminToken.trim();
@@ -1874,6 +1879,14 @@ function OperatorPage() {
               >
                 <FileText size={16} />
                 Export Notes
+              </button>
+              <button
+                type="button"
+                className="smallButton exportButton"
+                onClick={handleGoNoGoExport}
+              >
+                <ShieldCheck size={16} />
+                Export Go/No-Go
               </button>
             </div>
             <div className="launchSummaryGrid">
@@ -2476,6 +2489,57 @@ function buildLaunchNotes(snapshot: OperatorSnapshot): string {
     '- Review new beta, feedback, and support records.',
     '- Keep exports inside the operator launch workflow.'
   ];
+  return `${lines.join('\n')}\n`;
+}
+
+function buildGoNoGoSummary(snapshot: OperatorSnapshot): string {
+  const blockingChecks = snapshot.readiness.checks.filter((check) => !check.ready);
+  const selfTestBlocks = snapshot.selfTest.checks.filter((check) => !check.ok);
+  const openSupport = snapshot.launchSummary.queueCounts.support.new + snapshot.launchSummary.queueCounts.support.in_progress;
+  const recentErrors = snapshot.launchSummary.queueCounts.recentExecutionErrors;
+  const duplicateGroups = snapshot.duplicateWriteAudit.duplicateGroups;
+  const go =
+    snapshot.readiness.ready &&
+    snapshot.selfTest.ok &&
+    snapshot.duplicateWriteAudit.ok &&
+    openSupport === 0 &&
+    recentErrors === 0;
+
+  const lines = [
+    '# Brain Dump Go/No-Go Summary',
+    '',
+    `Generated: ${new Date(snapshot.launchSummary.generatedAt).toISOString()}`,
+    `Decision: ${go ? 'GO' : 'NO-GO'}`,
+    '',
+    '## Gates',
+    '',
+    `- Launch readiness: ${snapshot.readiness.ready ? 'Pass' : 'Blocked'}`,
+    `- Production self-test: ${snapshot.selfTest.ok ? 'Pass' : 'Blocked'}`,
+    `- Duplicate-write audit: ${snapshot.duplicateWriteAudit.ok ? 'Clear' : 'Investigate'}`,
+    `- Recent execution errors: ${recentErrors}`,
+    `- Open support requests: ${openSupport}`,
+    '',
+    '## Blocking Readiness Checks',
+    '',
+    ...(blockingChecks.length ? blockingChecks.map((check) => `- ${check.label}: ${check.detail}`) : ['- None']),
+    '',
+    '## Self-Test Blocks',
+    '',
+    ...(selfTestBlocks.length ? selfTestBlocks.map((check) => `- ${check.label}: ${check.detail}`) : ['- None']),
+    '',
+    '## Duplicate-Write Groups',
+    '',
+    ...(duplicateGroups.length
+      ? duplicateGroups.map((group) => `- ${group.title}: ${group.count} writes across ${group.requestIds.join(', ')}`)
+      : ['- None']),
+    '',
+    '## Required Decision Note',
+    '',
+    go
+      ? '- Record the cohort size, invite date, support owner, and rollback contact before sending invites.'
+      : '- Do not expand invites until every NO-GO gate above is resolved or explicitly accepted in the launch decision record.'
+  ];
+
   return `${lines.join('\n')}\n`;
 }
 
