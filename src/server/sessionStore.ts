@@ -38,11 +38,11 @@ export function createMemorySessionStore(now: () => number = Date.now): SessionS
 }
 
 export function sessionCookie(sessionId: string): string {
-  return `${sessionCookieName}=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Secure`;
+  return `${sessionCookieName}=${sessionId}; Path=/; HttpOnly; SameSite=None; Secure`;
 }
 
 export function clearSessionCookie(): string {
-  return `${sessionCookieName}=; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=0`;
+  return `${sessionCookieName}=; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=0`;
 }
 
 export function readSessionIdFromCookie(cookieHeader: string | null): string | undefined {

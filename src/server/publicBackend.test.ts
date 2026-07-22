@@ -135,6 +135,8 @@ describe('public backend scaffold', () => {
     expect(await invalid.json()).toEqual({ error: 'Beta access code is invalid.' });
     expect(valid.status).toBe(200);
     expect(betaCookie).toContain('bd_beta_access=');
+    expect(betaCookie).toContain('SameSite=None');
+    expect(betaCookie).toContain('Secure');
     expect(await after.json()).toEqual({ required: true, granted: true });
   });
 

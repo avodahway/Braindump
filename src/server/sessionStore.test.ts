@@ -28,7 +28,10 @@ describe('session store', () => {
 
     expect(cookie).toContain(`${sessionCookieName}=session-id`);
     expect(cookie).toContain('HttpOnly');
+    expect(cookie).toContain('SameSite=None');
+    expect(cookie).toContain('Secure');
     expect(readSessionIdFromCookie('theme=dark; bd_session=session-id; other=true')).toBe('session-id');
     expect(clearSessionCookie()).toContain('Max-Age=0');
+    expect(clearSessionCookie()).toContain('SameSite=None');
   });
 });

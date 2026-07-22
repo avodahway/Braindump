@@ -747,7 +747,7 @@ async function betaAccessCookieValue(betaAccessCode: string): Promise<string> {
 }
 
 function betaAccessCookie(value: string): string {
-  return `${betaAccessCookieName}=${value}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=2592000`;
+  return `${betaAccessCookieName}=${value}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=2592000`;
 }
 
 function readCookie(cookieHeader: string | null, name: string): string | undefined {
