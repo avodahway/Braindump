@@ -4,6 +4,10 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://brain-dump-api.onrender.com/api/:path*"
+    },
+    {
       "source": "/((?!assets/|icons/|manifest.webmanifest|robots.txt|sitemap.xml|sw.js|workbox-).*)",
       "destination": "/index.html"
     }
