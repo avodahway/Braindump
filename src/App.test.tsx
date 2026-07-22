@@ -53,6 +53,199 @@ describe('App routes', () => {
     );
   });
 
+  it('renders the data deletion page with disconnect guidance', () => {
+    renderAt('/data-deletion');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Data Deletion' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Disconnect Google' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Send deletion request/i })).toBeInTheDocument();
+    expect(screen.getByText(/does not remove tasks or calendar events already created/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /support@braindump.app/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('mailto:')
+    );
+  });
+
+  it('renders the beta feedback page with the three post-run questions', () => {
+    renderAt('/feedback');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Beta Feedback' })).toBeInTheDocument();
+    expect(screen.getByLabelText('What looked right?')).toBeInTheDocument();
+    expect(screen.getByLabelText('What looked wrong or confusing?')).toBeInTheDocument();
+    expect(screen.getByLabelText('What did you expect Brain Dump to do instead?')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /support@braindump.app/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('Brain%20Dump%20beta%20feedback')
+    );
+  });
+
+  it('renders the beta access page with public-user expectations', () => {
+    renderAt('/beta');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Join The Beta' })).toBeInTheDocument();
+    expect(screen.getByText(/Google connection is per user/i)).toBeInTheDocument();
+    expect(screen.getByText(/Email sending is not part of the beta/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /support@braindump.app/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('Brain%20Dump%20beta%20access%20request')
+    );
+  });
+
+  it('renders the public launch status page', () => {
+    renderAt('/status');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Launch Status' })).toBeInTheDocument();
+    expect(screen.getByText('Private beta setup')).toBeInTheDocument();
+    expect(screen.getByText('Reviewed only')).toBeInTheDocument();
+    expect(screen.getByText('Not enabled')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /^support$/i })[0]).toHaveAttribute('href', '/support');
+  });
+
+  it('renders the public FAQ page', () => {
+    renderAt('/faq');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'FAQ' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Does Brain Dump send email?' })).toBeInTheDocument();
+    expect(screen.getByText(/Preview mode does not touch Google/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '/data-deletion' })).toHaveAttribute('href', '/data-deletion');
+  });
+
+  it('renders the public security page', () => {
+    renderAt('/security');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Security' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Passwords and tokens' })).toBeInTheDocument();
+    expect(screen.getByText(/Brain Dump support will not ask for your Google password/i)).toBeInTheDocument();
+    expect(screen.getByText(/Protected operator CSV exports/i)).toBeInTheDocument();
+  });
+
+  it('renders the public trust center page', () => {
+    renderAt('/trust');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Trust Center' })).toBeInTheDocument();
+    expect(screen.getByText('User approved')).toBeInTheDocument();
+    expect(screen.getByText('Reviewed first')).toBeInTheDocument();
+    expect(screen.getByText(/analytics privacy audit/i)).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /data deletion/i })[0]).toHaveAttribute('href', '/data-deletion');
+  });
+
+  it('renders the public install page', () => {
+    renderAt('/install');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Install' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'iPhone or iPad' })).toBeInTheDocument();
+    expect(screen.getByText('Choose Add to Home Screen.')).toBeInTheDocument();
+    expect(screen.getByText(/Installing Brain Dump does not connect Google/i)).toBeInTheDocument();
+  });
+
+  it('renders the public roadmap page', () => {
+    renderAt('/roadmap');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Roadmap' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Current beta' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Not in beta' })).toBeInTheDocument();
+    expect(screen.getByText(/Brain Dump does not send email/i)).toBeInTheDocument();
+  });
+
+  it('renders the public press page', () => {
+    renderAt('/press');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Press' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Short description' })).toBeInTheDocument();
+    expect(screen.getByText(/reviewed Google Tasks, Calendar events/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'App icon 512' })).toHaveAttribute('href', '/icons/brain-dump-icon-512.png');
+  });
+
+  it('renders the public examples page', () => {
+    renderAt('/examples');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Examples' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Follow-ups' })).toBeInTheDocument();
+    expect(screen.getByText('Waiting for Chris to confirm numbers.')).toBeInTheDocument();
+    expect(screen.getByText(/keeps ambiguous calendar requests and email-like instructions in review/i)).toBeInTheDocument();
+  });
+
+  it('renders the public pricing page', () => {
+    renderAt('/pricing');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Pricing' })).toBeInTheDocument();
+    expect(screen.getByText(/Paid plans are not active yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/will not charge you without a separate paid-plan sign-up/i)).toBeInTheDocument();
+  });
+
+  it('renders the public demo page', () => {
+    renderAt('/demo');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Demo' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Show the workflow' })).toBeInTheDocument();
+    expect(screen.getByText(/Connect Google with a beta test account/i)).toBeInTheDocument();
+    expect(screen.getByText(/Brain Dump does not send email during beta/i)).toBeInTheDocument();
+  });
+
+  it('renders the OAuth verification demo checklist page', () => {
+    renderAt('/oauth-demo-checklist');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'OAuth Demo Checklist' })).toBeInTheDocument();
+    expect(screen.getByText(/Google OAuth verification recordings/i)).toBeInTheDocument();
+    expect(screen.getByText(/Show Disconnect Google and Delete account data/i)).toBeInTheDocument();
+  });
+
+  it('renders the public launch timeline page', () => {
+    renderAt('/timeline');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Launch Timeline' })).toBeInTheDocument();
+    expect(screen.getByText(/controlled beta preparation/i)).toBeInTheDocument();
+    expect(screen.getByText(/first five known testers/i)).toBeInTheDocument();
+  });
+
+  it('keeps public launch pages accessible by heading and labeled controls', () => {
+    const publicRoutes = [
+      '/',
+      '/privacy',
+      '/terms',
+      '/support',
+      '/data-deletion',
+      '/feedback',
+      '/beta',
+      '/status',
+      '/faq',
+      '/security',
+      '/trust',
+      '/install',
+      '/roadmap',
+      '/press',
+      '/examples',
+      '/pricing',
+      '/demo',
+      '/oauth-demo-checklist',
+      '/timeline'
+    ];
+
+    for (const route of publicRoutes) {
+      cleanup();
+      renderAt(route);
+      expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    }
+
+    cleanup();
+    renderAt('/support');
+    expect(screen.getByLabelText('Email')).toBeInTheDocument();
+    expect(screen.getByLabelText('Issue type')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Send support request/i })).toBeInTheDocument();
+
+    cleanup();
+    renderAt('/feedback');
+    expect(screen.getByLabelText('What looked right?')).toBeInTheDocument();
+    expect(screen.getByLabelText('What looked wrong or confusing?')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Send feedback/i })).toBeInTheDocument();
+
+    cleanup();
+    renderAt('/beta');
+    expect(screen.getByLabelText('Name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Email')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Request beta access/i })).toBeInTheDocument();
+  });
+
   it('renders the product tool at the app route', () => {
     renderAt('/app');
 
@@ -60,8 +253,620 @@ describe('App routes', () => {
     expect(screen.getByRole('heading', { name: "What's on your mind?" })).toBeInTheDocument();
     expect(screen.getByText('Setup progress')).toBeInTheDocument();
     expect(screen.getByText('Safe preview only. No Google account is connected.')).toBeInTheDocument();
+    expect(screen.getByText('Capture')).toBeInTheDocument();
+    expect(screen.getByText('Add a messy note or use a sample.')).toBeInTheDocument();
+    expect(screen.getAllByText('Review').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Check routed actions before anything is created.')).toBeInTheDocument();
+    expect(screen.getByText('Connect')).toBeInTheDocument();
+    expect(screen.getByText('Switch to public mode when ready for Google.')).toBeInTheDocument();
+    expect(screen.getByText('Create')).toBeInTheDocument();
+    expect(screen.getByText('Use support or feedback after the first run.')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Put everything here. Do not organize it.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Busy morning' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Review/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Support/i })).toHaveAttribute('href', '/support');
+    expect(screen.getByRole('link', { name: /Feedback/i })).toHaveAttribute('href', '/feedback');
+    expect(screen.getByRole('link', { name: /Status/i })).toHaveAttribute('href', '/status');
+  });
+
+  it('loads a first-run sample into the app', () => {
+    renderAt('/app');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Busy morning' }));
+
+    expect(screen.getByPlaceholderText('Put everything here. Do not organize it.')).toHaveValue(
+      'Pay employees tomorrow.\nLunch with Jack Thursday at noon; put on calendar.\nWaiting on Aaron to send estimate.\nBuy printer paper.'
+    );
+  });
+
+  it('renders the operator dashboard shell', () => {
+    renderAt('/operator');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Operator Dashboard' })).toBeInTheDocument();
+    expect(screen.getByText('Load launch readiness')).toBeInTheDocument();
+    expect(screen.getByText('Enter the production API URL and admin token to load launch readiness.')).toBeInTheDocument();
+    expect(screen.getByText(/Run deployment verification/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Refresh/i })).toBeInTheDocument();
+  });
+
+  it('loads protected operator dashboard data', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === 'https://api.example.com/api/admin/metrics') {
+        return new Response(
+          JSON.stringify({
+            totalEvents: 7,
+            uniqueUsers: 2,
+            uniqueRequests: 3,
+            totalActions: 5,
+            totalErrors: 1,
+            latestEventAt: '2026-07-17T12:00:00.000Z',
+            byName: { create_failed: 1, create_completed: 2 }
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/readiness') {
+        return new Response(
+          JSON.stringify({
+            ready: false,
+            generatedAt: '2026-07-17T12:00:00.000Z',
+            checks: [
+              { key: 'admin_token', label: 'Admin endpoints protected', ready: true, detail: 'Configured' },
+              { key: 'storage_encryption', label: 'Storage encryption codec', ready: false, detail: 'Missing BRAIN_DUMP_STORAGE_SECRET' }
+            ]
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/self-test') {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            generatedAt: '2026-07-17T12:00:00.000Z',
+            checks: [
+              { key: 'beta_access_gate', label: 'Beta access gate', ok: true, detail: 'Invite code configured' },
+              { key: 'storage_mode', label: 'Storage mode', ok: false, detail: 'Not ready for real users' }
+            ]
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/duplicate-write-audit') {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            generatedAt: '2026-07-17T12:00:00.000Z',
+            totalCreated: 2,
+            duplicateGroups: [
+              {
+                key: 'user@example.com|work_task|pay invoice',
+                userId: 'user@example.com',
+                actionType: 'work_task',
+                title: 'pay invoice',
+                count: 2,
+                requestIds: ['req-2', 'req-1'],
+                providerIds: ['task-2', 'task-1'],
+                latestCreatedAt: '2026-07-17T12:02:00.000Z'
+              }
+            ]
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/support-sla') {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            generatedAt: '2026-07-17T12:00:00.000Z',
+            thresholdHours: 24,
+            openCount: 1,
+            overdueCount: 1,
+            oldestOpenHours: 30,
+            overdueRequests: [
+              {
+                id: 'support-overdue',
+                email: 'late@example.com',
+                issueType: 'google_connection',
+                summary: 'Connection still failing',
+                status: 'new',
+                ageHours: 30,
+                createdAt: '2026-07-16T06:00:00.000Z'
+              }
+            ]
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/backup-plan') {
+        return new Response(
+          JSON.stringify({
+            generatedAt: '2026-07-17T12:00:00.000Z',
+            storagePrefix: 'prod',
+            sections: [{ name: 'OAuth tokens', keys: [], sensitivity: 'secret', backupAction: 'Snapshot', restoreAction: 'Restore' }],
+            operatorChecklist: ['Take a provider-level snapshot before deploy.']
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/launch-summary') {
+        return new Response(
+          JSON.stringify({
+            generatedAt: '2026-07-17T12:00:00.000Z',
+            ready: false,
+            totalEvents: 7,
+            uniqueUsers: 2,
+            totalErrors: 1,
+            latestEventAt: '2026-07-17T12:00:00.000Z',
+            queueCounts: {
+              beta: { new: 1, invited: 0, archived: 0 },
+              feedback: { new: 1, reviewed: 0, archived: 0 },
+              support: { new: 1, in_progress: 0, resolved: 0, archived: 0 },
+              recentExecutionErrors: 1
+            }
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/execution-errors') {
+        return new Response(
+          JSON.stringify({
+            recentErrors: [
+              {
+                requestId: 'req-error',
+                userId: 'user@example.com',
+                actionType: 'calendar',
+                title: 'Lunch with Jack',
+                status: 'error',
+                message: 'Calendar write failed',
+                createdAt: '2026-07-17T12:00:00.000Z'
+              }
+            ]
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/beta-requests') {
+        return new Response(
+          JSON.stringify({
+            requests: [
+              {
+                id: 'beta-1',
+                status: 'new',
+                name: 'Jay Cleveland',
+                email: 'jay@example.com',
+                tools: 'Google Tasks',
+                googleComfort: 'comfortable',
+                notes: 'I want to test it.',
+                createdAt: '2026-07-17T12:00:00.000Z'
+              }
+            ]
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/feedback') {
+        return new Response(
+          JSON.stringify({
+            feedback: [
+              {
+                id: 'feedback-1',
+                status: 'new',
+                email: 'user@example.com',
+                requestId: 'req-1',
+                lookedRight: 'Tasks were right.',
+                confusing: 'Calendar felt unclear.',
+                expected: 'More review guidance.',
+                createdAt: '2026-07-17T12:00:00.000Z'
+              }
+            ]
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/beta-request') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            request: {
+              id: 'beta-1',
+              status: 'invited',
+              name: 'Jay Cleveland',
+              email: 'jay@example.com',
+              tools: 'Google Tasks',
+              googleComfort: 'comfortable',
+              notes: 'I want to test it.',
+              createdAt: '2026-07-17T12:00:00.000Z',
+              updatedAt: '2026-07-17T12:30:00.000Z'
+            }
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/feedback-item') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            feedback: {
+              id: 'feedback-1',
+              status: 'reviewed',
+              email: 'user@example.com',
+              requestId: 'req-1',
+              lookedRight: 'Tasks were right.',
+              confusing: 'Calendar felt unclear.',
+              expected: 'More review guidance.',
+              createdAt: '2026-07-17T12:00:00.000Z',
+              updatedAt: '2026-07-17T12:30:00.000Z'
+            }
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/support-requests') {
+        return new Response(
+          JSON.stringify({
+            supportRequests: [
+              {
+                id: 'support-1',
+                status: 'new',
+                email: 'user@example.com',
+                issueType: 'google_connection',
+                summary: 'Connection failed',
+                details: 'OAuth callback showed an error.',
+                createdAt: '2026-07-17T12:00:00.000Z'
+              }
+            ]
+          })
+        );
+      }
+      if (url === 'https://api.example.com/api/admin/support-request') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            supportRequest: {
+              id: 'support-1',
+              status: 'resolved',
+              email: 'user@example.com',
+              issueType: 'google_connection',
+              summary: 'Connection failed',
+              details: 'OAuth callback showed an error.',
+              createdAt: '2026-07-17T12:00:00.000Z',
+              updatedAt: '2026-07-17T12:30:00.000Z'
+            }
+          })
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:csv-export') });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    renderAt('/operator');
+
+    fireEvent.change(screen.getByPlaceholderText('BRAIN_DUMP_ADMIN_TOKEN'), { target: { value: 'admin-token' } });
+    fireEvent.click(screen.getByRole('button', { name: /Refresh/i }));
+
+    expect(await screen.findByText('Storage encryption codec')).toBeInTheDocument();
+    expect(screen.getByText('Missing BRAIN_DUMP_STORAGE_SECRET')).toBeInTheDocument();
+    expect(screen.getByText('OAuth tokens')).toBeInTheDocument();
+    expect(screen.getByText('Recent Execution Errors')).toBeInTheDocument();
+    expect(screen.getByText('Lunch with Jack')).toBeInTheDocument();
+    expect(screen.getByText('Calendar write failed')).toBeInTheDocument();
+    expect(screen.getByText('Launch Summary')).toBeInTheDocument();
+    expect(screen.getByText('Production Launch Tracker')).toBeInTheDocument();
+    expect(screen.getByText('Beta access gate')).toBeInTheDocument();
+    expect(screen.getByText('Not ready for real users')).toBeInTheDocument();
+    expect(screen.getAllByText('Blocked').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Blocking Issues (1)')).toBeInTheDocument();
+    expect(screen.getByText('Ready Checks (1)')).toBeInTheDocument();
+    expect(screen.getByText('Privacy Handling')).toBeInTheDocument();
+    expect(screen.getByText(/Keep CSV exports local/i)).toBeInTheDocument();
+    expect(screen.getByText('Issue Triage')).toBeInTheDocument();
+    expect(screen.getByText(/disconnect, deletion, duplicate-write/i)).toBeInTheDocument();
+    expect(screen.getByText('Beta Queue')).toBeInTheDocument();
+    expect(screen.getByText('Feedback Queue')).toBeInTheDocument();
+    expect(screen.getByText('Support Queue')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate Write Audit')).toBeInTheDocument();
+    expect(screen.getByText('Investigate')).toBeInTheDocument();
+    expect(screen.getByText('pay invoice')).toBeInTheDocument();
+    expect(screen.getByText('req-2, req-1')).toBeInTheDocument();
+    expect(screen.getByText('Support SLA')).toBeInTheDocument();
+    expect(screen.getAllByText('Overdue').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Connection still failing')).toBeInTheDocument();
+    expect(screen.getByText('30 hours open from late@example.com')).toBeInTheDocument();
+    expect(screen.getByText('Cohort Review')).toBeInTheDocument();
+    expect(screen.getByText(/Tag each invite note with Founder watched run/i)).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Status')).toHaveLength(3);
+    expect(screen.getByText('in progress')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Export Notes/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Export Go\/No-Go/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Export Notes/i }));
+    expect(URL.createObjectURL).toHaveBeenCalledWith(expect.objectContaining({ type: 'text/markdown' }));
+    fireEvent.click(screen.getByRole('button', { name: /Export Go\/No-Go/i }));
+    expect(URL.createObjectURL).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'text/markdown' }));
+    expect(screen.getByText('Beta Requests')).toBeInTheDocument();
+    expect(screen.getByText('jay@example.com')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Draft invite/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('Brain%20Dump%20beta%20access')
+    );
+    expect(screen.getByRole('link', { name: /Draft follow-up/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('Brain%20Dump%20beta%20follow-up')
+    );
+    expect(screen.getAllByText('new').length).toBeGreaterThanOrEqual(3);
+    fireEvent.click(screen.getByRole('button', { name: /Mark invited/i }));
+    expect(await screen.findByText('invited')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-request', {
+      method: 'POST',
+      headers: {
+        'X-Brain-Dump-Admin-Token': 'admin-token',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 'beta-1', status: 'invited' })
+    });
+    expect(screen.getByText('Beta Feedback')).toBeInTheDocument();
+    expect(screen.getByText('Tasks were right.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Mark reviewed/i }));
+    expect(await screen.findByText('reviewed')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/feedback-item', {
+      method: 'POST',
+      headers: {
+        'X-Brain-Dump-Admin-Token': 'admin-token',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 'feedback-1', status: 'reviewed' })
+    });
+    expect(screen.getByText('Support Requests')).toBeInTheDocument();
+    expect(screen.getByText('Connection failed')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Resolve/i }));
+    expect(await screen.findByText('resolved')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/support-request', {
+      method: 'POST',
+      headers: {
+        'X-Brain-Dump-Admin-Token': 'admin-token',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 'support-1', status: 'resolved' })
+    });
+    expect(screen.getAllByRole('button', { name: /Export CSV/i })).toHaveLength(4);
+    expect(screen.getByText('Take a provider-level snapshot before deploy.')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/metrics', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/execution-errors', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/launch-summary', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/self-test', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/duplicate-write-audit', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/support-sla', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-requests', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/feedback', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+
+    fetcher.mockResolvedValueOnce(new Response('createdAt,requestId,title\n2026-07-17T12:00:00.000Z,req-1,Lunch'));
+    fireEvent.click(screen.getAllByRole('button', { name: /Export CSV/i })[0]);
+    expect(await screen.findByText('Recent Execution Errors')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/execution-errors?format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    fetcher.mockResolvedValueOnce(new Response('createdAt,name,email\n2026-07-17T12:00:00.000Z,Jay,jay@example.com'));
+    fireEvent.click(screen.getAllByRole('button', { name: /Export CSV/i })[1]);
+    expect(await screen.findByText('Beta Requests')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-requests?format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    fireEvent.change(screen.getAllByLabelText('Status')[1], { target: { value: 'reviewed' } });
+    fetcher.mockResolvedValueOnce(new Response('createdAt,email,status\n2026-07-17,user@example.com,reviewed'));
+    fireEvent.click(screen.getAllByRole('button', { name: /Export CSV/i })[2]);
+    expect(await screen.findByText('Beta Feedback')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/feedback?status=reviewed&format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    fireEvent.change(screen.getAllByLabelText('Status')[2], { target: { value: 'resolved' } });
+    fetcher.mockResolvedValueOnce(new Response('createdAt,email\n2026-07-17,user@example.com'));
+    fireEvent.click(screen.getAllByRole('button', { name: /Export CSV/i })[3]);
+    expect(await screen.findByText('Support Requests')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/support-requests?status=resolved&format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
+  it('submits support requests from the public support page', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === 'https://api.example.com/api/support/request') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            supportRequest: {
+              id: 'support-1',
+              status: 'new',
+              email: 'user@example.com',
+              issueType: 'google_connection',
+              summary: 'Connection failed',
+              details: 'OAuth callback showed an error.',
+              createdAt: '2026-07-17T12:00:00.000Z'
+            }
+          })
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/support');
+
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'user@example.com' } });
+    fireEvent.change(screen.getByLabelText('Issue type'), { target: { value: 'google_connection' } });
+    fireEvent.change(screen.getByLabelText('Summary'), { target: { value: 'Connection failed' } });
+    fireEvent.change(screen.getByLabelText('Details'), { target: { value: 'OAuth callback showed an error.' } });
+    fireEvent.click(screen.getByRole('button', { name: /Send support request/i }));
+
+    expect(await screen.findByText('Support request sent. We will follow up by email.')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/support/request', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'user@example.com',
+        issueType: 'google_connection',
+        summary: 'Connection failed',
+        details: 'OAuth callback showed an error.'
+      })
+    });
+  });
+
+  it('submits data deletion requests through the support pipeline', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === 'https://api.example.com/api/support/request') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            supportRequest: {
+              id: 'support-2',
+              status: 'new',
+              email: 'user@example.com',
+              issueType: 'account_or_data',
+              summary: 'Data deletion request',
+              details: 'Please delete my stored Brain Dump records.',
+              createdAt: '2026-07-17T12:00:00.000Z'
+            }
+          })
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/data-deletion');
+
+    fireEvent.change(screen.getByLabelText('Google account email'), { target: { value: 'user@example.com' } });
+    fireEvent.change(screen.getByLabelText('Request details'), {
+      target: { value: 'Please delete my stored Brain Dump records.' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Send deletion request/i }));
+
+    expect(await screen.findByText('Data deletion request sent. We will follow up by email.')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/support/request', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'user@example.com',
+        issueType: 'account_or_data',
+        summary: 'Data deletion request',
+        details: 'Please delete my stored Brain Dump records.'
+      })
+    });
+  });
+
+  it('submits feedback from the public feedback page', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === 'https://api.example.com/api/feedback') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            feedback: {
+              id: 'feedback-1',
+              status: 'new',
+              email: 'user@example.com',
+              lookedRight: 'Tasks were right.',
+              confusing: 'Calendar felt unclear.',
+              expected: 'More review guidance.',
+              createdAt: '2026-07-17T12:00:00.000Z'
+            }
+          })
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/feedback');
+
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'user@example.com' } });
+    fireEvent.change(screen.getByLabelText('What looked right?'), { target: { value: 'Tasks were right.' } });
+    fireEvent.change(screen.getByLabelText('What looked wrong or confusing?'), { target: { value: 'Calendar felt unclear.' } });
+    fireEvent.change(screen.getByLabelText('What did you expect Brain Dump to do instead?'), {
+      target: { value: 'More review guidance.' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Send feedback/i }));
+
+    expect(await screen.findByText('Feedback sent. Thank you for helping shape the beta.')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/feedback', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'user@example.com',
+        requestId: '',
+        lookedRight: 'Tasks were right.',
+        confusing: 'Calendar felt unclear.',
+        expected: 'More review guidance.'
+      })
+    });
+  });
+
+  it('submits beta access requests from the public beta page', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === 'https://api.example.com/api/beta/request') {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            request: {
+              id: 'beta-1',
+              status: 'new',
+              name: 'Jay Cleveland',
+              email: 'jay@example.com',
+              tools: 'Google Tasks',
+              googleComfort: 'comfortable',
+              createdAt: '2026-07-17T12:00:00.000Z'
+            }
+          })
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/beta');
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Jay Cleveland' } });
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'jay@example.com' } });
+    fireEvent.change(screen.getByLabelText('Current task or calendar tools'), { target: { value: 'Google Tasks' } });
+    fireEvent.change(screen.getByLabelText('Google connection comfort'), { target: { value: 'comfortable' } });
+    fireEvent.click(screen.getByRole('button', { name: /Request beta access/i }));
+
+    expect(await screen.findByText("You're on the beta request list. We'll follow up when the next group opens.")).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/beta/request', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Jay Cleveland',
+        email: 'jay@example.com',
+        tools: 'Google Tasks',
+        googleComfort: 'comfortable',
+        notes: ''
+      })
+    });
   });
 
   it('shows demo connection readiness for public mode without a backend URL', async () => {
@@ -78,6 +883,74 @@ describe('App routes', () => {
     expect(screen.getByText('demo@braindump.local')).toBeInTheDocument();
     expect(screen.getByText('Demo-ready. Add the public API URL before inviting users.')).toBeInTheDocument();
     expect(screen.getByLabelText('Google destinations')).toBeInTheDocument();
+  });
+
+  it('requires confirmation before deleting public account data from settings', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === 'https://api.example.com/api/workspace') {
+        return new Response(JSON.stringify({ status: 'connected', email: 'user@example.com', destinations: [] }));
+      }
+      if (url === 'https://api.example.com/api/account/delete') {
+        return new Response(JSON.stringify({ ok: true, deleted: ['google_tokens', 'workspace'] }));
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/app');
+
+    fireEvent.click(screen.getByRole('button', { name: /Settings/i }));
+    expect(screen.getByRole('button', { name: /Delete account data/i })).toBeDisabled();
+
+    fireEvent.change(screen.getByPlaceholderText('DELETE'), { target: { value: 'DELETE' } });
+    fireEvent.click(screen.getByRole('button', { name: /Delete account data/i }));
+
+    expect(await screen.findByText('Stored Brain Dump account records were deleted for this browser session.')).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/account/delete', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    expect(screen.getByText('Ready to start Google sign-in.')).toBeInTheDocument();
+  });
+
+  it('prompts for beta access before public Google connection', async () => {
+    localStorage.setItem(
+      'brain-dump-settings',
+      JSON.stringify({ backendMode: 'public', publicApiBaseUrl: 'https://api.example.com', backendUrl: '', sharedSecret: '' })
+    );
+    const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === 'https://api.example.com/api/beta/status') {
+        return new Response(JSON.stringify({ required: true, granted: false }));
+      }
+      if (url === 'https://api.example.com/api/workspace') {
+        return new Response(JSON.stringify({ status: 'not_connected', destinations: [] }));
+      }
+      if (url === 'https://api.example.com/api/beta/access') {
+        return new Response(JSON.stringify({ ok: true, access: { required: true, granted: true } }));
+      }
+      return new Response(JSON.stringify({ ok: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    renderAt('/app');
+
+    expect(await screen.findByText('Beta access required')).toBeInTheDocument();
+    expect(screen.getByText('Beta access code needed before Google sign-in.')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('Beta access code'), { target: { value: 'founder-beta' } });
+    fireEvent.click(screen.getByRole('button', { name: /Unlock/i }));
+
+    expect(await screen.findByText('Beta access confirmed. You can connect Google when ready.')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Beta access code')).not.toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/beta/access', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'founder-beta' })
+    });
   });
 
   it('shows a friendly message after Google callback success', () => {
@@ -102,7 +975,7 @@ describe('App routes', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Review/i }));
 
-    expect(screen.getByText('Review before creating')).toBeInTheDocument();
+    expect(screen.getAllByText('Review before creating').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('heading', { name: 'Work Tasks' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Calendar' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Create/i })).toBeInTheDocument();
@@ -162,7 +1035,9 @@ describe('App routes', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create/i }));
 
     expect(await screen.findByText('Google workspace is not connected.')).toBeInTheDocument();
-    expect(screen.getByText('Your reviewed actions are still here. Try again, or send support the error and what you expected.')).toBeInTheDocument();
+    expect(screen.getByText('Google connection needs attention')).toBeInTheDocument();
+    expect(screen.getByText('Your reviewed actions are still here. Reconnect Google or refresh the workspace before retrying.')).toBeInTheDocument();
+    expect(screen.getByText('Reconnect Google if the workspace is not connected.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Retry/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Work Tasks' })).toBeInTheDocument();
   });

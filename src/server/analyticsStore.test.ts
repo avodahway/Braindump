@@ -36,6 +36,49 @@ describe('analytics store', () => {
     expect(await store.readAll()).toMatchObject([{ name: 'create_completed', requestId: 'req-1' }]);
   });
 
+  it('deletes one user analytics events from memory', async () => {
+    const store = createMemoryAnalyticsStore();
+
+    await store.append({
+      name: 'create_completed',
+      requestId: 'req-1',
+      userId: 'user@example.com',
+      createdAt: '2026-07-12T12:00:00.000Z'
+    });
+    await store.append({
+      name: 'create_completed',
+      requestId: 'req-2',
+      userId: 'other@example.com',
+      createdAt: '2026-07-12T12:01:00.000Z'
+    });
+
+    await store.deleteByUser('USER@example.com');
+
+    expect(await store.readAll()).toMatchObject([{ requestId: 'req-2' }]);
+  });
+
+  it('deletes one user analytics events from durable storage', async () => {
+    const kv = createMemoryKeyValueStore();
+    const store = createDurableAnalyticsStore(kv, { keyPrefix: 'test' });
+
+    await store.append({
+      name: 'create_completed',
+      requestId: 'req-1',
+      userId: 'user@example.com',
+      createdAt: '2026-07-12T12:00:00.000Z'
+    });
+    await store.append({
+      name: 'create_completed',
+      requestId: 'req-2',
+      userId: 'other@example.com',
+      createdAt: '2026-07-12T12:01:00.000Z'
+    });
+
+    await store.deleteByUser('user@example.com');
+
+    expect(await store.readAll()).toMatchObject([{ requestId: 'req-2' }]);
+  });
+
   it('sanitizes submitted events and drops text-like fields', () => {
     expect(
       sanitizeAnalyticsEvent({

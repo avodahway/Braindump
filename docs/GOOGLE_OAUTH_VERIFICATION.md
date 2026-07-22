@@ -42,6 +42,7 @@ Do not add Gmail or Drive scopes for beta.
 
 Before verification submission:
 
+- Fill `docs/OAUTH_VERIFICATION_ASSETS.md` with production URLs, scope evidence, demo-video notes, and readiness status.
 - App name: `Brain Dump`
 - User support email: decide and configure.
 - App logo: use supplied Brain Dump icon.
@@ -61,6 +62,7 @@ Publish these before public OAuth verification:
 - Privacy policy explaining Google data access, use, storage, sharing, retention, and disconnect.
 - Terms of service.
 - Support/contact page at `/support` with visible support email.
+- Data deletion instructions at `/data-deletion`.
 
 ## Demo Video Script
 
@@ -102,7 +104,7 @@ Before verification:
 - Scope justifications written.
 - Test account available.
 - App screenshots available.
-- Data deletion/disconnect behavior documented.
+- Data deletion/disconnect behavior documented at `/data-deletion`.
 
 ## Notes
 

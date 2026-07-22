@@ -16,7 +16,7 @@ const workTerms = [
 
 const calendarTerms = ['put on calendar', 'calendar', 'meeting', 'lunch', 'appointment', 'bible study'];
 const projectTerms = ['project', 'finish', 'build', 'replace', 'organize', 'clean out', 'launch', 'plan'];
-const waitingTerms = ['waiting on', 'follow up with', 'check in with', 'needs to send', 'after they', 'when they'];
+const waitingTerms = ['waiting on', 'waiting for', 'follow up with', 'follow-up with', 'check in with', 'needs to send', 'after they', 'when they'];
 const reviewTerms = ['maybe', 'someday', 'think about', 'figure out', 'not sure', 'possibly'];
 
 export function splitBrainDump(text: string): string[] {

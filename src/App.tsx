@@ -16,15 +16,65 @@ import {
   Sparkles,
   UserCheck
 } from 'lucide-react';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { trackEvent } from './api/analytics';
 import { loadSettings, processBrainDump, saveSettings, type BackendSettings } from './api/client';
-import { connectPublicWorkspace, disconnectPublicWorkspace, refreshPublicWorkspace } from './api/publicConnection';
+import {
+  getPublicAdminBackupPlan,
+  getPublicAdminBetaRequests,
+  getPublicAdminBetaRequestsCsv,
+  getPublicAdminDuplicateWriteAudit,
+  getPublicAdminExecutionErrors,
+  getPublicAdminExecutionErrorsCsv,
+  getPublicAdminFeedback,
+  getPublicAdminFeedbackCsv,
+  getPublicAdminLaunchSummary,
+  getPublicAdminMetrics,
+  getPublicAdminReadiness,
+  getPublicAdminSelfTest,
+  getPublicAdminSupportSla,
+  submitPublicBetaRequest,
+  submitPublicFeedback,
+  submitPublicSupportRequest,
+  updatePublicAdminBetaRequestStatus,
+  updatePublicAdminFeedbackStatus,
+  getPublicAdminSupportRequests,
+  getPublicAdminSupportRequestsCsv,
+  updatePublicAdminSupportRequestStatus
+} from './api/publicClient';
+import {
+  connectPublicWorkspace,
+  deletePublicAccountRecords,
+  disconnectPublicWorkspace,
+  redeemPublicBetaAccess,
+  refreshPublicBetaAccess,
+  refreshPublicWorkspace
+} from './api/publicConnection';
 import { loadWorkspace } from './api/workspace';
 import { parseBrainDump } from './lib/parser';
-import { feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
+import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportEmail, supportRequestMailto } from './lib/support';
+import { betaInvitationMailto } from './lib/betaInvite';
+import { betaFollowUpMailto } from './lib/betaFollowUp';
+import { sampleBrainDumps } from './lib/sampleBrainDumps';
 import type { BrainDumpResponse, ParsedAction, UserWorkspace } from './lib/types';
+import type {
+  BetaAccessStatus,
+  BetaRequestRecord,
+  BetaRequestStatus,
+  DuplicateWriteAudit,
+  FeedbackRecord,
+  FeedbackStatus,
+  LaunchSummary,
+  ProductionSelfTest,
+  SupportSlaReport,
+  SupportRequestRecord,
+  SupportRequestStatus
+} from './api/publicContract';
+import type { AnalyticsMetrics } from './server/analyticsStore';
+import type { BackupPlan } from './server/backupPlan';
+import type { ExecutionLogRecord } from './server/executionLogStore';
+import type { ReadinessReport } from './server/readinessReport';
 
 const groups = [
   { key: 'calendar', label: 'Calendar', icon: CalendarDays },
@@ -42,6 +92,22 @@ export function App() {
   if (route === '/privacy') return <PrivacyPage />;
   if (route === '/terms') return <TermsPage />;
   if (route === '/support') return <SupportPage />;
+  if (route === '/data-deletion') return <DataDeletionPage />;
+  if (route === '/feedback') return <FeedbackPage />;
+  if (route === '/beta') return <BetaPage />;
+  if (route === '/status') return <StatusPage />;
+  if (route === '/faq') return <FaqPage />;
+  if (route === '/security') return <SecurityPage />;
+  if (route === '/trust') return <TrustPage />;
+  if (route === '/install') return <InstallPage />;
+  if (route === '/roadmap') return <RoadmapPage />;
+  if (route === '/press') return <PressPage />;
+  if (route === '/examples') return <ExamplesPage />;
+  if (route === '/pricing') return <PricingPage />;
+  if (route === '/demo') return <DemoPage />;
+  if (route === '/oauth-demo-checklist') return <OAuthDemoChecklistPage />;
+  if (route === '/timeline') return <TimelinePage />;
+  if (route === '/operator') return <OperatorPage />;
   if (route === '/app') return <ProductApp />;
   return <HomePage />;
 }
@@ -68,17 +134,27 @@ function ProductApp() {
   const [settings, setSettings] = useState<BackendSettings>(() => loadSettings());
   const [workspace, setWorkspace] = useState<UserWorkspace>(() => loadWorkspace());
   const [connectionNotice, setConnectionNotice] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeletingAccountData, setDeletingAccountData] = useState(false);
+  const [betaAccess, setBetaAccess] = useState<BetaAccessStatus>({ required: false, granted: true });
+  const [betaAccessCode, setBetaAccessCode] = useState('');
+  const [isRedeemingBetaAccess, setRedeemingBetaAccess] = useState(false);
+  const refreshGeneration = useRef(0);
 
   useEffect(() => {
     if (settings.backendMode !== 'public' || !settings.publicApiBaseUrl) return;
+    const generation = ++refreshGeneration.current;
 
     trackEvent({ name: 'app_opened', mode: settings.backendMode });
 
-    refreshPublicWorkspace(settings)
-      .then((refreshedWorkspace) => {
+    Promise.all([refreshPublicBetaAccess(settings), refreshPublicWorkspace(settings)])
+      .then(([refreshedAccess, refreshedWorkspace]) => {
+        if (generation !== refreshGeneration.current) return;
+        if (refreshedAccess) setBetaAccess(refreshedAccess);
         if (refreshedWorkspace) setWorkspace(refreshedWorkspace);
       })
       .catch(() => {
+        if (generation !== refreshGeneration.current) return;
         setWorkspace({ status: 'not_connected', destinations: [] });
       });
   }, [settings]);
@@ -113,6 +189,8 @@ function ProductApp() {
     });
     return map;
   }, [preview, result]);
+
+  const recoveryGuidance = useMemo(() => buildRecoveryGuidance(error, Boolean(preview)), [error, preview]);
 
   function handleReview() {
     const trimmed = text.trim();
@@ -197,6 +275,10 @@ function ProductApp() {
 
   async function handleConnectPublic() {
     setError('');
+    if (settings.backendMode === 'public' && settings.publicApiBaseUrl && betaAccess.required && !betaAccess.granted) {
+      setError('Enter your beta access code before connecting Google.');
+      return;
+    }
     trackEvent({ name: 'connect_started', mode: settings.backendMode });
     try {
       const connectedWorkspace = await connectPublicWorkspace(settings);
@@ -206,13 +288,56 @@ function ProductApp() {
     }
   }
 
+  async function handleRedeemBetaAccess(event: FormEvent) {
+    event.preventDefault();
+    const code = betaAccessCode.trim();
+    if (!code) {
+      setError('Enter your beta access code.');
+      return;
+    }
+
+    setRedeemingBetaAccess(true);
+    setError('');
+    try {
+      const access = await redeemPublicBetaAccess(settings, code);
+      if (access) setBetaAccess(access);
+      setBetaAccessCode('');
+      setConnectionNotice('Beta access confirmed. You can connect Google when ready.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not confirm beta access.');
+    } finally {
+      setRedeemingBetaAccess(false);
+    }
+  }
+
   async function handleDisconnectPublic() {
     setError('');
     try {
+      refreshGeneration.current += 1;
       setWorkspace(await disconnectPublicWorkspace(settings));
       trackEvent({ name: 'disconnect_completed', mode: settings.backendMode });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not disconnect Google.');
+    }
+  }
+
+  async function handleDeleteAccountData() {
+    if (deleteConfirmation !== 'DELETE') return;
+
+    setDeletingAccountData(true);
+    setError('');
+    try {
+      refreshGeneration.current += 1;
+      setWorkspace(await deletePublicAccountRecords(settings));
+      setPreview(null);
+      setResult(null);
+      setConnectionNotice('Stored Brain Dump account records were deleted for this browser session.');
+      setShowSettings(false);
+      setDeleteConfirmation('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete stored account records.');
+    } finally {
+      setDeletingAccountData(false);
     }
   }
 
@@ -234,11 +359,23 @@ function ProductApp() {
         <SetupPanel
           mode={settings.backendMode}
           hasPublicApi={Boolean(settings.publicApiBaseUrl)}
+          betaAccess={betaAccess}
           workspace={workspace}
+          hasDraft={Boolean(text.trim())}
+          hasPreview={Boolean(preview)}
+          hasResult={Boolean(result)}
           onConnect={handleConnectPublic}
           onDisconnect={handleDisconnectPublic}
           onOpenSettings={() => setShowSettings(true)}
         />
+        {settings.backendMode === 'public' && settings.publicApiBaseUrl && betaAccess.required && !betaAccess.granted && (
+          <BetaAccessPanel
+            code={betaAccessCode}
+            isSubmitting={isRedeemingBetaAccess}
+            onCodeChange={setBetaAccessCode}
+            onSubmit={handleRedeemBetaAccess}
+          />
+        )}
         {connectionNotice && <div className="successCard">{connectionNotice}</div>}
         <textarea
           value={text}
@@ -246,6 +383,15 @@ function ProductApp() {
           placeholder="Put everything here. Do not organize it."
           disabled={isProcessing}
         />
+        {!text.trim() && (
+          <div className="samplePack" aria-label="Try a sample brain dump">
+            {sampleBrainDumps.map((sample) => (
+              <button key={sample.label} type="button" onClick={() => handleDraft(sample.text)}>
+                {sample.label}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="actionRow">
           <button className="secondaryButton" type="button" onClick={() => document.querySelector('textarea')?.focus()}>
             <Mic size={19} />
@@ -268,6 +414,7 @@ function ProductApp() {
             </button>
           )}
         </div>
+        <BetaHelpLinks />
       </section>
 
       {(error || preview || result) && (
@@ -279,7 +426,7 @@ function ProductApp() {
                 canRetry={Boolean(preview)}
                 isProcessing={isProcessing}
                 onRetry={handleCreate}
-                context="Processing error"
+                guidance={recoveryGuidance}
               />
             </>
           )}
@@ -403,6 +550,31 @@ function ProductApp() {
                 placeholder="Optional during development"
               />
             </label>
+            {settings.backendMode === 'public' && (
+              <section className="dangerZone" aria-label="Account data deletion">
+                <h3>Account data</h3>
+                <p>
+                  Delete stored Brain Dump records for the signed-in Google account. This does not delete Google Tasks or
+                  Calendar events already created.
+                </p>
+                <label>
+                  Type DELETE to confirm
+                  <input
+                    value={deleteConfirmation}
+                    onChange={(event) => setDeleteConfirmation(event.target.value)}
+                    placeholder="DELETE"
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="dangerButton"
+                  disabled={deleteConfirmation !== 'DELETE' || isDeletingAccountData}
+                  onClick={handleDeleteAccountData}
+                >
+                  {isDeletingAccountData ? 'Deleting' : 'Delete account data'}
+                </button>
+              </section>
+            )}
             <div className="modalActions">
               <button type="button" className="secondaryButton" onClick={() => setShowSettings(false)}>
                 Cancel
@@ -452,9 +624,15 @@ function HomePage() {
               Open app
               <ArrowRight size={19} />
             </a>
-            <a className="secondaryButton linkButton" href="/privacy">
-              Privacy
+            <a className="secondaryButton linkButton" href="/beta">
+              Join beta
             </a>
+          <a className="secondaryButton linkButton" href="/privacy">
+            Privacy
+          </a>
+          <a className="secondaryButton linkButton" href="/status">
+            Status
+          </a>
           </div>
         </div>
         <div className="productPreview" aria-label="Brain Dump preview">
@@ -512,6 +690,62 @@ function HomePage() {
             <MessageCircle size={20} />
             Beta support
           </a>
+          <a href="/status">
+            <CheckCircle2 size={20} />
+            Launch status
+          </a>
+          <a href="/faq">
+            <MessageCircle size={20} />
+            FAQ
+          </a>
+          <a href="/security">
+            <ShieldCheck size={20} />
+            Security
+          </a>
+          <a href="/trust">
+            <Lock size={20} />
+            Trust center
+          </a>
+          <a href="/install">
+            <Sparkles size={20} />
+            Install
+          </a>
+          <a href="/roadmap">
+            <ArrowRight size={20} />
+            Roadmap
+          </a>
+          <a href="/press">
+            <FileText size={20} />
+            Press
+          </a>
+          <a href="/examples">
+            <ClipboardList size={20} />
+            Examples
+          </a>
+          <a href="/pricing">
+            <CheckCircle2 size={20} />
+            Pricing
+          </a>
+          <a href="/demo">
+            <Sparkles size={20} />
+            Demo
+          </a>
+          <a href="/oauth-demo-checklist">
+            <ShieldCheck size={20} />
+            OAuth checklist
+          </a>
+          <a href="/timeline">
+            <CalendarDays size={20} />
+            Launch timeline
+          </a>
+          <a href="/feedback">
+            <UserCheck size={20} />
+            Feedback form
+          </a>
+          <a href="/beta">
+            <ArrowRight size={20} />
+            Join beta
+          </a>
         </div>
       </section>
     </main>
@@ -551,6 +785,9 @@ function PrivacyPage() {
       <p>
         Users can disconnect Google, stop using the app, request deletion of stored account records, and delete tasks or
         calendar events directly in their Google account.
+      </p>
+      <p>
+        Data deletion instructions are available at <a href="/data-deletion">/data-deletion</a>.
       </p>
       <h2>Contact</h2>
       <p>
@@ -600,6 +837,40 @@ function TermsPage() {
 }
 
 function SupportPage() {
+  const [settings] = useState(() => loadSettings());
+  const [form, setForm] = useState({
+    email: '',
+    issueType: '',
+    summary: '',
+    details: ''
+  });
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setSubmitting] = useState(false);
+  const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError('');
+    setStatus('');
+
+    if (!publicApiBaseUrl) {
+      setError('Support form is not connected yet. Use the email link below.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await submitPublicSupportRequest(publicApiBaseUrl, form);
+      setStatus('Support request sent. We will follow up by email.');
+      setForm({ email: '', issueType: '', summary: '', details: '' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send support request.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <PublicDocument
       title="Support"
@@ -607,9 +878,58 @@ function SupportPage() {
     >
       <h2>Contact</h2>
       <p>
-        Email <a href={supportRequestMailto('Support page')}>{supportEmail}</a> with what happened and what you expected.
-        Include screenshots only if you are comfortable sharing them.
+        Send a request here, or email <a href={supportRequestMailto('Support page')}>{supportEmail}</a> with what
+        happened and what you expected. Include screenshots only if you are comfortable sharing them.
       </p>
+      <form className="publicForm" onSubmit={handleSubmit}>
+        <label>
+          Email
+          <input
+            value={form.email}
+            onChange={(event) => setForm({ ...form, email: event.target.value })}
+            autoComplete="email"
+            type="email"
+            required
+          />
+        </label>
+        <label>
+          Issue type
+          <select
+            value={form.issueType}
+            onChange={(event) => setForm({ ...form, issueType: event.target.value })}
+            required
+          >
+            <option value="">Choose one</option>
+            <option value="google_connection">Google connection</option>
+            <option value="task_or_calendar_write">Task or calendar write</option>
+            <option value="wrong_preview">Wrong preview</option>
+            <option value="account_or_data">Account or data request</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>
+          Summary
+          <input
+            value={form.summary}
+            onChange={(event) => setForm({ ...form, summary: event.target.value })}
+            required
+          />
+        </label>
+        <label>
+          Details
+          <textarea
+            value={form.details}
+            onChange={(event) => setForm({ ...form, details: event.target.value })}
+            required
+          />
+        </label>
+        {error && <div className="errorCard">{error}</div>}
+        {status && <div className="successCard">{status}</div>}
+        <button className="processButton" type="submit" disabled={isSubmitting}>
+          <MessageCircle size={18} />
+          {isSubmitting ? 'Sending' : 'Send support request'}
+        </button>
+      </form>
       <h2>What to include</h2>
       <ul>
         <li>Your Google account email used with Brain Dump.</li>
@@ -622,6 +942,9 @@ function SupportPage() {
         You can disconnect Google inside the app. For stored account deletion or privacy questions, email support with
         "Data request" in the subject.
       </p>
+      <p>
+        Full deletion instructions are available at <a href="/data-deletion">/data-deletion</a>.
+      </p>
       <h2>Security</h2>
       <p>
         Never send Google passwords, OAuth tokens, or unredacted private calendar screenshots. Brain Dump support will
@@ -629,6 +952,1804 @@ function SupportPage() {
       </p>
     </PublicDocument>
   );
+}
+
+function DataDeletionPage() {
+  const [settings] = useState(() => loadSettings());
+  const [form, setForm] = useState({
+    email: '',
+    details: ''
+  });
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setSubmitting] = useState(false);
+  const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError('');
+    setStatus('');
+
+    if (!publicApiBaseUrl) {
+      setError('Data deletion request form is not connected yet. Use the email link below.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await submitPublicSupportRequest(publicApiBaseUrl, {
+        email: form.email,
+        issueType: 'account_or_data',
+        summary: 'Data deletion request',
+        details: form.details
+      });
+      setStatus('Data deletion request sent. We will follow up by email.');
+      setForm({ email: '', details: '' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send data deletion request.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <PublicDocument
+      title="Data Deletion"
+      subtitle="How beta users can disconnect Google and request deletion of stored Brain Dump records."
+    >
+      <h2>Disconnect Google</h2>
+      <p>
+        Open Brain Dump, go to the setup panel, and choose Disconnect. Disconnecting removes the stored OAuth tokens and
+        workspace connection records Brain Dump uses for future writes.
+      </p>
+      <h2>Request stored record deletion</h2>
+      <p>
+        Email <a href={supportRequestMailto('Data deletion request')}>{supportEmail}</a> with "Data deletion request" in
+        the subject and include the Google account email you used with Brain Dump.
+      </p>
+      <form className="publicForm" onSubmit={handleSubmit}>
+        <label>
+          Google account email
+          <input
+            value={form.email}
+            onChange={(event) => setForm({ ...form, email: event.target.value })}
+            autoComplete="email"
+            type="email"
+            required
+          />
+        </label>
+        <label>
+          Request details
+          <textarea
+            value={form.details}
+            onChange={(event) => setForm({ ...form, details: event.target.value })}
+            placeholder="Tell us what records you want deleted."
+            required
+          />
+        </label>
+        {error && <div className="errorCard">{error}</div>}
+        {status && <div className="successCard">{status}</div>}
+        <button className="processButton" type="submit" disabled={isSubmitting}>
+          <ShieldCheck size={18} />
+          {isSubmitting ? 'Sending' : 'Send deletion request'}
+        </button>
+      </form>
+      <p>
+        The public backend also supports signed-in account deletion at <code>/api/account/delete</code>. This clears the
+        stored Brain Dump records associated with the current session.
+      </p>
+      <h2>What can be deleted</h2>
+      <ul>
+        <li>Stored session records associated with your account.</li>
+        <li>Stored OAuth tokens and workspace connection records.</li>
+        <li>Execution logs, idempotency records, and beta analytics associated with your account where technically available.</li>
+      </ul>
+      <h2>What Brain Dump cannot delete</h2>
+      <p>
+        Disconnecting or deleting Brain Dump records does not remove tasks or calendar events already created in your
+        Google account. You can delete those directly in Google Tasks or Google Calendar.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function FeedbackPage() {
+  const [settings] = useState(() => loadSettings());
+  const [form, setForm] = useState({
+    email: '',
+    requestId: '',
+    lookedRight: '',
+    confusing: '',
+    expected: ''
+  });
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setSubmitting] = useState(false);
+  const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError('');
+    setStatus('');
+
+    if (!publicApiBaseUrl) {
+      setError('Feedback form is not connected yet. Use the email link below.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await submitPublicFeedback(publicApiBaseUrl, {
+        email: form.email,
+        requestId: form.requestId,
+        lookedRight: form.lookedRight,
+        confusing: form.confusing,
+        expected: form.expected
+      });
+      setStatus('Feedback sent. Thank you for helping shape the beta.');
+      setForm({ email: '', requestId: '', lookedRight: '', confusing: '', expected: '' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send feedback.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <PublicDocument
+      title="Beta Feedback"
+      subtitle="Three quick questions for first-run testers after they try Brain Dump."
+    >
+      <h2>What to send</h2>
+      <ol>
+        <li>What looked right?</li>
+        <li>What looked wrong or confusing?</li>
+        <li>What did you expect Brain Dump to do instead?</li>
+      </ol>
+      <h2>Helpful context</h2>
+      <p>
+        Include your Google account email and the approximate time of your test if you connected Google. Do not send
+        passwords, OAuth tokens, or private screenshots unless you are comfortable sharing them.
+      </p>
+      <h2>Send feedback</h2>
+      <p>
+        Send it here, or email <a href={betaFeedbackMailto()}>{supportEmail}</a>. The app also adds a feedback link
+        after each completed run with the request ID and action summary already filled in.
+      </p>
+      <form className="publicForm" onSubmit={handleSubmit}>
+        <label>
+          Email
+          <input
+            value={form.email}
+            onChange={(event) => setForm({ ...form, email: event.target.value })}
+            autoComplete="email"
+            type="email"
+          />
+        </label>
+        <label>
+          Request ID
+          <input
+            value={form.requestId}
+            onChange={(event) => setForm({ ...form, requestId: event.target.value })}
+            placeholder="Optional"
+          />
+        </label>
+        <label>
+          What looked right?
+          <textarea
+            value={form.lookedRight}
+            onChange={(event) => setForm({ ...form, lookedRight: event.target.value })}
+            required
+          />
+        </label>
+        <label>
+          What looked wrong or confusing?
+          <textarea
+            value={form.confusing}
+            onChange={(event) => setForm({ ...form, confusing: event.target.value })}
+            required
+          />
+        </label>
+        <label>
+          What did you expect Brain Dump to do instead?
+          <textarea
+            value={form.expected}
+            onChange={(event) => setForm({ ...form, expected: event.target.value })}
+            required
+          />
+        </label>
+        {error && <div className="errorCard">{error}</div>}
+        {status && <div className="successCard">{status}</div>}
+        <button className="processButton" type="submit" disabled={isSubmitting}>
+          <MessageCircle size={18} />
+          {isSubmitting ? 'Sending' : 'Send feedback'}
+        </button>
+      </form>
+    </PublicDocument>
+  );
+}
+
+function BetaPage() {
+  const [settings] = useState(() => loadSettings());
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    tools: '',
+    googleComfort: '',
+    notes: ''
+  });
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setSubmitting] = useState(false);
+  const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError('');
+    setStatus('');
+
+    if (!publicApiBaseUrl) {
+      setError('Beta request form is not connected yet. Use the email link below.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await submitPublicBetaRequest(publicApiBaseUrl, form);
+      setStatus("You're on the beta request list. We'll follow up when the next group opens.");
+      setForm({ name: '', email: '', tools: '', googleComfort: '', notes: '' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send beta request.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <PublicDocument
+      title="Join The Beta"
+      subtitle="A small first-user beta for people who want messy notes turned into reviewed Google tasks and calendar events."
+    >
+      <h2>Who it is for</h2>
+      <p>
+        Brain Dump beta is for people who already use Google Tasks or Google Calendar and want a faster way to capture
+        scattered thoughts before sorting them.
+      </p>
+      <h2>What beta users can expect</h2>
+      <ul>
+        <li>Preview mode works before connecting Google.</li>
+        <li>Google connection is per user; Brain Dump does not use the founder's workspace.</li>
+        <li>Tasks and clear calendar events are reviewed before creation.</li>
+        <li>Ambiguous items stay in Needs Review instead of being created automatically.</li>
+        <li>Email sending is not part of the beta.</li>
+      </ul>
+      <h2>Request access</h2>
+      <p>
+        Send a request here, or email <a href={betaAccessMailto()}>{supportEmail}</a> if the form is unavailable.
+      </p>
+      <form className="publicForm" onSubmit={handleSubmit}>
+        <label>
+          Name
+          <input
+            value={form.name}
+            onChange={(event) => setForm({ ...form, name: event.target.value })}
+            autoComplete="name"
+            required
+          />
+        </label>
+        <label>
+          Email
+          <input
+            value={form.email}
+            onChange={(event) => setForm({ ...form, email: event.target.value })}
+            autoComplete="email"
+            type="email"
+            required
+          />
+        </label>
+        <label>
+          Current task or calendar tools
+          <input
+            value={form.tools}
+            onChange={(event) => setForm({ ...form, tools: event.target.value })}
+            placeholder="Google Tasks, Calendar, paper list..."
+            required
+          />
+        </label>
+        <label>
+          Google connection comfort
+          <select
+            value={form.googleComfort}
+            onChange={(event) => setForm({ ...form, googleComfort: event.target.value })}
+            required
+          >
+            <option value="">Choose one</option>
+            <option value="comfortable">Comfortable connecting Google during beta</option>
+            <option value="preview_first">Want to preview first</option>
+            <option value="not_ready">Not ready to connect Google yet</option>
+          </select>
+        </label>
+        <label>
+          Notes
+          <textarea
+            value={form.notes}
+            onChange={(event) => setForm({ ...form, notes: event.target.value })}
+            placeholder="What would make Brain Dump useful for you?"
+          />
+        </label>
+        {error && <div className="errorCard">{error}</div>}
+        {status && <div className="successCard">{status}</div>}
+        <button className="processButton" type="submit" disabled={isSubmitting}>
+          <Sparkles size={18} />
+          {isSubmitting ? 'Sending' : 'Request beta access'}
+        </button>
+      </form>
+    </PublicDocument>
+  );
+}
+
+function StatusPage() {
+  return (
+    <PublicDocument
+      title="Launch Status"
+      subtitle="Current public beta posture for Brain Dump users and reviewers."
+    >
+      <section className="statusOverview" aria-label="Launch status summary">
+        <div>
+          <span>Current phase</span>
+          <strong>Private beta setup</strong>
+        </div>
+        <div>
+          <span>Google writes</span>
+          <strong>Reviewed only</strong>
+        </div>
+        <div>
+          <span>Email sending</span>
+          <strong>Not enabled</strong>
+        </div>
+      </section>
+      <h2>Available now</h2>
+      <ul>
+        <li>Preview mode for turning free-form notes into reviewed actions.</li>
+        <li>Per-user Google connection for Tasks and Calendar during beta.</li>
+        <li>Support, feedback, beta access, and data deletion request forms.</li>
+        <li>Operator readiness checks before any broader launch push.</li>
+      </ul>
+      <h2>Launch limits</h2>
+      <ul>
+        <li>Brain Dump is not a public self-serve production launch yet.</li>
+        <li>Ambiguous actions stay in review instead of being created automatically.</li>
+        <li>Email-like requests are captured for review and are not sent.</li>
+        <li>Calendar and task writes depend on each user's own Google authorization.</li>
+      </ul>
+      <h2>Need help?</h2>
+      <p>
+        If something fails during setup or a test run, use <a href="/support">support</a> or email{' '}
+        <a href={supportRequestMailto('Launch status')}>{supportEmail}</a>.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function FaqPage() {
+  return (
+    <PublicDocument
+      title="FAQ"
+      subtitle="Plain answers for beta users before connecting Google."
+    >
+      <h2>Does Brain Dump send email?</h2>
+      <p>No. Email-like requests are captured for review during beta. Brain Dump does not send emails automatically.</p>
+      <h2>When does Brain Dump touch Google?</h2>
+      <p>
+        Preview mode does not touch Google. In public mode, Brain Dump connects only after you approve Google access, and
+        reviewed actions are created only after you click Create.
+      </p>
+      <h2>What Google data does it use?</h2>
+      <p>
+        Brain Dump uses your Google sign-in identity to keep your session connected, Google Tasks access to create
+        reviewed tasks, and Google Calendar event access to create reviewed events.
+      </p>
+      <h2>Can I disconnect?</h2>
+      <p>
+        Yes. Open the app setup panel and choose Disconnect. You can also request stored record deletion from{' '}
+        <a href="/data-deletion">/data-deletion</a>.
+      </p>
+      <h2>What if Brain Dump gets something wrong?</h2>
+      <p>
+        Remove wrong preview actions before creating. If something fails after creation, send feedback or open a support
+        request from <a href="/support">/support</a>.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function SecurityPage() {
+  return (
+    <PublicDocument
+      title="Security"
+      subtitle="How Brain Dump handles account access, support requests, and beta operations."
+    >
+      <h2>Passwords and tokens</h2>
+      <p>
+        Brain Dump support will not ask for your Google password, OAuth tokens, recovery codes, or private browser
+        cookies. Do not send those through support, feedback, email, screenshots, or shared docs.
+      </p>
+      <h2>Google access</h2>
+      <p>
+        Brain Dump connects to Google only after you approve access. During beta, Google access is used for reviewed
+        Tasks and Calendar actions, not email sending.
+      </p>
+      <h2>Review before create</h2>
+      <p>
+        Preview and review happen before Google writes. Remove anything that looks wrong before clicking Create.
+        Ambiguous calendar items should stay in review.
+      </p>
+      <h2>Operator exports</h2>
+      <p>
+        Protected operator CSV exports are for short-lived beta support and launch review. They should stay inside the
+        operator workflow and not be posted in broad shared channels.
+      </p>
+      <h2>Report a concern</h2>
+      <p>
+        If you notice unexpected account access, duplicate writes, disconnect trouble, or a privacy concern, use{' '}
+        <a href="/support">support</a> or email <a href={supportRequestMailto('Security concern')}>{supportEmail}</a>.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function TrustPage() {
+  return (
+    <PublicDocument
+      title="Trust Center"
+      subtitle="The plain-language safety posture for Brain Dump users, beta testers, and reviewers."
+    >
+      <section className="statusOverview" aria-label="Trust summary">
+        <div>
+          <span>Google access</span>
+          <strong>User approved</strong>
+        </div>
+        <div>
+          <span>Action creation</span>
+          <strong>Reviewed first</strong>
+        </div>
+        <div>
+          <span>Email sending</span>
+          <strong>Not enabled</strong>
+        </div>
+      </section>
+      <h2>What Brain Dump can access</h2>
+      <p>
+        Brain Dump asks for Google access only after you choose to connect. During beta, it uses Google sign-in, Google
+        Tasks access, and Google Calendar event access so reviewed actions can be created in your own account.
+      </p>
+      <h2>What Brain Dump will not do</h2>
+      <ul>
+        <li>It will not ask for your Google password, recovery code, OAuth token, or browser cookies.</li>
+        <li>It will not sell Google user data or use it for advertising.</li>
+        <li>It will not send email during beta.</li>
+        <li>It will not create ambiguous actions without a review step.</li>
+      </ul>
+      <h2>Your controls</h2>
+      <ul>
+        <li>Use <a href="/app">the app</a> to disconnect Google.</li>
+        <li>Use <a href="/data-deletion">data deletion</a> to request stored Brain Dump account record deletion.</li>
+        <li>Use <a href="/support">support</a> to report duplicate writes, connection trouble, or privacy concerns.</li>
+      </ul>
+      <h2>Launch safeguards</h2>
+      <p>
+        Public launch is gated by protected readiness checks, duplicate-write auditing, support SLA monitoring, restore
+        rehearsal, OAuth smoke testing, and an analytics privacy audit that blocks private fields from telemetry.
+      </p>
+      <h2>Current posture</h2>
+      <p>
+        See <a href="/status">launch status</a> for the current beta phase, <a href="/privacy">privacy</a> for Google
+        user data language, and <a href="/security">security</a> for safe support practices.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function InstallPage() {
+  return (
+    <PublicDocument
+      title="Install"
+      subtitle="Add Brain Dump to your home screen or desktop during beta."
+    >
+      <h2>iPhone or iPad</h2>
+      <ol>
+        <li>Open Brain Dump in Safari.</li>
+        <li>Tap Share.</li>
+        <li>Choose Add to Home Screen.</li>
+        <li>Open Brain Dump from the new home-screen icon.</li>
+      </ol>
+      <h2>Android</h2>
+      <ol>
+        <li>Open Brain Dump in Chrome.</li>
+        <li>Tap the browser menu.</li>
+        <li>Choose Install app or Add to Home screen.</li>
+      </ol>
+      <h2>Desktop</h2>
+      <p>
+        Open Brain Dump in Chrome or Edge and use the browser install option when it appears in the address bar or app
+        menu.
+      </p>
+      <h2>Beta note</h2>
+      <p>
+        Installing Brain Dump does not connect Google by itself. Google connects only from inside the app setup panel
+        after you approve access.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function RoadmapPage() {
+  return (
+    <PublicDocument
+      title="Roadmap"
+      subtitle="What Brain Dump supports during beta, what is next, and what is intentionally later."
+    >
+      <h2>Current beta</h2>
+      <ul>
+        <li>Messy thought capture with a reviewed action preview.</li>
+        <li>Google Tasks and primary Google Calendar creation after user approval.</li>
+        <li>Projects, waiting-on items, and ambiguous items kept in app-owned review records.</li>
+        <li>Public support, feedback, data-deletion, install, FAQ, and status pages.</li>
+      </ul>
+      <h2>Next</h2>
+      <ul>
+        <li>Sharper parsing for natural follow-up language and vague calendar requests.</li>
+        <li>Better first-run guidance after Google connection.</li>
+        <li>Operator workflows for tester cohorts, launch notes, and issue triage.</li>
+      </ul>
+      <h2>Later</h2>
+      <ul>
+        <li>Team workspaces and shared destination setup.</li>
+        <li>Payments and public self-serve account upgrades.</li>
+        <li>Native app-store distribution if the PWA path proves useful.</li>
+      </ul>
+      <h2>Not in beta</h2>
+      <p>
+        Brain Dump does not send email, make unreviewed Google changes, manage shared inboxes, or replace a project
+        management system during beta.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function PressPage() {
+  const email = supportEmail;
+  return (
+    <PublicDocument
+      title="Press"
+      subtitle="Approved Brain Dump language and brand assets for beta coverage."
+    >
+      <h2>Short description</h2>
+      <p>
+        Brain Dump turns messy thoughts into reviewed Google Tasks, Calendar events, projects, and follow-ups.
+      </p>
+      <h2>Boilerplate</h2>
+      <p>
+        Brain Dump is an installable browser app for people who capture scattered thoughts and need a trusted review step
+        before work lands in Google Tasks or Calendar. During beta, users connect their own Google account, review planned
+        actions, and stay in control of what gets created.
+      </p>
+      <h2>Beta boundaries</h2>
+      <ul>
+        <li>Brain Dump does not send email during beta.</li>
+        <li>Brain Dump does not make unreviewed Google changes.</li>
+        <li>Brain Dump is not a team workspace or project management replacement yet.</li>
+      </ul>
+      <h2>Assets</h2>
+      <ul>
+        <li><a href="/icons/brain-dump-icon-180.png">App icon 180</a></li>
+        <li><a href="/icons/brain-dump-icon-512.png">App icon 512</a></li>
+      </ul>
+      <h2>Contact</h2>
+      <p>
+        Send beta coverage, interview, and partnership questions to <a href={`mailto:${email}`}>{email}</a>.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function ExamplesPage() {
+  return (
+    <PublicDocument
+      title="Examples"
+      subtitle="Natural brain-dump wording Brain Dump can turn into reviewed actions."
+    >
+      <h2>Tasks</h2>
+      <ul>
+        <li>Pay employees tomorrow.</li>
+        <li>Buy printer paper.</li>
+      </ul>
+      <h2>Calendar</h2>
+      <ul>
+        <li>Lunch with Jack Thursday at noon; put on calendar.</li>
+        <li>Call Sarah Friday at 2pm; put on calendar.</li>
+      </ul>
+      <h2>Projects</h2>
+      <ul>
+        <li>Spend 4 hours this week on the porch replacement project.</li>
+        <li>Set up project: beta tester onboarding.</li>
+      </ul>
+      <h2>Follow-ups</h2>
+      <ul>
+        <li>Waiting for Chris to confirm numbers.</li>
+        <li>Follow-up with Sarah about the invoice.</li>
+      </ul>
+      <h2>Review first</h2>
+      <p>
+        Brain Dump keeps ambiguous calendar requests and email-like instructions in review so you can decide what should
+        happen next.
+      </p>
+    </PublicDocument>
+  );
+}
+
+function PricingPage() {
+  return (
+    <PublicDocument
+      title="Pricing"
+      subtitle="Brain Dump is private beta software. Paid plans are not active yet."
+    >
+      <h2>During beta</h2>
+      <ul>
+        <li>No payment is required to use the current private beta.</li>
+        <li>Brain Dump will not charge you without a separate paid-plan sign-up.</li>
+        <li>Beta testers should expect product changes as the workflow is validated.</li>
+      </ul>
+      <h2>What we are learning</h2>
+      <p>
+        Pricing will be shaped around whether Brain Dump saves enough repeated planning time to justify a personal or
+        solo-operator subscription.
+      </p>
+      <h2>Likely future options</h2>
+      <ul>
+        <li>Free preview mode.</li>
+        <li>Paid connected Google execution.</li>
+        <li>Monthly solo plan.</li>
+        <li>Future small-team plan after individual use is proven.</li>
+      </ul>
+    </PublicDocument>
+  );
+}
+
+function DemoPage() {
+  return (
+    <PublicDocument
+      title="Demo"
+      subtitle="A short walkthrough script for beta testers, advisors, and OAuth verification."
+    >
+      <h2>Opening</h2>
+      <p>
+        Brain Dump helps you capture messy thoughts first, then review organized actions before anything is created in
+        Google.
+      </p>
+      <h2>Show the workflow</h2>
+      <ol>
+        <li>Open the app and show preview mode.</li>
+        <li>Paste a mixed brain dump with a task, calendar item, project, and follow-up.</li>
+        <li>Click Review and explain each routed group.</li>
+        <li>Remove one planned action to show user control.</li>
+        <li>Connect Google with a beta test account.</li>
+        <li>Create reviewed actions and confirm Tasks and Calendar results.</li>
+        <li>Show Disconnect Google and the stored account deletion path.</li>
+      </ol>
+      <h2>Safety points</h2>
+      <ul>
+        <li>Brain Dump does not send email during beta.</li>
+        <li>Ambiguous calendar items stay in review.</li>
+        <li>Each user connects their own Google account.</li>
+      </ul>
+    </PublicDocument>
+  );
+}
+
+function OAuthDemoChecklistPage() {
+  return (
+    <PublicDocument
+      title="OAuth Demo Checklist"
+      subtitle="A public checklist for Google OAuth verification recordings and reviewer walkthroughs."
+    >
+      <h2>Before recording</h2>
+      <ul>
+        <li>Use a dedicated Google test user, not a private production account.</li>
+        <li>Show the production home page, privacy policy, support page, and app page.</li>
+        <li>Confirm the OAuth consent screen app name and logo match Brain Dump branding.</li>
+      </ul>
+      <h2>Required walkthrough</h2>
+      <ol>
+        <li>Open `/app` and show the user starts disconnected.</li>
+        <li>Enter beta access if invite-only beta is enabled.</li>
+        <li>Click Connect Google and complete Google consent.</li>
+        <li>Return to Brain Dump and confirm the workspace shows connected destinations.</li>
+        <li>Review a mixed brain dump before creating anything.</li>
+        <li>Create reviewed task and calendar actions in the test user's Google account.</li>
+        <li>Show Disconnect Google and Delete account data.</li>
+      </ol>
+      <h2>What to say clearly</h2>
+      <ul>
+        <li>Brain Dump uses Google access only to create reviewed user-requested tasks and calendar events.</li>
+        <li>Brain Dump does not sell Google user data, use it for ads, or send email during beta.</li>
+        <li>Users can disconnect Google and request deletion of stored Brain Dump account records.</li>
+      </ul>
+    </PublicDocument>
+  );
+}
+
+function TimelinePage() {
+  return (
+    <PublicDocument
+      title="Launch Timeline"
+      subtitle="A realistic public beta path for Brain Dump."
+    >
+      <h2>Current stage</h2>
+      <p>
+        Brain Dump is in controlled beta preparation. The app supports local preview, public Google account setup,
+        protected operator readiness, support intake, feedback intake, and launch verification tools.
+      </p>
+      <h2>Next milestones</h2>
+      <ol>
+        <li>Deploy the production frontend, backend, and durable encrypted storage.</li>
+        <li>Run production environment validation, deployment verification, OAuth smoke testing, and restore rehearsal.</li>
+        <li>Invite the first five known testers with an invite code.</li>
+        <li>Resolve any OAuth, duplicate-write, disconnect, deletion, or support blockers.</li>
+        <li>Submit or complete Google OAuth verification before broader public beta.</li>
+      </ol>
+      <h2>Expected launch shape</h2>
+      <ul>
+        <li>Private production beta: first five known users.</li>
+        <li>Small invite-only beta: 10 to 25 users after support and duplicate-write gates are clear.</li>
+        <li>Public beta: narrow public announcement after OAuth verification path is ready for the intended audience.</li>
+      </ul>
+    </PublicDocument>
+  );
+}
+
+type OperatorSnapshot = {
+  metrics: AnalyticsMetrics;
+  launchSummary: LaunchSummary;
+  readiness: ReadinessReport;
+  selfTest: ProductionSelfTest;
+  duplicateWriteAudit: DuplicateWriteAudit;
+  supportSla: SupportSlaReport;
+  backupPlan: BackupPlan;
+  recentErrors: ExecutionLogRecord[];
+  betaRequests: BetaRequestRecord[];
+  feedback: FeedbackRecord[];
+  supportRequests: SupportRequestRecord[];
+};
+
+function OperatorPage() {
+  const [settings, setSettings] = useState(() => loadSettings());
+  const [adminToken, setAdminToken] = useState(() => localStorage.getItem('brain-dump-admin-token') ?? '');
+  const [betaRequestStatusFilter, setBetaRequestStatusFilter] = useState<BetaRequestStatus | 'all'>('all');
+  const [feedbackStatusFilter, setFeedbackStatusFilter] = useState<FeedbackStatus | 'all'>('all');
+  const [supportRequestStatusFilter, setSupportRequestStatusFilter] = useState<SupportRequestStatus | 'all'>('all');
+  const [snapshot, setSnapshot] = useState<OperatorSnapshot | null>(null);
+  const [error, setError] = useState('');
+  const [isLoading, setLoading] = useState(false);
+  const [isExporting, setExporting] = useState('');
+  const [updatingRecordId, setUpdatingRecordId] = useState('');
+
+  async function handleLoad(event: FormEvent) {
+    event.preventDefault();
+    const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+    const token = adminToken.trim();
+    if (!publicApiBaseUrl) {
+      setError('Add the public API URL first.');
+      return;
+    }
+    if (!token) {
+      setError('Add the admin token first.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      const [metrics, readiness, selfTest, duplicateWriteAudit, supportSla, backupPlan, launchSummary, executionErrors, betaRequests, feedback, supportRequests] = await Promise.all([
+        getPublicAdminMetrics(publicApiBaseUrl, token),
+        getPublicAdminReadiness(publicApiBaseUrl, token),
+        getPublicAdminSelfTest(publicApiBaseUrl, token),
+        getPublicAdminDuplicateWriteAudit(publicApiBaseUrl, token),
+        getPublicAdminSupportSla(publicApiBaseUrl, token),
+        getPublicAdminBackupPlan(publicApiBaseUrl, token),
+        getPublicAdminLaunchSummary(publicApiBaseUrl, token),
+        getPublicAdminExecutionErrors(publicApiBaseUrl, token),
+        getPublicAdminBetaRequests(publicApiBaseUrl, token, betaRequestStatusFilter === 'all' ? undefined : betaRequestStatusFilter),
+        getPublicAdminFeedback(publicApiBaseUrl, token, feedbackStatusFilter === 'all' ? undefined : feedbackStatusFilter),
+        getPublicAdminSupportRequests(publicApiBaseUrl, token, supportRequestStatusFilter === 'all' ? undefined : supportRequestStatusFilter)
+      ]);
+      localStorage.setItem('brain-dump-admin-token', token);
+      saveSettings(settings);
+      setSnapshot({
+        metrics,
+        launchSummary,
+        readiness,
+        selfTest,
+        duplicateWriteAudit,
+        supportSla,
+        backupPlan,
+        recentErrors: executionErrors.recentErrors,
+        betaRequests: betaRequests.requests,
+        feedback: feedback.feedback,
+        supportRequests: supportRequests.supportRequests
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load operator dashboard.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleExport(kind: 'execution-errors' | 'beta-requests' | 'feedback' | 'support-requests') {
+    const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+    const token = adminToken.trim();
+    if (!publicApiBaseUrl || !token) {
+      setError('Add the public API URL and admin token first.');
+      return;
+    }
+
+    setExporting(kind);
+    setError('');
+    try {
+      const csv =
+        kind === 'execution-errors'
+          ? await getPublicAdminExecutionErrorsCsv(publicApiBaseUrl, token)
+          : kind === 'beta-requests'
+          ? await getPublicAdminBetaRequestsCsv(publicApiBaseUrl, token, betaRequestStatusFilter === 'all' ? undefined : betaRequestStatusFilter)
+          : kind === 'feedback'
+            ? await getPublicAdminFeedbackCsv(publicApiBaseUrl, token, feedbackStatusFilter === 'all' ? undefined : feedbackStatusFilter)
+            : await getPublicAdminSupportRequestsCsv(publicApiBaseUrl, token, supportRequestStatusFilter === 'all' ? undefined : supportRequestStatusFilter);
+      const filename =
+        kind === 'execution-errors'
+          ? 'brain-dump-execution-errors.csv'
+          : kind === 'beta-requests'
+          ? 'brain-dump-beta-requests.csv'
+          : kind === 'feedback'
+            ? 'brain-dump-feedback.csv'
+            : 'brain-dump-support-requests.csv';
+      downloadTextFile(csv, filename, 'text/csv');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not export CSV.');
+    } finally {
+      setExporting('');
+    }
+  }
+
+  function handleLaunchNotesExport() {
+    if (!snapshot) return;
+    downloadTextFile(buildLaunchNotes(snapshot), 'brain-dump-launch-notes.md', 'text/markdown');
+  }
+
+  function handleGoNoGoExport() {
+    if (!snapshot) return;
+    downloadTextFile(buildGoNoGoSummary(snapshot), 'brain-dump-go-no-go-summary.md', 'text/markdown');
+  }
+
+  async function handleBetaRequestStatus(id: string, status: BetaRequestStatus) {
+    const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+    const token = adminToken.trim();
+    if (!publicApiBaseUrl || !token) {
+      setError('Add the public API URL and admin token first.');
+      return;
+    }
+
+    setUpdatingRecordId(id);
+    setError('');
+    try {
+      const result = await updatePublicAdminBetaRequestStatus(publicApiBaseUrl, token, id, status);
+      setSnapshot((current) =>
+        current
+          ? {
+              ...current,
+              betaRequests: current.betaRequests.map((request) => (request.id === id ? result.request : request))
+            }
+          : current
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update beta request.');
+    } finally {
+      setUpdatingRecordId('');
+    }
+  }
+
+  async function handleFeedbackStatus(id: string, status: FeedbackStatus) {
+    const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+    const token = adminToken.trim();
+    if (!publicApiBaseUrl || !token) {
+      setError('Add the public API URL and admin token first.');
+      return;
+    }
+
+    setUpdatingRecordId(id);
+    setError('');
+    try {
+      const result = await updatePublicAdminFeedbackStatus(publicApiBaseUrl, token, id, status);
+      setSnapshot((current) =>
+        current
+          ? {
+              ...current,
+              feedback: current.feedback.map((record) => (record.id === id ? result.feedback : record))
+            }
+          : current
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update feedback.');
+    } finally {
+      setUpdatingRecordId('');
+    }
+  }
+
+  async function handleSupportRequestStatus(id: string, status: SupportRequestStatus) {
+    const publicApiBaseUrl = settings.publicApiBaseUrl.trim();
+    const token = adminToken.trim();
+    if (!publicApiBaseUrl || !token) {
+      setError('Add the public API URL and admin token first.');
+      return;
+    }
+
+    setUpdatingRecordId(id);
+    setError('');
+    try {
+      const result = await updatePublicAdminSupportRequestStatus(publicApiBaseUrl, token, id, status);
+      setSnapshot((current) =>
+        current
+          ? {
+              ...current,
+              supportRequests: current.supportRequests.map((request) =>
+                request.id === id ? result.supportRequest : request
+              )
+            }
+          : current
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update support request.');
+    } finally {
+      setUpdatingRecordId('');
+    }
+  }
+
+  return (
+    <main className="operatorShell">
+      <header className="operatorHeader">
+        <a className="navBrand" href="/">
+          <img src="/icons/brain-dump-icon-180.png" alt="" />
+          <span>Brain Dump</span>
+        </a>
+        <a href="/app">Open app</a>
+      </header>
+
+      <section className="operatorIntro">
+        <div>
+          <h1>Operator Dashboard</h1>
+          <p>Launch readiness, beta analytics, and backup posture from protected backend endpoints.</p>
+        </div>
+        {snapshot?.readiness.ready ? <span className="operatorBadge ready">Ready</span> : <span className="operatorBadge">Not ready</span>}
+      </section>
+
+      <form className="operatorControls" onSubmit={handleLoad}>
+        <label>
+          Public API URL
+          <input
+            value={settings.publicApiBaseUrl}
+            onChange={(event) => setSettings({ ...settings, publicApiBaseUrl: event.target.value })}
+            placeholder="https://api.braindump.app"
+          />
+        </label>
+        <label>
+          Admin token
+          <input
+            value={adminToken}
+            onChange={(event) => setAdminToken(event.target.value)}
+            type="password"
+            placeholder="BRAIN_DUMP_ADMIN_TOKEN"
+          />
+        </label>
+        <button className="processButton" type="submit" disabled={isLoading}>
+          <ShieldCheck size={18} />
+          {isLoading ? 'Loading' : 'Refresh'}
+        </button>
+      </form>
+
+      {error && <div className="errorCard">{error}</div>}
+
+      {snapshot ? (
+        <section className="operatorGrid" aria-live="polite">
+          <OperatorMetric label="Events" value={snapshot.metrics.totalEvents} />
+          <OperatorMetric label="Users" value={snapshot.metrics.uniqueUsers} />
+          <OperatorMetric label="Requests" value={snapshot.metrics.uniqueRequests} />
+          <OperatorMetric label="Actions" value={snapshot.metrics.totalActions} />
+          <OperatorMetric label="Errors" value={snapshot.metrics.totalErrors} warning={snapshot.metrics.totalErrors > 0} />
+          <OperatorMetric label="Latest Event" value={snapshot.metrics.latestEventAt ? shortDateTime(snapshot.metrics.latestEventAt) : 'None'} />
+
+          <article className="operatorPanel widePanel">
+            <div className="operatorPanelHeader">
+              <h2>Launch Summary</h2>
+              <button
+                type="button"
+                className="smallButton exportButton"
+                onClick={handleLaunchNotesExport}
+              >
+                <FileText size={16} />
+                Export Notes
+              </button>
+              <button
+                type="button"
+                className="smallButton exportButton"
+                onClick={handleGoNoGoExport}
+              >
+                <ShieldCheck size={16} />
+                Export Go/No-Go
+              </button>
+            </div>
+            <div className="launchSummaryGrid">
+              <div>
+                <span>Posture</span>
+                <strong>{snapshot.launchSummary.ready ? 'Ready' : 'Blocked'}</strong>
+              </div>
+              <div>
+                <span>Recent Errors</span>
+                <strong>{snapshot.launchSummary.queueCounts.recentExecutionErrors}</strong>
+              </div>
+              <div>
+                <span>Open Beta</span>
+                <strong>{snapshot.launchSummary.queueCounts.beta.new}</strong>
+              </div>
+              <div>
+                <span>Open Support</span>
+                <strong>{snapshot.launchSummary.queueCounts.support.new + snapshot.launchSummary.queueCounts.support.in_progress}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <div className="operatorPanelHeader">
+              <h2>Production Launch Tracker</h2>
+              <span className={snapshot.selfTest.ok ? 'operatorBadge ready' : 'operatorBadge'}>
+                {snapshot.selfTest.ok ? 'Pass' : 'Blocked'}
+              </span>
+            </div>
+            <div className="launchTrackerGrid">
+              {snapshot.selfTest.checks.map((check) => (
+                <div className={check.ok ? 'launchTrackerItem ready' : 'launchTrackerItem'} key={check.key}>
+                  {check.ok ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+                  <div>
+                    <strong>{check.label}</strong>
+                    <span>{check.detail}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <QueueSummaryPanel
+            title="Beta Queue"
+            counts={countStatuses(snapshot.betaRequests)}
+            labels={['new', 'invited', 'archived']}
+          />
+          <QueueSummaryPanel
+            title="Feedback Queue"
+            counts={countStatuses(snapshot.feedback)}
+            labels={['new', 'reviewed', 'archived']}
+          />
+          <QueueSummaryPanel
+            title="Support Queue"
+            counts={countStatuses(snapshot.supportRequests)}
+            labels={['new', 'in_progress', 'resolved', 'archived']}
+          />
+
+          <article className="operatorPanel widePanel">
+            <div className="operatorPanelHeader">
+              <h2>Duplicate Write Audit</h2>
+              <span className={snapshot.duplicateWriteAudit.ok ? 'operatorBadge ready' : 'operatorBadge'}>
+                {snapshot.duplicateWriteAudit.ok ? 'Clear' : 'Investigate'}
+              </span>
+            </div>
+            {snapshot.duplicateWriteAudit.duplicateGroups.length ? (
+              <div className="duplicateAuditList">
+                {snapshot.duplicateWriteAudit.duplicateGroups.map((group) => (
+                  <div className="duplicateAuditItem" key={group.key}>
+                    <div>
+                      <strong>{group.title}</strong>
+                      <span>{operatorEventLabel(group.actionType)} repeated {group.count} times</span>
+                    </div>
+                    <dl>
+                      <div>
+                        <dt>User</dt>
+                        <dd>{group.userId ?? 'Unknown'}</dd>
+                      </div>
+                      <div>
+                        <dt>Requests</dt>
+                        <dd>{group.requestIds.join(', ')}</dd>
+                      </div>
+                      <div>
+                        <dt>Provider IDs</dt>
+                        <dd>{group.providerIds.join(', ') || 'Not recorded'}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No likely duplicate writes in the recent audit window.</p>
+            )}
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <div className="operatorPanelHeader">
+              <h2>Support SLA</h2>
+              <span className={snapshot.supportSla.ok ? 'operatorBadge ready' : 'operatorBadge'}>
+                {snapshot.supportSla.ok ? 'On track' : 'Overdue'}
+              </span>
+            </div>
+            <div className="launchSummaryGrid">
+              <div>
+                <span>Open</span>
+                <strong>{snapshot.supportSla.openCount}</strong>
+              </div>
+              <div>
+                <span>Overdue</span>
+                <strong>{snapshot.supportSla.overdueCount}</strong>
+              </div>
+              <div>
+                <span>Threshold</span>
+                <strong>{snapshot.supportSla.thresholdHours}h</strong>
+              </div>
+              <div>
+                <span>Oldest</span>
+                <strong>{snapshot.supportSla.oldestOpenHours ?? 0}h</strong>
+              </div>
+            </div>
+            {snapshot.supportSla.overdueRequests.length ? (
+              <div className="duplicateAuditList">
+                {snapshot.supportSla.overdueRequests.map((request) => (
+                  <div className="duplicateAuditItem" key={request.id}>
+                    <div>
+                      <strong>{request.summary}</strong>
+                      <span>{request.ageHours} hours open from {request.email}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No overdue support requests.</p>
+            )}
+          </article>
+
+          <article className="operatorPanel">
+            <h2>Cohort Review</h2>
+            <ul>
+              <li>Tag each invite note with Founder watched run, Small operator cohort, or Public beta seed.</li>
+              <li>Use the status filter before exporting beta requests for the next invite batch.</li>
+              <li>Expand only after the current cohort meets the gates in the beta cohort plan.</li>
+            </ul>
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <h2>Readiness</h2>
+            <ReadinessGroups checks={snapshot.readiness.checks} />
+          </article>
+
+          <article className="operatorPanel">
+            <h2>Event Mix</h2>
+            <div className="eventMix">
+              {Object.entries(snapshot.metrics.byName).length ? (
+                Object.entries(snapshot.metrics.byName).map(([name, value]) => (
+                  <div key={name}>
+                    <span>{operatorEventLabel(name)}</span>
+                    <strong>{value}</strong>
+                  </div>
+                ))
+              ) : (
+                <p>No beta events yet.</p>
+              )}
+            </div>
+          </article>
+
+          <article className="operatorPanel">
+            <h2>Backup</h2>
+            <p>Storage prefix: {snapshot.backupPlan.storagePrefix}</p>
+            <ul>
+              {snapshot.backupPlan.sections.map((section) => (
+                <li key={section.name}>{section.name}</li>
+              ))}
+            </ul>
+          </article>
+
+          <article className="operatorPanel">
+            <h2>Privacy Handling</h2>
+            <ul>
+              <li>Use the minimum record needed for support or beta follow-up.</li>
+              <li>Do not request passwords, OAuth tokens, or unredacted private screenshots.</li>
+              <li>Keep CSV exports local to the launch workflow.</li>
+            </ul>
+          </article>
+
+          <article className="operatorPanel">
+            <h2>Issue Triage</h2>
+            <ul>
+              <li>Critical: disconnect, deletion, duplicate-write, or account-safety failures.</li>
+              <li>High: connected-user task, calendar, OAuth, or review-flow failures.</li>
+              <li>Medium: onboarding, copy, support form, and beta friction.</li>
+            </ul>
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <div className="operatorPanelHeader">
+              <h2>Recent Execution Errors</h2>
+              <button
+                type="button"
+                className="smallButton exportButton"
+                disabled={isExporting === 'execution-errors'}
+                onClick={() => handleExport('execution-errors')}
+              >
+                {isExporting === 'execution-errors' ? 'Exporting' : 'Export CSV'}
+              </button>
+            </div>
+            {snapshot.recentErrors.length ? (
+              <div className="executionErrorList">
+                {snapshot.recentErrors.map((record) => (
+                  <div className="executionErrorItem" key={`${record.requestId}-${record.actionType}-${record.createdAt}`}>
+                    <div>
+                      <strong>{record.title}</strong>
+                      <span>{record.message}</span>
+                    </div>
+                    <dl>
+                      <div>
+                        <dt>Request</dt>
+                        <dd>{record.requestId}</dd>
+                      </div>
+                      <div>
+                        <dt>User</dt>
+                        <dd>{record.userId ?? 'Unknown'}</dd>
+                      </div>
+                      <div>
+                        <dt>Type</dt>
+                        <dd>{operatorEventLabel(record.actionType)}</dd>
+                      </div>
+                      <div>
+                        <dt>Time</dt>
+                        <dd>{shortDateTime(record.createdAt)}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No recent execution errors.</p>
+            )}
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <div className="operatorPanelHeader">
+              <h2>Beta Requests</h2>
+              <div className="operatorHeaderActions">
+                <label>
+                  Status
+                  <select
+                    value={betaRequestStatusFilter}
+                    onChange={(event) => setBetaRequestStatusFilter(event.target.value as BetaRequestStatus | 'all')}
+                  >
+                    <option value="all">All</option>
+                    <option value="new">New</option>
+                    <option value="invited">Invited</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="smallButton exportButton"
+                  disabled={isExporting === 'beta-requests'}
+                  onClick={() => handleExport('beta-requests')}
+                >
+                  {isExporting === 'beta-requests' ? 'Exporting' : 'Export CSV'}
+                </button>
+              </div>
+            </div>
+            {snapshot.betaRequests.length ? (
+              <div className="betaRequestList">
+                {snapshot.betaRequests.map((request) => (
+                  <div className="betaRequestItem" key={request.id}>
+                    <div>
+                      <strong>{request.name}</strong>
+                      <a href={`mailto:${request.email}`}>{request.email}</a>
+                    </div>
+                    <dl>
+                      <div>
+                        <dt>Tools</dt>
+                        <dd>{request.tools}</dd>
+                      </div>
+                      <div>
+                        <dt>Google</dt>
+                        <dd>{betaComfortLabel(request.googleComfort)}</dd>
+                      </div>
+                      <div>
+                        <dt>Requested</dt>
+                        <dd>{shortDateTime(request.createdAt)}</dd>
+                      </div>
+                      <div>
+                        <dt>Status</dt>
+                        <dd>{operatorStatusLabel(request.status)}</dd>
+                      </div>
+                    </dl>
+                    {request.notes && <p>{request.notes}</p>}
+                    <div className="operatorInlineActions">
+                      <a
+                        className="smallButton exportButton"
+                        href={betaInvitationMailto(request, `${window.location.origin}/app`)}
+                      >
+                        Draft invite
+                      </a>
+                      <a
+                        className="smallButton exportButton"
+                        href={betaFollowUpMailto(request, `${window.location.origin}/feedback`)}
+                      >
+                        Draft follow-up
+                      </a>
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === request.id || request.status === 'invited'}
+                        onClick={() => handleBetaRequestStatus(request.id, 'invited')}
+                      >
+                        Mark invited
+                      </button>
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === request.id || request.status === 'archived'}
+                        onClick={() => handleBetaRequestStatus(request.id, 'archived')}
+                      >
+                        Archive
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No beta requests yet.</p>
+            )}
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <div className="operatorPanelHeader">
+              <h2>Beta Feedback</h2>
+              <div className="operatorHeaderActions">
+                <label>
+                  Status
+                  <select
+                    value={feedbackStatusFilter}
+                    onChange={(event) => setFeedbackStatusFilter(event.target.value as FeedbackStatus | 'all')}
+                  >
+                    <option value="all">All</option>
+                    <option value="new">New</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="smallButton exportButton"
+                  disabled={isExporting === 'feedback'}
+                  onClick={() => handleExport('feedback')}
+                >
+                  {isExporting === 'feedback' ? 'Exporting' : 'Export CSV'}
+                </button>
+              </div>
+            </div>
+            {snapshot.feedback.length ? (
+              <div className="feedbackRecordList">
+                {snapshot.feedback.map((record) => (
+                  <div className="feedbackRecordItem" key={record.id}>
+                    <dl>
+                      <div>
+                        <dt>Email</dt>
+                        <dd>{record.email ?? 'Not provided'}</dd>
+                      </div>
+                      <div>
+                        <dt>Request</dt>
+                        <dd>{record.requestId ?? 'Not provided'}</dd>
+                      </div>
+                      <div>
+                        <dt>Sent</dt>
+                        <dd>{shortDateTime(record.createdAt)}</dd>
+                      </div>
+                      <div>
+                        <dt>Status</dt>
+                        <dd>{operatorStatusLabel(record.status)}</dd>
+                      </div>
+                    </dl>
+                    <div>
+                      <strong>Right</strong>
+                      <p>{record.lookedRight}</p>
+                    </div>
+                    <div>
+                      <strong>Confusing</strong>
+                      <p>{record.confusing}</p>
+                    </div>
+                    <div>
+                      <strong>Expected</strong>
+                      <p>{record.expected}</p>
+                    </div>
+                    <div className="operatorInlineActions">
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === record.id || record.status === 'reviewed'}
+                        onClick={() => handleFeedbackStatus(record.id, 'reviewed')}
+                      >
+                        Mark reviewed
+                      </button>
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === record.id || record.status === 'archived'}
+                        onClick={() => handleFeedbackStatus(record.id, 'archived')}
+                      >
+                        Archive
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No beta feedback yet.</p>
+            )}
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <div className="operatorPanelHeader">
+              <h2>Support Requests</h2>
+              <div className="operatorHeaderActions">
+                <label>
+                  Status
+                  <select
+                    value={supportRequestStatusFilter}
+                    onChange={(event) => setSupportRequestStatusFilter(event.target.value as SupportRequestStatus | 'all')}
+                  >
+                    <option value="all">All</option>
+                    <option value="new">New</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="smallButton exportButton"
+                  disabled={isExporting === 'support-requests'}
+                  onClick={() => handleExport('support-requests')}
+                >
+                  {isExporting === 'support-requests' ? 'Exporting' : 'Export CSV'}
+                </button>
+              </div>
+            </div>
+            {snapshot.supportRequests.length ? (
+              <div className="feedbackRecordList">
+                {snapshot.supportRequests.map((request) => (
+                  <div className="feedbackRecordItem" key={request.id}>
+                    <dl>
+                      <div>
+                        <dt>Email</dt>
+                        <dd>{request.email}</dd>
+                      </div>
+                      <div>
+                        <dt>Type</dt>
+                        <dd>{operatorEventLabel(request.issueType)}</dd>
+                      </div>
+                      <div>
+                        <dt>Sent</dt>
+                        <dd>{shortDateTime(request.createdAt)}</dd>
+                      </div>
+                      <div>
+                        <dt>Status</dt>
+                        <dd>{operatorStatusLabel(request.status)}</dd>
+                      </div>
+                    </dl>
+                    <div>
+                      <strong>{request.summary}</strong>
+                      <p>{request.details}</p>
+                    </div>
+                    <div className="operatorInlineActions">
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === request.id || request.status === 'in_progress'}
+                        onClick={() => handleSupportRequestStatus(request.id, 'in_progress')}
+                      >
+                        Mark in progress
+                      </button>
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === request.id || request.status === 'resolved'}
+                        onClick={() => handleSupportRequestStatus(request.id, 'resolved')}
+                      >
+                        Resolve
+                      </button>
+                      <button
+                        type="button"
+                        className="smallButton exportButton"
+                        disabled={updatingRecordId === request.id || request.status === 'archived'}
+                        onClick={() => handleSupportRequestStatus(request.id, 'archived')}
+                      >
+                        Archive
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No support requests yet.</p>
+            )}
+          </article>
+
+          <article className="operatorPanel widePanel">
+            <h2>Operator Checklist</h2>
+            <ol>
+              {snapshot.backupPlan.operatorChecklist.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ol>
+          </article>
+        </section>
+      ) : (
+        <section className="operatorEmpty">
+          <div>
+            <Lock size={24} />
+            <div>
+              <strong>Load launch readiness</strong>
+              <p>Enter the production API URL and admin token to load launch readiness.</p>
+            </div>
+          </div>
+          <ol>
+            <li>Confirm `BRAIN_DUMP_PUBLIC_API_ORIGIN` points to the deployed backend.</li>
+            <li>Use `BRAIN_DUMP_ADMIN_TOKEN` from the backend host secret settings.</li>
+            <li>Run deployment verification before inviting testers.</li>
+            <li>Readiness should be green before expanding beta access.</li>
+          </ol>
+        </section>
+      )}
+    </main>
+  );
+}
+
+function OperatorMetric({ label, value, warning = false }: { label: string; value: number | string; warning?: boolean }) {
+  return (
+    <article className={warning ? 'operatorMetric warningMetric' : 'operatorMetric'}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </article>
+  );
+}
+
+function QueueSummaryPanel({
+  title,
+  counts,
+  labels
+}: {
+  title: string;
+  counts: Record<string, number>;
+  labels: string[];
+}) {
+  return (
+    <article className="operatorPanel queueSummaryPanel">
+      <h2>{title}</h2>
+      <div className="queueSummaryGrid">
+        {labels.map((label) => (
+          <div key={label}>
+            <span>{operatorStatusLabel(label)}</span>
+            <strong>{counts[label] ?? 0}</strong>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function countStatuses(records: Array<{ status: string }>): Record<string, number> {
+  return records.reduce<Record<string, number>>((counts, record) => {
+    counts[record.status] = (counts[record.status] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+function ReadinessGroups({ checks }: { checks: ReadinessReport['checks'] }) {
+  const blocking = checks.filter((check) => !check.ready);
+  const ready = checks.filter((check) => check.ready);
+
+  return (
+    <div className="readinessGroups">
+      <ReadinessGroup
+        title={`Blocking Issues (${blocking.length})`}
+        emptyText="No launch blockers detected."
+        checks={blocking}
+        blocked
+      />
+      <ReadinessGroup
+        title={`Ready Checks (${ready.length})`}
+        emptyText="No completed checks yet."
+        checks={ready}
+      />
+    </div>
+  );
+}
+
+function buildLaunchNotes(snapshot: OperatorSnapshot): string {
+  const blockingChecks = snapshot.readiness.checks.filter((check) => !check.ready);
+  const readyChecks = snapshot.readiness.checks.filter((check) => check.ready);
+  const openSupport = snapshot.launchSummary.queueCounts.support.new + snapshot.launchSummary.queueCounts.support.in_progress;
+  const lines = [
+    '# Brain Dump Launch Notes',
+    '',
+    `Generated: ${new Date(snapshot.launchSummary.generatedAt).toISOString()}`,
+    `Posture: ${snapshot.launchSummary.ready ? 'Ready' : 'Blocked'}`,
+    '',
+    '## Metrics',
+    '',
+    `- Events: ${snapshot.launchSummary.totalEvents}`,
+    `- Users: ${snapshot.launchSummary.uniqueUsers}`,
+    `- Errors: ${snapshot.launchSummary.totalErrors}`,
+    `- Latest event: ${snapshot.launchSummary.latestEventAt ?? 'None'}`,
+    '',
+    '## Queues',
+    '',
+    `- New beta requests: ${snapshot.launchSummary.queueCounts.beta.new}`,
+    `- New feedback items: ${snapshot.launchSummary.queueCounts.feedback.new}`,
+    `- Open support requests: ${openSupport}`,
+    `- Recent execution errors: ${snapshot.launchSummary.queueCounts.recentExecutionErrors}`,
+    '',
+    '## Blocking Checks',
+    '',
+    ...(blockingChecks.length
+      ? blockingChecks.map((check) => `- ${check.label}: ${check.detail}`)
+      : ['- None']),
+    '',
+    '## Ready Checks',
+    '',
+    ...(readyChecks.length
+      ? readyChecks.map((check) => `- ${check.label}: ${check.detail}`)
+      : ['- None']),
+    '',
+    '## Recent Errors',
+    '',
+    ...(snapshot.recentErrors.length
+      ? snapshot.recentErrors.map((record) => `- ${record.title}: ${record.message}`)
+      : ['- None']),
+    '',
+    '## Operator Next Moves',
+    '',
+    '- Resolve blocking checks before expanding beta invitations.',
+    '- Review new beta, feedback, and support records.',
+    '- Keep exports inside the operator launch workflow.'
+  ];
+  return `${lines.join('\n')}\n`;
+}
+
+function buildGoNoGoSummary(snapshot: OperatorSnapshot): string {
+  const blockingChecks = snapshot.readiness.checks.filter((check) => !check.ready);
+  const selfTestBlocks = snapshot.selfTest.checks.filter((check) => !check.ok);
+  const openSupport = snapshot.launchSummary.queueCounts.support.new + snapshot.launchSummary.queueCounts.support.in_progress;
+  const recentErrors = snapshot.launchSummary.queueCounts.recentExecutionErrors;
+  const duplicateGroups = snapshot.duplicateWriteAudit.duplicateGroups;
+  const go =
+    snapshot.readiness.ready &&
+    snapshot.selfTest.ok &&
+    snapshot.duplicateWriteAudit.ok &&
+    openSupport === 0 &&
+    recentErrors === 0;
+
+  const lines = [
+    '# Brain Dump Go/No-Go Summary',
+    '',
+    `Generated: ${new Date(snapshot.launchSummary.generatedAt).toISOString()}`,
+    `Decision: ${go ? 'GO' : 'NO-GO'}`,
+    '',
+    '## Gates',
+    '',
+    `- Launch readiness: ${snapshot.readiness.ready ? 'Pass' : 'Blocked'}`,
+    `- Production self-test: ${snapshot.selfTest.ok ? 'Pass' : 'Blocked'}`,
+    `- Duplicate-write audit: ${snapshot.duplicateWriteAudit.ok ? 'Clear' : 'Investigate'}`,
+    `- Recent execution errors: ${recentErrors}`,
+    `- Open support requests: ${openSupport}`,
+    '',
+    '## Blocking Readiness Checks',
+    '',
+    ...(blockingChecks.length ? blockingChecks.map((check) => `- ${check.label}: ${check.detail}`) : ['- None']),
+    '',
+    '## Self-Test Blocks',
+    '',
+    ...(selfTestBlocks.length ? selfTestBlocks.map((check) => `- ${check.label}: ${check.detail}`) : ['- None']),
+    '',
+    '## Duplicate-Write Groups',
+    '',
+    ...(duplicateGroups.length
+      ? duplicateGroups.map((group) => `- ${group.title}: ${group.count} writes across ${group.requestIds.join(', ')}`)
+      : ['- None']),
+    '',
+    '## Required Decision Note',
+    '',
+    go
+      ? '- Record the cohort size, invite date, support owner, and rollback contact before sending invites.'
+      : '- Do not expand invites until every NO-GO gate above is resolved or explicitly accepted in the launch decision record.'
+  ];
+
+  return `${lines.join('\n')}\n`;
+}
+
+function ReadinessGroup({
+  title,
+  emptyText,
+  checks,
+  blocked = false
+}: {
+  title: string;
+  emptyText: string;
+  checks: ReadinessReport['checks'];
+  blocked?: boolean;
+}) {
+  const Icon = blocked ? AlertTriangle : CheckCircle2;
+
+  return (
+    <section className="readinessGroup">
+      <h3>{title}</h3>
+      <div className="readinessList">
+        {checks.length ? (
+          checks.map((check) => (
+            <div className={blocked ? 'blockedItem' : 'readyItem'} key={check.key}>
+              <Icon size={17} />
+              <div>
+                <strong>{check.label}</strong>
+                <span>{check.detail}</span>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p>{emptyText}</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function shortDateTime(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(new Date(value));
+}
+
+function operatorEventLabel(name: string): string {
+  return name.replaceAll('_', ' ');
+}
+
+function betaComfortLabel(value: string): string {
+  if (value === 'comfortable') return 'Comfortable';
+  if (value === 'preview_first') return 'Preview first';
+  if (value === 'not_ready') return 'Not ready yet';
+  return value;
+}
+
+function operatorStatusLabel(value: string): string {
+  return value.replaceAll('_', ' ');
+}
+
+function downloadTextFile(contents: string, filename: string, type: string): void {
+  const blob = new Blob([contents], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function PublicDocument({
@@ -663,6 +2784,21 @@ function PublicNav() {
         <a href="/app">App</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
+        <a href="/beta">Beta</a>
+        <a href="/status">Status</a>
+        <a href="/faq">FAQ</a>
+        <a href="/security">Security</a>
+        <a href="/trust">Trust</a>
+        <a href="/install">Install</a>
+        <a href="/roadmap">Roadmap</a>
+        <a href="/press">Press</a>
+        <a href="/examples">Examples</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/demo">Demo</a>
+        <a href="/oauth-demo-checklist">OAuth checklist</a>
+        <a href="/timeline">Timeline</a>
+        <a href="/data-deletion">Data deletion</a>
+        <a href="/feedback">Feedback</a>
         <a href="/support">Support</a>
       </nav>
     </header>
@@ -688,7 +2824,28 @@ function PreviewRow({
 }
 
 function normalizedPath(path: string): string {
-  if (path === '/privacy' || path === '/terms' || path === '/support' || path === '/app') return path;
+  if (
+    path === '/privacy' ||
+    path === '/terms' ||
+    path === '/support' ||
+    path === '/data-deletion' ||
+    path === '/feedback' ||
+    path === '/beta' ||
+    path === '/status' ||
+    path === '/faq' ||
+    path === '/security' ||
+    path === '/trust' ||
+    path === '/install' ||
+    path === '/roadmap' ||
+    path === '/press' ||
+    path === '/examples' ||
+    path === '/pricing' ||
+    path === '/demo' ||
+    path === '/oauth-demo-checklist' ||
+    path === '/timeline' ||
+    path === '/operator' ||
+    path === '/app'
+  ) return path;
   return '/';
 }
 
@@ -716,26 +2873,46 @@ function FeedbackPanel({ result }: { result: BrainDumpResponse }) {
   );
 }
 
+function BetaHelpLinks() {
+  return (
+    <div className="betaHelpLinks" aria-label="Beta help">
+      <a href="/support">
+        <MessageCircle size={16} />
+        Support
+      </a>
+      <a href="/feedback">
+        <UserCheck size={16} />
+        Feedback
+      </a>
+      <a href="/status">
+        <CheckCircle2 size={16} />
+        Status
+      </a>
+    </div>
+  );
+}
+
 function RecoveryPanel({
   canRetry,
   isProcessing,
   onRetry,
-  context
+  guidance
 }: {
   canRetry: boolean;
   isProcessing: boolean;
   onRetry: () => void;
-  context: string;
+  guidance: RecoveryGuidance;
 }) {
   return (
-    <div className="feedbackPanel">
+    <div className="feedbackPanel recoveryPanel">
       <div>
-        <strong>{canRetry ? 'Nothing was created yet' : 'Need help?'}</strong>
-        <span>
-          {canRetry
-            ? 'Your reviewed actions are still here. Try again, or send support the error and what you expected.'
-            : 'Send what happened and what you expected. Include screenshots only if you are comfortable.'}
-        </span>
+        <strong>{guidance.title}</strong>
+        <span>{guidance.message}</span>
+        <ul>
+          {guidance.steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ul>
       </div>
       <div className="feedbackActions">
         {canRetry && (
@@ -744,13 +2921,56 @@ function RecoveryPanel({
             {isProcessing ? 'Retrying' : 'Retry'}
           </button>
         )}
-        <a href={supportRequestMailto(context)}>
+        <a href={supportRequestMailto(guidance.context)}>
           <MessageCircle size={17} />
           Contact support
         </a>
       </div>
     </div>
   );
+}
+
+type RecoveryGuidance = {
+  title: string;
+  message: string;
+  context: string;
+  steps: string[];
+};
+
+function buildRecoveryGuidance(error: string, canRetry: boolean): RecoveryGuidance {
+  const normalized = error.toLowerCase();
+  if (normalized.includes('workspace') || normalized.includes('connected')) {
+    return {
+      title: canRetry ? 'Google connection needs attention' : 'Reconnect Google',
+      message: 'Your reviewed actions are still here. Reconnect Google or refresh the workspace before retrying.',
+      context: 'Google workspace connection',
+      steps: ['Open Settings and confirm Public API URL.', 'Reconnect Google if the workspace is not connected.', 'Retry after the connection status looks right.']
+    };
+  }
+  if (normalized.includes('beta access')) {
+    return {
+      title: 'Beta access is required',
+      message: 'Enter the beta access code, then connect Google and retry the reviewed actions.',
+      context: 'Beta access',
+      steps: ['Enter the beta access code.', 'Confirm the access success message.', 'Retry the reviewed actions.']
+    };
+  }
+  if (normalized.includes('rate limit') || normalized.includes('too many')) {
+    return {
+      title: 'Slow down and retry',
+      message: 'The backend is protecting the beta from too many requests at once.',
+      context: 'Rate limit',
+      steps: ['Wait one minute.', 'Retry once.', 'Contact support if the same request still fails.']
+    };
+  }
+  return {
+    title: canRetry ? 'Nothing was created yet' : 'Need help?',
+    message: canRetry
+      ? 'Your reviewed actions are still here. Try again, or send support the error and what you expected.'
+      : 'Send what happened and what you expected. Include screenshots only if you are comfortable.',
+    context: 'Processing error',
+    steps: canRetry ? ['Retry once.', 'Do not repeatedly click Create if Google reports an error.', 'Contact support with the error text if retry fails.'] : ['Contact support with the error text.']
+  };
 }
 
 function ResultRecoveryPanel({ result }: { result: BrainDumpResponse }) {
@@ -774,21 +2994,30 @@ function ResultRecoveryPanel({ result }: { result: BrainDumpResponse }) {
 function SetupPanel({
   mode,
   hasPublicApi,
+  betaAccess,
   workspace,
+  hasDraft,
+  hasPreview,
+  hasResult,
   onConnect,
   onDisconnect,
   onOpenSettings
 }: {
   mode: BackendSettings['backendMode'];
   hasPublicApi: boolean;
+  betaAccess: BetaAccessStatus;
   workspace: UserWorkspace;
+  hasDraft: boolean;
+  hasPreview: boolean;
+  hasResult: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
   onOpenSettings: () => void;
 }) {
   const isConnected = workspace.status === 'connected';
-  const statusLabel = setupStatusLabel(mode, hasPublicApi, workspace);
-  const steps = setupSteps(mode, hasPublicApi, workspace);
+  const statusLabel = setupStatusLabel(mode, hasPublicApi, workspace, betaAccess);
+  const steps = setupSteps(mode, hasPublicApi, workspace, betaAccess, hasDraft, hasPreview, hasResult);
+  const needsBetaAccess = mode === 'public' && hasPublicApi && betaAccess.required && !betaAccess.granted;
 
   if (mode === 'mock') {
     return (
@@ -810,9 +3039,19 @@ function SetupPanel({
   if (mode === 'public') {
     return (
       <OnboardingPanel
-        title={isConnected ? (hasPublicApi ? 'Google workspace connected' : 'Demo Google workspace connected') : 'Connect Google'}
+        title={
+          needsBetaAccess
+            ? 'Beta access required'
+            : isConnected
+              ? hasPublicApi
+                ? 'Google workspace connected'
+                : 'Demo Google workspace connected'
+              : 'Connect Google'
+        }
         description={
-          isConnected
+          needsBetaAccess
+            ? 'Enter your beta access code before connecting a Google account.'
+            : isConnected
             ? workspace.email ?? 'Ready to create reviewed actions.'
             : hasPublicApi
               ? 'Each user connects their own Google account before Brain Dump creates anything.'
@@ -822,7 +3061,7 @@ function SetupPanel({
         steps={steps}
         destinations={isConnected ? workspace.destinations.map((destination) => destination.name) : []}
         action={
-          isConnected ? (
+          needsBetaAccess ? undefined : isConnected ? (
             <button type="button" onClick={onDisconnect}>
               <Cloud size={16} />
               Disconnect
@@ -854,6 +3093,40 @@ function SetupPanel({
   );
 }
 
+function BetaAccessPanel({
+  code,
+  isSubmitting,
+  onCodeChange,
+  onSubmit
+}: {
+  code: string;
+  isSubmitting: boolean;
+  onCodeChange: (code: string) => void;
+  onSubmit: (event: FormEvent) => void;
+}) {
+  return (
+    <form className="betaAccessPanel" onSubmit={onSubmit}>
+      <div>
+        <strong>Private beta access</strong>
+        <span>Enter the access code from your invitation before connecting Google.</span>
+      </div>
+      <label>
+        Access code
+        <input
+          value={code}
+          onChange={(event) => onCodeChange(event.target.value)}
+          placeholder="Beta access code"
+          autoComplete="one-time-code"
+        />
+      </label>
+      <button className="processButton smallButton" type="submit" disabled={isSubmitting}>
+        <Lock size={16} />
+        {isSubmitting ? 'Checking' : 'Unlock'}
+      </button>
+    </form>
+  );
+}
+
 function OnboardingPanel({
   title,
   description,
@@ -865,9 +3138,9 @@ function OnboardingPanel({
   title: string;
   description: string;
   statusLabel: string;
-  steps: Array<{ label: string; complete: boolean }>;
+  steps: Array<{ label: string; detail: string; complete: boolean }>;
   destinations?: string[];
-  action: ReactNode;
+  action?: ReactNode;
 }) {
   return (
     <div className="setupPanel">
@@ -883,7 +3156,10 @@ function OnboardingPanel({
         {steps.map((step) => (
           <li className={step.complete ? 'complete' : ''} key={step.label}>
             <CheckCircle2 size={15} />
-            <span>{step.label}</span>
+            <span>
+              <strong>{step.label}</strong>
+              <small>{step.detail}</small>
+            </span>
           </li>
         ))}
       </ol>
@@ -902,36 +3178,61 @@ function OnboardingPanel({
   );
 }
 
-function setupStatusLabel(mode: BackendSettings['backendMode'], hasPublicApi: boolean, workspace: UserWorkspace): string {
+function setupStatusLabel(
+  mode: BackendSettings['backendMode'],
+  hasPublicApi: boolean,
+  workspace: UserWorkspace,
+  betaAccess: BetaAccessStatus
+): string {
   if (mode === 'mock') return 'Safe preview only. No Google account is connected.';
   if (mode === 'private_apps_script') return 'Private CSOS bridge is for founder testing, not public beta users.';
+  if (hasPublicApi && betaAccess.required && !betaAccess.granted) return 'Beta access code needed before Google sign-in.';
   if (workspace.status === 'connected') {
     return hasPublicApi ? 'Ready for reviewed actions in this user account.' : 'Demo-ready. Add the public API URL before inviting users.';
   }
   return hasPublicApi ? 'Ready to start Google sign-in.' : 'Public backend URL needed before real Google sign-in.';
 }
 
-function setupSteps(mode: BackendSettings['backendMode'], hasPublicApi: boolean, workspace: UserWorkspace) {
+function setupSteps(
+  mode: BackendSettings['backendMode'],
+  hasPublicApi: boolean,
+  workspace: UserWorkspace,
+  betaAccess: BetaAccessStatus,
+  hasDraft: boolean,
+  hasPreview: boolean,
+  hasResult: boolean
+) {
   if (mode === 'mock') {
     return [
-      { label: 'Preview parser', complete: true },
-      { label: 'Review actions', complete: true },
-      { label: 'Connect Google when ready', complete: false }
+      { label: 'Capture', detail: 'Add a messy note or use a sample.', complete: hasDraft },
+      { label: 'Review', detail: 'Check routed actions before anything is created.', complete: hasPreview || hasResult },
+      { label: 'Connect', detail: 'Switch to public mode when ready for Google.', complete: false },
+      { label: 'Create', detail: 'Create only after review in connected mode.', complete: hasResult },
+      { label: 'Help', detail: 'Use support or feedback after the first run.', complete: false }
     ];
   }
 
   if (mode === 'private_apps_script') {
     return [
-      { label: 'Private bridge selected', complete: true },
-      { label: 'Public user account setup', complete: false },
-      { label: 'Per-user Google workspace', complete: false }
+      { label: 'Mode', detail: 'Private CSOS bridge selected.', complete: true },
+      { label: 'Capture', detail: 'Add a messy note for founder testing.', complete: hasDraft },
+      { label: 'Review', detail: 'Confirm routed actions before bridge writes.', complete: hasPreview || hasResult },
+      { label: 'Public users', detail: 'Use public mode for anyone beyond founder testing.', complete: false },
+      { label: 'Help', detail: 'Use support or feedback for launch issues.', complete: false }
     ];
   }
 
   const connected = workspace.status === 'connected';
   return [
-    { label: hasPublicApi ? 'Public backend configured' : 'Public backend configured', complete: hasPublicApi },
-    { label: connected ? 'Google account connected' : 'Connect Google account', complete: connected },
-    { label: connected ? 'Workspace destinations ready' : 'Workspace destinations created after sign-in', complete: connected }
+    { label: 'Backend', detail: hasPublicApi ? 'Public API URL is configured.' : 'Add the public API URL in Settings.', complete: hasPublicApi },
+    {
+      label: 'Beta',
+      detail: betaAccess.required ? 'Confirm invite access before sign-in.' : 'Beta gate is open.',
+      complete: !hasPublicApi || !betaAccess.required || betaAccess.granted
+    },
+    { label: 'Connect', detail: connected ? 'Google account is connected.' : 'Connect your own Google account.', complete: connected },
+    { label: 'Review', detail: 'Check routed actions before creating them.', complete: hasPreview || hasResult },
+    { label: 'Create', detail: 'Send reviewed actions to your workspace.', complete: hasResult },
+    { label: 'Help', detail: 'Use support or feedback after the first run.', complete: false }
   ];
 }

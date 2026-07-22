@@ -8,7 +8,8 @@ Use `docs/BETA_LAUNCH_WORKSHEET.md` for deployment-specific URLs, support email,
 
 - Deploy the frontend and backend to staging or beta production.
 - Set `VITE_SUPPORT_EMAIL`, `BRAIN_DUMP_FRONTEND_ORIGIN`, `BRAIN_DUMP_PUBLIC_API_ORIGIN`, and `BRAIN_DUMP_ADMIN_TOKEN`.
-- Confirm `/`, `/privacy`, `/terms`, and `/app` load on the beta domain.
+- Confirm `/`, `/privacy`, `/terms`, `/support`, `/data-deletion`, `/feedback`, `/beta`, and `/app` load on the beta domain.
+- Confirm `/status` and `/faq` match the current beta posture.
 - Confirm Google OAuth works with one test account.
 - Confirm `GET /api/admin/metrics` and `GET /api/admin/backup-plan` require `X-Brain-Dump-Admin-Token`.
 - Confirm backup snapshot or point-in-time recovery is available before inviting testers.
@@ -41,6 +42,8 @@ A few important notes:
 
 Beta link: [BETA_APP_URL]
 
+Beta request page: [BETA_APP_URL]/beta
+
 If you are willing, try it this week and send me your honest notes.
 
 Thank you,
@@ -59,7 +62,7 @@ Thank you,
 8. Remove anything that looks wrong.
 9. Click Create.
 10. Check Google Tasks and Google Calendar.
-11. Send feedback using the app link or reply to the invite email.
+11. Send feedback using the app link, `/feedback`, or reply to the invite email.
 12. Disconnect Google if you do not want Brain Dump to stay connected.
 
 Suggested test note:
@@ -122,6 +125,8 @@ Thank you for trying Brain Dump. I have three quick follow-up questions:
 3. Would you use it again with real work next week?
 
 No need for a polished answer. A few honest sentences are perfect.
+
+Please do not send passwords, OAuth tokens, or private screenshots unless you are comfortable sharing them.
 
 Thank you,
 

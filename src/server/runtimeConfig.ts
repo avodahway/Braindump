@@ -1,5 +1,7 @@
 import { publicBackendRoutes } from '../api/publicContract';
 import type { BrainDumpBackendConfig } from './backendFactory';
+import { createAesGcmSecretCodec } from './storageCrypto';
+import { createSupabaseKeyValueStore } from './supabaseKeyValueStore';
 
 export type RuntimeEnv = Record<string, string | undefined>;
 
@@ -37,13 +39,30 @@ export function loadBrainDumpBackendConfig(
     },
     frontendAppUrl: frontendAppUrl(env.BRAIN_DUMP_FRONTEND_ORIGIN),
     adminToken: env.BRAIN_DUMP_ADMIN_TOKEN?.trim() || undefined,
+    betaAccessCode: env.BRAIN_DUMP_BETA_ACCESS_CODE?.trim() || undefined,
     storageKeyPrefix: env.BRAIN_DUMP_STORAGE_PREFIX || 'brain-dump',
+    requestLimits: requestLimits(env),
     fetcher: options.fetcher,
-    storage: options.storage,
-    storageCodec: options.storageCodec,
+    storage: options.storage ?? supabaseStorage(env, options.fetcher),
+    storageCodec: options.storageCodec ?? storageCodec(env),
     nowMs: options.nowMs,
     nowDate: options.nowDate
   };
+}
+
+function requestLimits(env: RuntimeEnv): BrainDumpBackendConfig['requestLimits'] {
+  return {
+    maxJsonBodyBytes: optionalPositiveInteger(env.BRAIN_DUMP_MAX_JSON_BODY_BYTES, 'BRAIN_DUMP_MAX_JSON_BODY_BYTES'),
+    rateLimit: {
+      windowMs: optionalPositiveInteger(env.BRAIN_DUMP_RATE_LIMIT_WINDOW_MS, 'BRAIN_DUMP_RATE_LIMIT_WINDOW_MS'),
+      maxRequests: optionalPositiveInteger(env.BRAIN_DUMP_RATE_LIMIT_MAX_REQUESTS, 'BRAIN_DUMP_RATE_LIMIT_MAX_REQUESTS')
+    }
+  };
+}
+
+function storageCodec(env: RuntimeEnv): BrainDumpBackendConfig['storageCodec'] | undefined {
+  const secret = env.BRAIN_DUMP_STORAGE_SECRET?.trim();
+  return secret ? createAesGcmSecretCodec(secret) : undefined;
 }
 
 export function requiredEnv(env: RuntimeEnv, name: string): string {
@@ -63,6 +82,17 @@ export function parseScopes(value: string | undefined): string[] {
   return scopes && scopes.length > 0 ? scopes : [...defaultGoogleScopes];
 }
 
+export function optionalPositiveInteger(value: string | undefined, name: string): number | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+
+  const parsed = Number(trimmed);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`Invalid ${name} value: ${trimmed}`);
+  }
+  return parsed;
+}
+
 function normalizeOrigin(value: string): string {
   const withoutTrailingSlash = value.replace(/\/+$/, '');
   const url = new URL(withoutTrailingSlash);
@@ -72,4 +102,22 @@ function normalizeOrigin(value: string): string {
 function frontendAppUrl(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
   return trimmed ? `${normalizeOrigin(trimmed)}/app` : undefined;
+}
+
+function supabaseStorage(
+  env: RuntimeEnv,
+  fetcher: BrainDumpBackendConfig['fetcher']
+): BrainDumpBackendConfig['storage'] | undefined {
+  const supabaseUrl = env.SUPABASE_URL?.trim();
+  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!supabaseUrl && !serviceRoleKey) return undefined;
+  if (!supabaseUrl) throw new Error('Missing required environment variable: SUPABASE_URL');
+  if (!serviceRoleKey) throw new Error('Missing required environment variable: SUPABASE_SERVICE_ROLE_KEY');
+
+  return createSupabaseKeyValueStore({
+    supabaseUrl,
+    serviceRoleKey,
+    tableName: env.SUPABASE_KV_TABLE?.trim() || undefined,
+    fetcher
+  });
 }

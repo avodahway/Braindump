@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { feedbackMailto, supportMailto, supportRequestMailto } from './support';
+import { betaAccessMailto, betaFeedbackMailto, feedbackMailto, supportMailto, supportRequestMailto } from './support';
 import type { BrainDumpResponse } from './types';
 
 describe('support links', () => {
@@ -19,6 +19,23 @@ describe('support links', () => {
 
   it('builds support request links', () => {
     expect(decodeURIComponent(supportRequestMailto('OAuth'))).toContain('Context: OAuth');
+  });
+
+  it('builds a reusable beta feedback link', () => {
+    const href = decodeURIComponent(betaFeedbackMailto());
+
+    expect(href).toContain('Brain Dump beta feedback');
+    expect(href).toContain('What looked right?');
+    expect(href).toContain('What looked wrong or confusing?');
+    expect(href).toContain('What did you expect Brain Dump to do instead?');
+  });
+
+  it('builds a beta access request link', () => {
+    const href = decodeURIComponent(betaAccessMailto());
+
+    expect(href).toContain('Brain Dump beta access request');
+    expect(href).toContain('What do you currently use for tasks and calendar?');
+    expect(href).toContain('Are you comfortable connecting Google Tasks and Google Calendar during beta?');
   });
 });
 

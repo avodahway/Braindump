@@ -1,10 +1,35 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  deletePublicAccountData,
+  getPublicAdminBackupPlan,
+  getPublicAdminBetaCohortReadiness,
+  getPublicAdminBetaRequests,
+  getPublicAdminBetaRequestsCsv,
+  getPublicAdminExecutionErrors,
+  getPublicAdminExecutionErrorsCsv,
+  getPublicAdminDuplicateWriteAudit,
+  getPublicAdminFeedback,
+  getPublicAdminFeedbackCsv,
+  getPublicAdminLaunchSummary,
+  getPublicAdminMetrics,
+  getPublicAdminReadiness,
+  getPublicAdminSelfTest,
+  getPublicAdminSupportSla,
+  getPublicBetaAccessStatus,
   normalizeApiBaseUrl,
   processPublicBrainDump,
   publicApiUrl,
+  redeemPublicBetaAccessCode,
   startPublicGoogleConnection,
-  trackPublicEvent
+  submitPublicBetaRequest,
+  submitPublicFeedback,
+  submitPublicSupportRequest,
+  trackPublicEvent,
+  updatePublicAdminBetaRequestStatus,
+  updatePublicAdminFeedbackStatus,
+  getPublicAdminSupportRequests,
+  getPublicAdminSupportRequestsCsv,
+  updatePublicAdminSupportRequestStatus
 } from './publicClient';
 
 describe('public API client', () => {
@@ -22,6 +47,32 @@ describe('public API client', () => {
     expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/auth/google/start', {
       method: 'POST',
       credentials: 'include'
+    });
+  });
+
+  it('reads and redeems public beta access through the public backend', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ required: true, granted: false })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, access: { required: true, granted: true } })));
+
+    await expect(getPublicBetaAccessStatus('https://api.example.com', fetcher)).resolves.toEqual({
+      required: true,
+      granted: false
+    });
+    await expect(redeemPublicBetaAccessCode('https://api.example.com', 'founder-beta', fetcher)).resolves.toEqual({
+      ok: true,
+      access: { required: true, granted: true }
+    });
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/beta/status', {
+      credentials: 'include'
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/beta/access', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'founder-beta' })
     });
   });
 
@@ -52,6 +103,135 @@ describe('public API client', () => {
     });
   });
 
+  it('submits beta requests through the public backend', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          request: {
+            id: 'beta-1',
+            status: 'new',
+            name: 'Jay Cleveland',
+            email: 'jay@example.com',
+            tools: 'Google Tasks',
+            googleComfort: 'comfortable',
+            createdAt: '2026-07-17T12:00:00.000Z'
+          }
+        })
+      )
+    );
+
+    await submitPublicBetaRequest(
+      'https://api.example.com',
+      {
+        name: 'Jay Cleveland',
+        email: 'jay@example.com',
+        tools: 'Google Tasks',
+        googleComfort: 'comfortable'
+      },
+      fetcher
+    );
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/beta/request', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Jay Cleveland',
+        email: 'jay@example.com',
+        tools: 'Google Tasks',
+        googleComfort: 'comfortable'
+      })
+    });
+  });
+
+  it('submits feedback through the public backend', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          feedback: {
+            id: 'feedback-1',
+            status: 'new',
+            email: 'jay@example.com',
+            lookedRight: 'Tasks were right.',
+            confusing: 'Calendar felt unclear.',
+            expected: 'More review guidance.',
+            createdAt: '2026-07-17T12:00:00.000Z'
+          }
+        })
+      )
+    );
+
+    await submitPublicFeedback(
+      'https://api.example.com',
+      {
+        email: 'jay@example.com',
+        lookedRight: 'Tasks were right.',
+        confusing: 'Calendar felt unclear.',
+        expected: 'More review guidance.'
+      },
+      fetcher
+    );
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/feedback', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'jay@example.com',
+        lookedRight: 'Tasks were right.',
+        confusing: 'Calendar felt unclear.',
+        expected: 'More review guidance.'
+      })
+    });
+  });
+
+  it('submits support requests through the public backend', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          supportRequest: {
+            id: 'support-1',
+            status: 'new',
+            email: 'user@example.com',
+            issueType: 'google_connection',
+            summary: 'Connection failed',
+            details: 'OAuth callback showed an error.',
+            createdAt: '2026-07-17T12:00:00.000Z'
+          }
+        })
+      )
+    );
+
+    await submitPublicSupportRequest(
+      'https://api.example.com',
+      {
+        email: 'user@example.com',
+        issueType: 'google_connection',
+        summary: 'Connection failed',
+        details: 'OAuth callback showed an error.'
+      },
+      fetcher
+    );
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/support/request', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'user@example.com',
+        issueType: 'google_connection',
+        summary: 'Connection failed',
+        details: 'OAuth callback showed an error.'
+      })
+    });
+  });
+
+
+
+
   it('uses backend error messages when public requests fail', async () => {
     const fetcher = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ error: 'Google workspace is not connected.' }), {
@@ -78,6 +258,267 @@ describe('public API client', () => {
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'review_created', requestId: 'req-1', actionCount: 2 })
+    });
+  });
+
+  it('deletes public account data through the public backend', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true, deleted: ['google_tokens', 'workspace'] }))
+    );
+
+    await deletePublicAccountData('https://api.example.com', fetcher);
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/account/delete', {
+      method: 'POST',
+      credentials: 'include'
+    });
+  });
+
+  it('reads protected operator endpoints with the admin token header', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ totalEvents: 0, uniqueUsers: 0, uniqueRequests: 0, totalActions: 0, totalErrors: 0, byName: {} })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ready: true, generatedAt: '2026-07-17T12:00:00.000Z', checks: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, generatedAt: '2026-07-17T12:00:00.000Z', checks: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, generatedAt: '2026-07-17T12:00:00.000Z', totalCreated: 0, duplicateGroups: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, generatedAt: '2026-07-17T12:00:00.000Z', thresholdHours: 24, openCount: 0, overdueCount: 0, overdueRequests: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, generatedAt: '2026-07-17T12:00:00.000Z', recommendedNextCohortSize: 5, queueCounts: {}, checks: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ generatedAt: '2026-07-17T12:00:00.000Z', storagePrefix: 'prod', sections: [], operatorChecklist: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ generatedAt: '2026-07-17T12:00:00.000Z', ready: true, totalEvents: 0, uniqueUsers: 0, totalErrors: 0, queueCounts: { beta: { new: 0, invited: 0, archived: 0 }, feedback: { new: 0, reviewed: 0, archived: 0 }, support: { new: 0, in_progress: 0, resolved: 0, archived: 0 }, recentExecutionErrors: 0 } })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ recentErrors: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ requests: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ feedback: [] })));
+
+    await getPublicAdminMetrics('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminReadiness('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminSelfTest('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminDuplicateWriteAudit('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminSupportSla('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminBetaCohortReadiness('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminBackupPlan('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminLaunchSummary('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminExecutionErrors('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminBetaRequests('https://api.example.com', 'admin-token', fetcher);
+    await getPublicAdminFeedback('https://api.example.com', 'admin-token', fetcher);
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/metrics', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/admin/readiness', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(3, 'https://api.example.com/api/admin/self-test', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(4, 'https://api.example.com/api/admin/duplicate-write-audit', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(5, 'https://api.example.com/api/admin/support-sla', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(6, 'https://api.example.com/api/admin/beta-cohort-readiness', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(7, 'https://api.example.com/api/admin/backup-plan', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(8, 'https://api.example.com/api/admin/launch-summary', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(9, 'https://api.example.com/api/admin/execution-errors', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(10, 'https://api.example.com/api/admin/beta-requests', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(11, 'https://api.example.com/api/admin/feedback', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
+  it('reads protected operator CSV exports with the admin token header', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('createdAt,requestId,title\n2026-07-17T12:00:00.000Z,req-1,Lunch'))
+      .mockResolvedValueOnce(new Response('createdAt,name,email\n2026-07-17T12:00:00.000Z,Jay,jay@example.com'))
+      .mockResolvedValueOnce(new Response('createdAt,email,lookedRight\n2026-07-17T12:00:00.000Z,user@example.com,Tasks'));
+
+    await expect(getPublicAdminExecutionErrorsCsv('https://api.example.com', 'admin-token', fetcher)).resolves.toContain('req-1');
+    await expect(getPublicAdminBetaRequestsCsv('https://api.example.com', 'admin-token', fetcher)).resolves.toContain(
+      'jay@example.com'
+    );
+    await expect(getPublicAdminFeedbackCsv('https://api.example.com', 'admin-token', fetcher)).resolves.toContain('Tasks');
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/execution-errors?format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/admin/beta-requests?format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(3, 'https://api.example.com/api/admin/feedback?format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
+  it('filters protected beta request lists and CSV exports by status', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ requests: [] })))
+      .mockResolvedValueOnce(new Response('createdAt,name,email,status\n2026-07-17T12:00:00.000Z,Jay,jay@example.com,new'));
+
+    await getPublicAdminBetaRequests('https://api.example.com', 'admin-token', 'new', fetcher);
+    await getPublicAdminBetaRequestsCsv('https://api.example.com', 'admin-token', 'new', fetcher);
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/beta-requests?status=new', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/admin/beta-requests?status=new&format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
+  it('filters protected feedback lists and CSV exports by status', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ feedback: [] })))
+      .mockResolvedValueOnce(new Response('createdAt,email,status\n2026-07-17T12:00:00.000Z,user@example.com,reviewed'));
+
+    await getPublicAdminFeedback('https://api.example.com', 'admin-token', 'reviewed', fetcher);
+    await getPublicAdminFeedbackCsv('https://api.example.com', 'admin-token', 'reviewed', fetcher);
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/feedback?status=reviewed', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/admin/feedback?status=reviewed&format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
+  it('updates beta request status through the protected operator API', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          request: {
+            id: 'beta-1',
+            status: 'invited',
+            name: 'Jay Cleveland',
+            email: 'jay@example.com',
+            tools: 'Google Tasks',
+            googleComfort: 'comfortable',
+            createdAt: '2026-07-17T12:00:00.000Z',
+            updatedAt: '2026-07-17T12:30:00.000Z'
+          }
+        })
+      )
+    );
+
+    await updatePublicAdminBetaRequestStatus('https://api.example.com', 'admin-token', 'beta-1', 'invited', fetcher);
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/beta-request', {
+      method: 'POST',
+      headers: {
+        'X-Brain-Dump-Admin-Token': 'admin-token',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 'beta-1', status: 'invited' })
+    });
+  });
+
+  it('updates feedback status through the protected operator API', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          feedback: {
+            id: 'feedback-1',
+            status: 'reviewed',
+            lookedRight: 'Tasks were right.',
+            confusing: 'Calendar felt unclear.',
+            expected: 'More review guidance.',
+            createdAt: '2026-07-17T12:00:00.000Z',
+            updatedAt: '2026-07-17T12:30:00.000Z'
+          }
+        })
+      )
+    );
+
+    await updatePublicAdminFeedbackStatus('https://api.example.com', 'admin-token', 'feedback-1', 'reviewed', fetcher);
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/feedback-item', {
+      method: 'POST',
+      headers: {
+        'X-Brain-Dump-Admin-Token': 'admin-token',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 'feedback-1', status: 'reviewed' })
+    });
+  });
+
+  it('reads and updates support requests through protected operator APIs', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ supportRequests: [] })))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            supportRequest: {
+              id: 'support-1',
+              status: 'resolved',
+              email: 'user@example.com',
+              issueType: 'google_connection',
+              summary: 'Connection failed',
+              details: 'OAuth callback showed an error.',
+              createdAt: '2026-07-17T12:00:00.000Z',
+              updatedAt: '2026-07-17T12:30:00.000Z'
+            }
+          })
+        )
+      );
+
+    await getPublicAdminSupportRequests('https://api.example.com', 'admin-token', fetcher);
+    await updatePublicAdminSupportRequestStatus('https://api.example.com', 'admin-token', 'support-1', 'resolved', fetcher);
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/support-requests', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/admin/support-request', {
+      method: 'POST',
+      headers: {
+        'X-Brain-Dump-Admin-Token': 'admin-token',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: 'support-1', status: 'resolved' })
+    });
+  });
+
+  it('reads support request CSV exports with the admin token header', async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response('createdAt,email\n2026-07-17,user@example.com'));
+
+    await expect(getPublicAdminSupportRequestsCsv('https://api.example.com', 'admin-token', fetcher)).resolves.toContain(
+      'user@example.com'
+    );
+
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.com/api/admin/support-requests?format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+  });
+
+  it('filters protected support request lists and CSV exports by status', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ supportRequests: [] })))
+      .mockResolvedValueOnce(new Response('createdAt,email,status\n2026-07-17,user@example.com,in_progress'));
+
+    await getPublicAdminSupportRequests('https://api.example.com', 'admin-token', 'in_progress', fetcher);
+    await getPublicAdminSupportRequestsCsv('https://api.example.com', 'admin-token', 'in_progress', fetcher);
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.com/api/admin/support-requests?status=in_progress', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
+    });
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://api.example.com/api/admin/support-requests?status=in_progress&format=csv', {
+      headers: { 'X-Brain-Dump-Admin-Token': 'admin-token' }
     });
   });
 });

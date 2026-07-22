@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: brain-dump-api
+    runtime: node
+    plan: starter
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build:backend
+    startCommand: pnpm start:backend
+    healthCheckPath: /api/health
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: BRAIN_DUMP_PUBLIC_API_ORIGIN
+        sync: false
+      - key: BRAIN_DUMP_FRONTEND_ORIGIN
+        sync: false
+      - key: BRAIN_DUMP_ADMIN_TOKEN
+        sync: false
+      - key: BRAIN_DUMP_BETA_ACCESS_CODE
+        sync: false
+      - key: BRAIN_DUMP_STORAGE_PREFIX
+        value: brain-dump-prod
+      - key: BRAIN_DUMP_STORAGE_SECRET
+        sync: false
+      - key: BRAIN_DUMP_MAX_JSON_BODY_BYTES
+        value: "65536"
+      - key: BRAIN_DUMP_RATE_LIMIT_WINDOW_MS
+        value: "60000"
+      - key: BRAIN_DUMP_RATE_LIMIT_MAX_REQUESTS
+        value: "60"
+      - key: GOOGLE_OAUTH_SCOPES
+        value: openid email profile https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/calendar.events
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_KV_TABLE
+        value: brain_dump_kv

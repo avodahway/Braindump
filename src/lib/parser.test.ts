@@ -34,6 +34,11 @@ describe('parseLine', () => {
     expect(action.type).toBe('waiting');
   });
 
+  it('routes common follow-up wording to waiting', () => {
+    expect(parseLine('Waiting for Chris to confirm numbers')[0].type).toBe('waiting');
+    expect(parseLine('Follow-up with Sarah about the invoice')[0].type).toBe('waiting');
+  });
+
   it('creates project plus calendar block for weekly hour allocation', () => {
     const actions = parseLine('Spend 4 hours this week on the porch replacement project');
     expect(actions.map((action) => action.type)).toEqual(['project', 'calendar']);

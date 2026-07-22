@@ -10,7 +10,8 @@ describe('readiness report', () => {
       googleScopes: ['https://www.googleapis.com/auth/tasks', 'https://www.googleapis.com/auth/calendar.events'],
       frontendAppUrl: 'https://app.example.com/app',
       adminTokenConfigured: true,
-      storageMode: 'durable'
+      storageMode: 'durable',
+      storageEncrypted: true
     });
 
     expect(report.ready).toBe(true);
@@ -21,7 +22,8 @@ describe('readiness report', () => {
     const report = buildReadinessReport({
       googleScopes: ['https://www.googleapis.com/auth/tasks'],
       adminTokenConfigured: false,
-      storageMode: 'memory'
+      storageMode: 'memory',
+      storageEncrypted: false
     });
 
     expect(report.ready).toBe(false);
@@ -31,7 +33,26 @@ describe('readiness report', () => {
       'google_scopes',
       'frontend_return_url',
       'admin_token',
-      'durable_storage'
+      'durable_storage',
+      'storage_encryption'
     ]);
+  });
+
+  it('does not mark durable storage ready when encryption is missing', () => {
+    const report = buildReadinessReport({
+      googleClientId: 'client-id',
+      googleRedirectUri: 'https://api.example.com/api/auth/google/callback',
+      googleScopes: ['https://www.googleapis.com/auth/tasks', 'https://www.googleapis.com/auth/calendar.events'],
+      frontendAppUrl: 'https://app.example.com/app',
+      adminTokenConfigured: true,
+      storageMode: 'durable',
+      storageEncrypted: false
+    });
+
+    expect(report.ready).toBe(false);
+    expect(report.checks.find((check) => check.key === 'storage_encryption')).toMatchObject({
+      ready: false,
+      detail: 'Missing BRAIN_DUMP_STORAGE_SECRET'
+    });
   });
 });

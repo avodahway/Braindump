@@ -51,6 +51,7 @@ Initial routes are documented in `src/api/publicContract.ts`:
 - `POST /api/auth/google/start`
 - `GET /api/auth/google/callback`
 - `POST /api/auth/google/disconnect`
+- `POST /api/account/delete`
 - `POST /api/brain-dump`
 
 The current PWA includes a safe demo connection in public mode. It creates local-only destinations so the onboarding and processing flow can be tested without Google OAuth credentials. When a Public API URL is configured, `src/api/publicClient.ts` sends real requests to the public backend contract instead of using the demo process path.
@@ -58,6 +59,9 @@ The current PWA includes a safe demo connection in public mode. It creates local
 `src/api/publicConnection.ts` is the frontend connection boundary. With a Public API URL configured, it starts backend OAuth and redirects to Google. Without one, it keeps the local demo connection path available.
 
 `src/server/publicBackend.ts` contains a framework-neutral backend scaffold for these routes. It is intentionally pure TypeScript so it can be adapted to a serverless function, a small Node service, or an edge runtime.
+
+When `BRAIN_DUMP_FRONTEND_ORIGIN` is configured, the public backend allows credentialed browser requests only from that
+frontend origin and rejects state-changing requests from other origins.
 
 `src/server/actionExecutor.ts` separates parsed actions from provider writes. The demo executor maps actions to user destinations now; a later Google executor can implement the same interface with real Tasks, Calendar, and workspace writes.
 
@@ -79,13 +83,18 @@ Calendar execution carries the request timezone through the executor context and
 
 `src/server/durableStore.ts` adds a framework-neutral key-value storage adapter for OAuth state, refresh tokens, workspaces, and sessions. A deployed backend can supply a managed store and encryption codec to `createBrainDumpBackend` without changing the parser, frontend, or Google execution code.
 
-`src/server/runtimeConfig.ts` and `src/server/runtimeHandler.ts` are the deployable backend entry point. Required environment values are `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BRAIN_DUMP_PUBLIC_API_ORIGIN`, and `BRAIN_DUMP_FRONTEND_ORIGIN`. Optional values are `GOOGLE_OAUTH_SCOPES` and `BRAIN_DUMP_STORAGE_PREFIX`.
+`src/server/runtimeConfig.ts` and `src/server/runtimeHandler.ts` are the deployable backend entry point. Required environment values are `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BRAIN_DUMP_PUBLIC_API_ORIGIN`, and `BRAIN_DUMP_FRONTEND_ORIGIN`. Optional values are `GOOGLE_OAUTH_SCOPES`, `BRAIN_DUMP_STORAGE_PREFIX`, `BRAIN_DUMP_BETA_ACCESS_CODE`, `BRAIN_DUMP_MAX_JSON_BODY_BYTES`, `BRAIN_DUMP_RATE_LIMIT_WINDOW_MS`, and `BRAIN_DUMP_RATE_LIMIT_MAX_REQUESTS`.
 
 `src/server/workspaceProvisioning.ts` provisions a public user's workspace after Google sign-in. It reuses existing `Brain Dump Work` and `Brain Dump Personal` task lists when present, or creates them in that user's Google Tasks account when missing.
 
 `src/server/idempotencyStore.ts` persists processed brain-dump responses by request id. With durable storage configured, retries and backend restarts return the first response instead of writing duplicate tasks or calendar events.
 
 `src/server/executionLogStore.ts` records every attempted action with request id, user id, status, provider id, and error message when one occurs. Production storage can retain this as the audit trail for support and debugging.
+
+`POST /api/account/delete` deletes the signed-in user's stored Brain Dump records, including OAuth tokens, workspace
+records, session records, idempotency responses, execution logs, and analytics events. The app exposes this from Settings
+with a `DELETE` confirmation. It does not delete Google Tasks or Google Calendar events already created in the user's
+Google account.
 
 ## Safety Rules
 

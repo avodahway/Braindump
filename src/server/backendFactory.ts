@@ -1,4 +1,4 @@
-import type { GoogleOAuthConfig } from './publicBackend';
+import type { GoogleOAuthConfig, PublicRequestLimits } from './publicBackend';
 import { createPublicBackend } from './publicBackend';
 import type { ActionExecutor } from './actionExecutor';
 import {
@@ -26,6 +26,13 @@ import {
   type ExecutionLogStore
 } from './executionLogStore';
 import { createDurableAnalyticsStore, createMemoryAnalyticsStore, type AnalyticsStore } from './analyticsStore';
+import { createDurableBetaRequestStore, createMemoryBetaRequestStore, type BetaRequestStore } from './betaRequestStore';
+import { createDurableFeedbackStore, createMemoryFeedbackStore, type FeedbackStore } from './feedbackStore';
+import {
+  createDurableSupportRequestStore,
+  createMemorySupportRequestStore,
+  type SupportRequestStore
+} from './supportRequestStore';
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -47,7 +54,12 @@ export type BrainDumpBackendConfig = {
   responseStore?: ResponseStore;
   executionLogStore?: ExecutionLogStore;
   analyticsStore?: AnalyticsStore;
+  betaRequestStore?: BetaRequestStore;
+  feedbackStore?: FeedbackStore;
+  supportRequestStore?: SupportRequestStore;
   adminToken?: string;
+  betaAccessCode?: string;
+  requestLimits?: PublicRequestLimits;
   executor?: ActionExecutor;
 };
 
@@ -93,6 +105,30 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
           codec: config.storageCodec
         })
       : createMemoryAnalyticsStore());
+  const betaRequestStore =
+    config.betaRequestStore ??
+    (config.storage
+      ? createDurableBetaRequestStore(config.storage, {
+          keyPrefix: config.storageKeyPrefix,
+          codec: config.storageCodec
+        })
+      : createMemoryBetaRequestStore());
+  const feedbackStore =
+    config.feedbackStore ??
+    (config.storage
+      ? createDurableFeedbackStore(config.storage, {
+          keyPrefix: config.storageKeyPrefix,
+          codec: config.storageCodec
+        })
+      : createMemoryFeedbackStore());
+  const supportRequestStore =
+    config.supportRequestStore ??
+    (config.storage
+      ? createDurableSupportRequestStore(config.storage, {
+          keyPrefix: config.storageKeyPrefix,
+          codec: config.storageCodec
+        })
+      : createMemorySupportRequestStore());
   const tokenClient =
     config.tokenClient ??
     createGoogleOAuthClient(
@@ -127,9 +163,15 @@ export function createBrainDumpBackend(config: BrainDumpBackendConfig) {
     responseStore,
     executionLogStore,
     analyticsStore,
+    betaRequestStore,
+    feedbackStore,
+    supportRequestStore,
     adminToken: config.adminToken,
+    betaAccessCode: config.betaAccessCode,
     storageKeyPrefix: config.storageKeyPrefix,
     storageMode: config.storage ? 'durable' : 'memory',
+    storageEncrypted: Boolean(config.storageCodec),
+    requestLimits: config.requestLimits,
     now: config.nowDate,
     executor
   });

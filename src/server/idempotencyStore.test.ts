@@ -43,6 +43,30 @@ describe('idempotency response store', () => {
     expect([...kv.values.values()][0]).toMatch(/^encoded:/);
     expect(await store.readResponse('req-1')).toMatchObject({ requestId: 'req-1' });
   });
+
+  it('deletes only one user responses from memory', async () => {
+    const store = createMemoryResponseStore();
+
+    await store.saveResponse('req-1', brainDumpResponse('req-1'), 'user@example.com');
+    await store.saveResponse('req-2', brainDumpResponse('req-2'), 'other@example.com');
+    await store.deleteByUser('USER@example.com');
+
+    expect(await store.readResponse('req-1')).toBeUndefined();
+    expect(await store.readResponse('req-2')).toMatchObject({ requestId: 'req-2' });
+  });
+
+  it('deletes durable responses from a user index', async () => {
+    const kv = createMemoryKeyValueStore();
+    const store = createDurableResponseStore(kv, { keyPrefix: 'test' });
+
+    await store.saveResponse('req-1', brainDumpResponse('req-1'), 'user@example.com');
+    await store.saveResponse('req-2', brainDumpResponse('req-2'), 'other@example.com');
+    await store.deleteByUser('user@example.com');
+
+    expect(await store.readResponse('req-1')).toBeUndefined();
+    expect(await store.readResponse('req-2')).toMatchObject({ requestId: 'req-2' });
+    expect(kv.values.has('test:brain-dump-response-index:user@example.com')).toBe(false);
+  });
 });
 
 function brainDumpResponse(requestId: string): BrainDumpResponse {

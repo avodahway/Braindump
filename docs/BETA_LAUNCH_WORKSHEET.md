@@ -13,11 +13,15 @@ Use this as the launch-day control sheet. Fill in the placeholders when deployme
 | Backend host | `[BACKEND_HOST]` |
 | Frontend host | `[FRONTEND_HOST]` |
 | Storage provider | `[DURABLE_STORAGE_PROVIDER]` |
+| Supabase URL | `[SUPABASE_URL]` |
+| Supabase KV table | `[SUPABASE_KV_TABLE]` |
 | Google Cloud project | `[GOOGLE_CLOUD_PROJECT]` |
 | OAuth client name | `[GOOGLE_OAUTH_CLIENT_NAME]` |
 | Admin token storage location | `[PASSWORD_MANAGER_ITEM]` |
 
 ## Environment Checklist
+
+Start from `.env.production.example`. Fill real values only in hosting provider secret settings or a local ignored env file.
 
 Frontend:
 
@@ -29,6 +33,10 @@ Backend:
 - `GOOGLE_CLIENT_SECRET=[GOOGLE_CLIENT_SECRET]`
 - `BRAIN_DUMP_PUBLIC_API_ORIGIN=[PUBLIC_API_ORIGIN]`
 - `BRAIN_DUMP_FRONTEND_ORIGIN=[FRONTEND_ORIGIN]`
+- `SUPABASE_URL=[SUPABASE_URL]`
+- `SUPABASE_SERVICE_ROLE_KEY=[SUPABASE_SERVICE_ROLE_KEY]`
+- `SUPABASE_KV_TABLE=brain_dump_kv`
+- `BRAIN_DUMP_STORAGE_SECRET=[LONG_RANDOM_STORAGE_SECRET]`
 - `BRAIN_DUMP_STORAGE_PREFIX=brain-dump-prod`
 - `BRAIN_DUMP_ADMIN_TOKEN=[LONG_RANDOM_ADMIN_TOKEN]`
 
@@ -64,6 +72,7 @@ Expected:
 - Metrics response contains counts only.
 - Backup plan response says not to export Google refresh tokens.
 - Readiness response returns `ready: true` before invite emails go out.
+- Record the go/no-go call in `docs/LAUNCH_DECISION_RECORD.md`.
 
 ## Launch-Day Command Checklist
 
@@ -81,6 +90,9 @@ Check deployed frontend:
 [BETA_APP_URL]/privacy
 [BETA_APP_URL]/terms
 [BETA_APP_URL]/support
+[BETA_APP_URL]/data-deletion
+[BETA_APP_URL]/feedback
+[BETA_APP_URL]/beta
 [BETA_APP_URL]/app
 ```
 
@@ -89,6 +101,15 @@ Check deployed backend:
 ```sh
 curl -i "[PUBLIC_API_ORIGIN]/api/health"
 curl -i -H "X-Brain-Dump-Admin-Token: [ADMIN_TOKEN]" "[PUBLIC_API_ORIGIN]/api/admin/readiness"
+```
+
+Run the deployment verifier:
+
+```sh
+BRAIN_DUMP_FRONTEND_ORIGIN=[BETA_APP_URL] \
+BRAIN_DUMP_PUBLIC_API_ORIGIN=[PUBLIC_API_ORIGIN] \
+BRAIN_DUMP_ADMIN_TOKEN=[ADMIN_TOKEN] \
+pnpm verify:deployment
 ```
 
 Manual app smoke test:

@@ -18,7 +18,8 @@ export function buildReadinessReport({
   googleScopes,
   frontendAppUrl,
   adminTokenConfigured,
-  storageMode
+  storageMode,
+  storageEncrypted
 }: {
   generatedAt?: string;
   googleClientId?: string;
@@ -27,6 +28,7 @@ export function buildReadinessReport({
   frontendAppUrl?: string;
   adminTokenConfigured: boolean;
   storageMode: 'memory' | 'durable';
+  storageEncrypted: boolean;
 }): ReadinessReport {
   const checks: ReadinessCheck[] = [
     {
@@ -64,6 +66,12 @@ export function buildReadinessReport({
       label: 'Durable backend storage',
       ready: storageMode === 'durable',
       detail: storageMode === 'durable' ? 'Durable storage injected' : 'Using memory storage; do not invite real beta users'
+    },
+    {
+      key: 'storage_encryption',
+      label: 'Storage encryption codec',
+      ready: storageMode === 'durable' && storageEncrypted,
+      detail: storageEncrypted ? 'Configured' : 'Missing BRAIN_DUMP_STORAGE_SECRET'
     }
   ];
 

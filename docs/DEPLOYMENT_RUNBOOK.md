@@ -29,16 +29,53 @@ Optional backend:
 - `GOOGLE_OAUTH_SCOPES`
 - `BRAIN_DUMP_STORAGE_PREFIX`
 - `BRAIN_DUMP_ADMIN_TOKEN`
+- `BRAIN_DUMP_BETA_ACCESS_CODE`
+- `BRAIN_DUMP_MAX_JSON_BODY_BYTES`
+- `BRAIN_DUMP_RATE_LIMIT_WINDOW_MS`
+- `BRAIN_DUMP_RATE_LIMIT_MAX_REQUESTS`
+- `SUPABASE_KV_TABLE`
+
+Supabase backend storage:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `BRAIN_DUMP_STORAGE_SECRET`
 
 See `.env.example`.
+
+Use `.env.production.example` as the production handoff template. Fill it in through the frontend and backend hosting
+provider secret settings, not by committing real credentials.
+
+Use `docs/LAUNCH_URLS.md` as the canonical list of public pages, API routes, and missing production values.
+
+Use `docs/PRODUCTION_DEPLOYMENT.md` for the concrete Vercel, Render, and Supabase setup.
+
+Use `docs/RELEASE_GATE.md` before promoting a build from staging to beta testers.
+
+Use `docs/HOSTING_DECISION.md` to choose the frontend, backend, and storage providers before setting production secrets.
+
+Use `docs/SUPABASE_STORAGE.md` to create the durable storage table before inviting beta users.
 
 ## Frontend Routes
 
 - `/`
 - `/app`
 - `/privacy`
-- `/support`
 - `/terms`
+- `/support`
+- `/data-deletion`
+- `/feedback`
+- `/beta`
+- `/status`
+- `/faq`
+- `/security`
+- `/install`
+- `/roadmap`
+- `/press`
+- `/examples`
+- `/pricing`
+- `/demo`
+- `/operator`
 
 The frontend host must serve `index.html` for those routes.
 
@@ -49,11 +86,17 @@ The frontend host must serve `index.html` for those routes.
 - `POST /api/auth/google/start`
 - `GET /api/auth/google/callback`
 - `POST /api/auth/google/disconnect`
+- `POST /api/account/delete`
+- `POST /api/beta/request`
 - `POST /api/brain-dump`
 - `POST /api/events`
+- `POST /api/feedback`
 - `GET /api/admin/metrics`
 - `GET /api/admin/backup-plan`
 - `GET /api/admin/readiness`
+- `GET /api/admin/execution-errors`
+- `GET /api/admin/beta-requests`
+- `GET /api/admin/feedback`
 
 `GET /api/health` is anonymous and should return:
 
@@ -64,6 +107,34 @@ The frontend host must serve `index.html` for those routes.
   "time": "..."
 }
 ```
+
+## Backend Build
+
+The public backend can run as a Node HTTP service.
+
+Build command:
+
+```sh
+pnpm build:backend
+```
+
+Start command:
+
+```sh
+pnpm start:backend
+```
+
+The server listens on `PORT`, defaulting to `3000` for local backend smoke tests.
+
+`BRAIN_DUMP_FRONTEND_ORIGIN` is also the allowed browser origin for credentialed API requests. The backend answers
+preflight requests for that origin and rejects state-changing browser requests from other origins.
+
+Set `BRAIN_DUMP_BETA_ACCESS_CODE` to require an invitation code before public users can start Google OAuth or create
+reviewed actions. Leave it unset only when the app is ready for open access.
+
+The public API defaults to a 64 KB JSON body limit and 60 POST requests per client per minute. Override those with
+`BRAIN_DUMP_MAX_JSON_BODY_BYTES`, `BRAIN_DUMP_RATE_LIMIT_WINDOW_MS`, and `BRAIN_DUMP_RATE_LIMIT_MAX_REQUESTS` if the beta
+host needs tighter or looser limits.
 
 ## Google Cloud Setup
 
@@ -90,25 +161,72 @@ After deploy:
 2. Open `/privacy`.
 3. Open `/terms`.
 4. Open `/support`.
-5. Open `/app`.
-6. Check backend health: `GET /api/health`.
-7. In app settings, set Public API URL.
-8. Click Connect Google.
-9. Complete OAuth with a test user and confirm the app returns to `/app?connected=google`, then clears the query.
-10. Submit: `Pay employees tomorrow. Lunch with Jack Thursday at noon; put on calendar.`
-11. Confirm the review step appears before anything is created.
-12. Remove one preview action and confirm it disappears.
-13. Review again, then click Create.
-14. Confirm Google Tasks has the work task.
-15. Confirm Google Calendar has the event.
-16. Submit: `Spend 4 hours this week on the porch replacement project`.
-17. Confirm the calendar work block stays in Needs Review and is not created.
-18. Click Disconnect.
-19. Confirm stored OAuth tokens and workspace connection records are removed.
-20. Confirm `/api/workspace` returns not connected afterward.
-21. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
-22. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
-23. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users.
+5. Open `/data-deletion`.
+6. Open `/feedback`.
+7. Open `/beta`.
+8. Open `/status`.
+9. Open `/faq`.
+10. Open `/security`.
+11. Open `/install`.
+12. Open `/roadmap`.
+13. Open `/press`.
+14. Open `/examples`.
+15. Open `/pricing`.
+16. Open `/demo`.
+17. Open `/app`.
+18. Open `/operator` and confirm it asks for the public API URL and admin token.
+19. Confirm `/robots.txt` disallows `/operator`.
+20. Confirm `/sitemap.xml` includes public pages and excludes `/operator`.
+21. Check backend health: `GET /api/health`.
+22. In app settings, set Public API URL.
+23. Click Connect Google.
+24. Complete OAuth with a test user and confirm the app returns to `/app?connected=google`, then clears the query.
+25. Submit: `Pay employees tomorrow. Lunch with Jack Thursday at noon; put on calendar.`
+26. Confirm the review step appears before anything is created.
+27. Remove one preview action and confirm it disappears.
+28. Review again, then click Create.
+29. Confirm Google Tasks has the work task.
+30. Confirm Google Calendar has the event.
+31. Submit: `Spend 4 hours this week on the porch replacement project`.
+32. Confirm the calendar work block stays in Needs Review and is not created.
+33. Click Disconnect.
+34. Confirm stored OAuth tokens and workspace connection records are removed.
+35. Confirm `/api/workspace` returns not connected afterward.
+36. Submit a three-question beta feedback form from `/feedback`.
+37. Submit a beta access request from `/beta`.
+38. Submit a support request from `/support`.
+39. Submit a data deletion request from `/data-deletion`.
+40. In Settings, type `DELETE`, click Delete account data, and confirm the session returns to not connected.
+41. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `/operator` loads readiness, launch summary, metrics, beta requests, feedback, support requests, recent errors, backup plan, and checklist.
+42. If `BRAIN_DUMP_ADMIN_TOKEN` is set, export launch notes Markdown from `/operator`.
+43. If `BRAIN_DUMP_ADMIN_TOKEN` is set, filter beta requests by status before exporting a waitlist batch.
+44. If `BRAIN_DUMP_ADMIN_TOKEN` is set, filter feedback and support requests by status before exporting review batches.
+45. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `/operator` can mark beta requests invited/archived, feedback reviewed/archived, and support requests in progress/resolved/archived.
+46. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/metrics` returns event counts only when `X-Brain-Dump-Admin-Token` is provided.
+47. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/backup-plan` returns the storage categories and operator checklist only when `X-Brain-Dump-Admin-Token` is provided.
+48. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/launch-summary` returns launch posture and queue counts only when `X-Brain-Dump-Admin-Token` is provided.
+49. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/execution-errors` returns recent provider write failures only when `X-Brain-Dump-Admin-Token` is provided.
+50. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/execution-errors?format=csv` downloads the execution error CSV from `/operator`.
+51. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests` returns beta requests only when `X-Brain-Dump-Admin-Token` is provided.
+52. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests?format=csv` downloads the beta request CSV from `/operator`.
+53. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/beta-requests?status=new` filters beta requests.
+54. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback` returns feedback only when `X-Brain-Dump-Admin-Token` is provided.
+55. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback?format=csv` downloads the feedback CSV from `/operator`.
+56. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/feedback?status=reviewed` filters feedback.
+57. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/support-requests` returns support requests only when `X-Brain-Dump-Admin-Token` is provided.
+58. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/support-requests?format=csv` downloads the support request CSV from `/operator`.
+59. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/support-requests?status=in_progress` filters support requests.
+60. Complete `docs/LAUNCH_DECISION_RECORD.md` for the release or tester batch.
+61. If `BRAIN_DUMP_ADMIN_TOKEN` is set, confirm `GET /api/admin/readiness` returns `ready: true` before inviting users. Readiness requires durable storage and `BRAIN_DUMP_STORAGE_SECRET`.
+
+You can automate the public page, `/operator`, health, protected operator endpoint, and CSV export checks with:
+
+```sh
+BRAIN_DUMP_FRONTEND_ORIGIN=https://braindump.app \
+BRAIN_DUMP_PUBLIC_API_ORIGIN=https://api.braindump.app \
+BRAIN_DUMP_ADMIN_TOKEN=replace-with-admin-token \
+pnpm verify:deployment
+```
 
 ## Backup And Restore
 
@@ -118,7 +236,7 @@ Before inviting real beta users:
 2. Set `BRAIN_DUMP_STORAGE_PREFIX` to a stable production value.
 3. Set `BRAIN_DUMP_ADMIN_TOKEN` to a long random value.
 4. Call `GET /api/admin/backup-plan` with `X-Brain-Dump-Admin-Token`.
-5. Confirm the plan covers OAuth tokens, workspaces, sessions, idempotency responses, execution logs, and analytics events.
+5. Confirm the plan covers OAuth tokens, workspaces, sessions, beta requests, feedback, idempotency responses, execution logs, and analytics events.
 6. Take a provider-level encrypted snapshot before every backend deploy during beta.
 7. Test restore in staging with a non-production Google account.
 8. After restore, verify `/api/health`, `/api/workspace`, duplicate request behavior, `/api/admin/metrics`, and Disconnect Google.
