@@ -2,7 +2,7 @@ services:
   - type: web
     name: brain-dump-api
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build:backend
     startCommand: pnpm start:backend
     healthCheckPath: /api/health
