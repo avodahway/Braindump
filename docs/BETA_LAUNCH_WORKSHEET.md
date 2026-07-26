@@ -2,6 +2,40 @@
 
 Use this as the launch-day control sheet. Fill in the placeholders when deployment details are known. Do not commit real secrets.
 
+## Current Staging Values
+
+| Item | Value |
+| --- | --- |
+| Beta app URL | `https://brain-dump-vercel-deploy.vercel.app/app` |
+| Frontend origin | `https://brain-dump-vercel-deploy.vercel.app` |
+| Public API origin | `https://brain-dump-vercel-deploy.vercel.app` |
+| Direct backend origin | `https://brain-dump-api.onrender.com` |
+| Support email | `avodahway@gmail.com` |
+| Backend host | Render |
+| Frontend host | Vercel |
+| Storage provider | Supabase |
+| Supabase URL | `https://crcavxfqlnjyyyrxfaca.supabase.co` |
+| Supabase KV table | `brain_dump_kv` |
+| Google Cloud project | `brain-dump-staging` |
+| OAuth client name | Brain Dump staging web client |
+| OAuth redirect URI | `https://brain-dump-vercel-deploy.vercel.app/api/auth/google/callback` |
+| Admin token storage location | Host secret manager only; do not commit |
+| Beta access code storage location | Host secret manager only; do not commit |
+
+## Current Staging Verification
+
+| Check | Result |
+| --- | --- |
+| GitHub `main` | `4bc9ea897bdf3ea9110e493cb4f83d0b98aeb6a4` |
+| GitHub Actions CI | Passed |
+| Vercel frontend deployment | Ready |
+| `GET /api/health` through Vercel | Passed |
+| Direct Render `/api/health` | Passed |
+| OAuth callback route | Reaches Render backend |
+| `pnpm verify:deployment` against staging | Passed |
+| `pnpm smoke:oauth` from local shell | Blocked by missing `BRAIN_DUMP_BETA_ACCESS_CODE` in local environment |
+| `pnpm validate:env` from local shell | Blocked by host secrets not available locally |
+
 ## Deployment Placeholders
 
 | Item | Value |
@@ -46,8 +80,8 @@ Do not paste real client secrets or admin tokens into this file.
 
 | Name | Email | Added in Google OAuth Testing | Invite Sent | First Run Complete | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `[Tester 1]` | `[email@example.com]` | No | No | No |  |
-| `[Tester 2]` | `[email@example.com]` | No | No | No |  |
+| Jay Cleveland | `jcleveland3@gmail.com` | Yes | Internal test | Yes | OAuth, task, and calendar smoke succeeded |
+| Avodah Way | `avodahway@gmail.com` | Yes | Internal test | Yes | OAuth, task, and calendar smoke succeeded |
 | `[Tester 3]` | `[email@example.com]` | No | No | No |  |
 | `[Tester 4]` | `[email@example.com]` | No | No | No |  |
 | `[Tester 5]` | `[email@example.com]` | No | No | No |  |

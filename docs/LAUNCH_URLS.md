@@ -2,6 +2,24 @@
 
 Use this inventory when moving from local development to a real beta deployment.
 
+## Current Staging Values
+
+These values are safe to commit because they are public URLs and non-secret identifiers only.
+
+| Item | Staging value | Status |
+| --- | --- | --- |
+| Frontend origin | `https://brain-dump-vercel-deploy.vercel.app` | Deployed on Vercel |
+| Frontend public API build var | `https://brain-dump-vercel-deploy.vercel.app` | Uses Vercel `/api/*` proxy to Render |
+| Public API origin | `https://brain-dump-vercel-deploy.vercel.app` | Verified through Vercel proxy |
+| Direct backend origin | `https://brain-dump-api.onrender.com` | Render health check verified |
+| Support email | `avodahway@gmail.com` | Selected for private beta |
+| Google OAuth redirect URI | `https://brain-dump-vercel-deploy.vercel.app/api/auth/google/callback` | Callback reaches Render backend |
+| Google Cloud project | `brain-dump-staging` | OAuth testing app configured |
+| OAuth client name | Brain Dump staging web client | Testing mode |
+| OAuth test users | `jcleveland3@gmail.com`, `avodahway@gmail.com` | Added |
+| Supabase project URL | `https://crcavxfqlnjyyyrxfaca.supabase.co` | Durable storage project selected |
+| Supabase KV table | `brain_dump_kv` | Required table name |
+
 ## Required Public Origins
 
 | Item | Production value | Needed before |
@@ -82,17 +100,24 @@ pnpm verify:deployment
 The admin token can be omitted if you only want to verify public pages, health, and anonymous admin rejection. Include it
 to verify readiness, metrics, backup, execution errors, beta requests, feedback, and CSV exports.
 
+Current staging public verification command:
+
+```sh
+BRAIN_DUMP_FRONTEND_ORIGIN=https://brain-dump-vercel-deploy.vercel.app \
+BRAIN_DUMP_PUBLIC_API_ORIGIN=https://brain-dump-vercel-deploy.vercel.app \
+pnpm verify:deployment
+```
+
+Last verified: passed after the Vercel deployment from GitHub `main` commit `4bc9ea897bdf3ea9110e493cb4f83d0b98aeb6a4`.
+
 ## Missing Values To Collect
 
-- Production frontend URL.
-- Production backend URL.
-- Support email.
-- Google OAuth client ID.
-- Google OAuth client secret.
-- Supabase URL.
-- Supabase service role key.
-- Supabase `brain_dump_kv` table.
-- Long random storage encryption secret.
-- Long random admin token.
-- Public beta request intake URL.
-- First OAuth test-user email addresses.
+- Production custom domain decision.
+- Production frontend URL if different from the Vercel staging alias.
+- Production backend URL if different from the Render staging service.
+- Google OAuth client secret location confirmation.
+- Supabase service role key location confirmation.
+- Long random storage encryption secret location confirmation.
+- Long random admin token location confirmation.
+- Private beta access code location confirmation.
+- Render deploy authorization or deploy hook for backend redeploys from GitHub `main`.
