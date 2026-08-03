@@ -11,7 +11,7 @@ These values are safe to commit because they are public URLs and non-secret iden
 | Frontend origin | `https://brain-dump-vercel-deploy.vercel.app` | Deployed on Vercel |
 | Frontend public API build var | `https://brain-dump-vercel-deploy.vercel.app` | Uses Vercel `/api/*` proxy to Render |
 | Public API origin | `https://brain-dump-vercel-deploy.vercel.app` | Verified through Vercel proxy |
-| Direct backend origin | `https://brain-dump-api.onrender.com` | Render health check verified |
+| Direct backend origin | `https://brain-dump-api-staging.onrender.com` | Render health check verified |
 | Support email | `avodahway@gmail.com` | Selected for private beta |
 | Google OAuth redirect URI | `https://brain-dump-vercel-deploy.vercel.app/api/auth/google/callback` | Callback reaches Render backend |
 | Google Cloud project | `brain-dump-staging` | OAuth testing app configured |

@@ -9,7 +9,7 @@ Use this as the launch-day control sheet. Fill in the placeholders when deployme
 | Beta app URL | `https://brain-dump-vercel-deploy.vercel.app/app` |
 | Frontend origin | `https://brain-dump-vercel-deploy.vercel.app` |
 | Public API origin | `https://brain-dump-vercel-deploy.vercel.app` |
-| Direct backend origin | `https://brain-dump-api.onrender.com` |
+| Direct backend origin | `https://brain-dump-api-staging.onrender.com` |
 | Support email | `avodahway@gmail.com` |
 | Backend host | Render |
 | Frontend host | Vercel |
